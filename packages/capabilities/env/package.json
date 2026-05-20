@@ -1,10 +1,12 @@
-{
-  "name": "@kiln/env-capability",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "build": "echo \"build env\"",
-    "test": "echo \"test env\"",
-    "lint": "echo \"lint env\""
-  }
+﻿{
+    "name":  "@kiln/env-capability",
+    "version":  "0.0.0",
+    "private":  true,
+    "scripts":  {
+                    "build":  "tsc",
+                    "test":  "echo \"test env\"",
+                    "lint":  "echo \"lint env\""
+                },
+    "main":  "dist/index.js",
+    "types":  "dist/index.d.ts"
 }
