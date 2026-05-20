@@ -1,0 +1,10 @@
+{
+  "name": "@kiln/utils",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"build utils\"",
+    "test": "echo \"test utils\"",
+    "lint": "echo \"lint utils\""
+  }
+}

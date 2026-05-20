@@ -1,0 +1,10 @@
+{
+  "name": "@kiln/transform-engine",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"build transform-engine\"",
+    "test": "echo \"test transform-engine\"",
+    "lint": "echo \"lint transform-engine\""
+  }
+}
