@@ -1,10 +1,12 @@
-{
-  "name": "@kiln/transform-engine",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "build": "echo \"build transform-engine\"",
-    "test": "echo \"test transform-engine\"",
-    "lint": "echo \"lint transform-engine\""
-  }
+﻿{
+    "name":  "@kiln/transform-engine",
+    "version":  "0.0.0",
+    "private":  true,
+    "scripts":  {
+                    "build":  "tsc",
+                    "test":  "echo \"test transform-engine\"",
+                    "lint":  "echo \"lint transform-engine\""
+                },
+    "main":  "dist/index.js",
+    "types":  "dist/index.d.ts"
 }
