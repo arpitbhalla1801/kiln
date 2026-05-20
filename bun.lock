@@ -1,0 +1,90 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "kiln-monorepo",
+      "devDependencies": {
+        "turbo": "latest",
+        "typescript": "latest",
+      },
+    },
+    "apps/cli": {
+      "name": "@kiln/cli",
+      "version": "0.0.0",
+      "dependencies": {
+        "@kiln/core": "workspace:*",
+        "@kiln/planner": "workspace:*",
+        "@kiln/project-model": "workspace:*",
+        "@kiln/transform-engine": "workspace:*",
+      },
+    },
+    "packages/adapters/node": {
+      "name": "@kiln/node-adapter",
+      "version": "0.0.0",
+    },
+    "packages/capabilities/auth": {
+      "name": "@kiln/auth-capability",
+      "version": "0.0.0",
+    },
+    "packages/capabilities/env": {
+      "name": "@kiln/env-capability",
+      "version": "0.0.0",
+    },
+    "packages/core": {
+      "name": "@kiln/core",
+      "version": "0.0.0",
+    },
+    "packages/planner": {
+      "name": "@kiln/planner",
+      "version": "0.0.0",
+    },
+    "packages/project-model": {
+      "name": "@kiln/project-model",
+      "version": "0.0.0",
+    },
+    "packages/transform-engine": {
+      "name": "@kiln/transform-engine",
+      "version": "0.0.0",
+    },
+    "packages/utils": {
+      "name": "@kiln/utils",
+      "version": "0.0.0",
+    },
+  },
+  "packages": {
+    "@kiln/auth-capability": ["@kiln/auth-capability@workspace:packages/capabilities/auth"],
+
+    "@kiln/cli": ["@kiln/cli@workspace:apps/cli"],
+
+    "@kiln/core": ["@kiln/core@workspace:packages/core"],
+
+    "@kiln/env-capability": ["@kiln/env-capability@workspace:packages/capabilities/env"],
+
+    "@kiln/node-adapter": ["@kiln/node-adapter@workspace:packages/adapters/node"],
+
+    "@kiln/planner": ["@kiln/planner@workspace:packages/planner"],
+
+    "@kiln/project-model": ["@kiln/project-model@workspace:packages/project-model"],
+
+    "@kiln/transform-engine": ["@kiln/transform-engine@workspace:packages/transform-engine"],
+
+    "@kiln/utils": ["@kiln/utils@workspace:packages/utils"],
+
+    "@turbo/darwin-64": ["@turbo/darwin-64@2.9.14", "", { "os": "darwin", "cpu": "x64" }, "sha512-t7QiPflaEyBE4oayeZtSmu4mEfjgIrcNlNNl1z1dmIVPqEdtA7+CfTf8d7KXsOGPh6aNgWjKxyvQg9uGfDQF+A=="],
+
+    "@turbo/darwin-arm64": ["@turbo/darwin-arm64@2.9.14", "", { "os": "darwin", "cpu": "arm64" }, "sha512-d23147mC9BsCPA9mJ0h/ubcpbRgcJBXbcG3+Vq7YLhjz3IXuvQsJ1UXH8f4MD76ZjJ4m/E4aRdJV+MW88CDfbw=="],
+
+    "@turbo/linux-64": ["@turbo/linux-64@2.9.14", "", { "os": "linux", "cpu": "x64" }, "sha512-P3ZKB5tuUDdDQWuAsACGUR1qv9W7BNWxdxqVJ0kZNuNNPRaVYTPPikLcp79+GiEcW3npsR+KyP38lnQiBc5aSA=="],
+
+    "@turbo/linux-arm64": ["@turbo/linux-arm64@2.9.14", "", { "os": "linux", "cpu": "arm64" }, "sha512-ZRTlzcUMrrPv9ZuDzRF9n60Ym13bKeG9jDB8WjxyLhWNzV+AJQN+zdpIk3NJYf2zQsGUm1mNar2P0elRzLw25g=="],
+
+    "@turbo/windows-64": ["@turbo/windows-64@2.9.14", "", { "os": "win32", "cpu": "x64" }, "sha512-exanwN6sIduZwykYeiTQj8kCmOhazP5WOz3bvXMcYtjhL6Z3iRWLewKrXCBq0bqwSP3iBMb/AerRCnHI4lx46A=="],
+
+    "@turbo/windows-arm64": ["@turbo/windows-arm64@2.9.14", "", { "os": "win32", "cpu": "arm64" }, "sha512-fVdCsnmYoKICsycbWuuGp6Jvi51/3G/UluFWuAUCvR8PIW5IJkAk5BM9UF8PSm0Q2IphWHFZjYEgjHsh3B9y/g=="],
+
+    "turbo": ["turbo@2.9.14", "", { "optionalDependencies": { "@turbo/darwin-64": "2.9.14", "@turbo/darwin-arm64": "2.9.14", "@turbo/linux-64": "2.9.14", "@turbo/linux-arm64": "2.9.14", "@turbo/windows-64": "2.9.14", "@turbo/windows-arm64": "2.9.14" }, "bin": { "turbo": "bin/turbo" } }, "sha512-BQqXRr4UoWI3UPFrtznCLykYHxwxWh53iCB57x092jPMjIlW1wnm3N895g5irpiXmnxUhREBB0n6+y8BHhs4nw=="],
+
+    "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
+  }
+}

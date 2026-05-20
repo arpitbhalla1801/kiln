@@ -1,0 +1,10 @@
+{
+  "name": "@kiln/core",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"build core\"",
+    "test": "echo \"test core\"",
+    "lint": "echo \"lint core\""
+  }
+}

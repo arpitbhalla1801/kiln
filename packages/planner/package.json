@@ -1,0 +1,10 @@
+{
+  "name": "@kiln/planner",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"build planner\"",
+    "test": "echo \"test planner\"",
+    "lint": "echo \"lint planner\""
+  }
+}
