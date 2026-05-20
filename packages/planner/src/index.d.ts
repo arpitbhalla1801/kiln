@@ -1,1 +1,1 @@
-export declare const name = "@kiln/planner";
+export declare const name = '@kiln/planner';

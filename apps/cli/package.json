@@ -1,19 +1,18 @@
 ﻿{
-    "name":  "@kiln/cli",
-    "version":  "0.0.0",
-    "private":  true,
-    "scripts":  {
-                    "build":  "tsc",
-                    "dev":  "echo \"dev cli\"",
-                    "test":  "echo \"test cli\"",
-                    "lint":  "echo \"lint cli\""
-                },
-    "dependencies":  {
-                         "@kiln/core":  "workspace:*",
-                         "@kiln/planner":  "workspace:*",
-                         "@kiln/project-model":  "workspace:*",
-                         "@kiln/transform-engine":  "workspace:*"
-                     },
-    "main":  "dist/index.js",
-    "types":  "dist/index.d.ts"
+  "name": "@kiln/cli",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@kiln/core": "workspace:*",
+    "@kiln/planner": "workspace:*",
+    "@kiln/project-model": "workspace:*",
+    "@kiln/transform-engine": "workspace:*"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  }
 }
