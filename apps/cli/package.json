@@ -2,11 +2,15 @@
   "name": "@kiln/cli",
   "version": "0.0.0",
   "private": true,
+  "bin": {
+    "kiln": "bin/kiln.sh"
+  },
   "dependencies": {
     "@kiln/core": "workspace:*",
     "@kiln/planner": "workspace:*",
     "@kiln/project-model": "workspace:*",
-    "@kiln/transform-engine": "workspace:*"
+    "@kiln/transform-engine": "workspace:*",
+    "@kiln/node-adapter": "workspace:*"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

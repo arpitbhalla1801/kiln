@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "composite": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "types": ["bun-types"]
   }
 }
