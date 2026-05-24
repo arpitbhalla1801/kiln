@@ -1,12 +1,15 @@
-﻿{
+{
   "name": "@kiln/transform-engine",
   "version": "0.0.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "bunx tsc",
     "lint": "eslint .",
     "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }
