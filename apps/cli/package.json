@@ -2,6 +2,9 @@
   "name": "@kiln/cli",
   "version": "0.0.0",
   "private": true,
+  "bin": {
+    "kiln": "./dist/index.js"
+  },
   "dependencies": {
     "@kiln/core": "workspace:*",
     "@kiln/planner": "workspace:*",
@@ -11,7 +14,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "bunx tsc",
+    "dev": "bun src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   }
