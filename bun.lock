@@ -31,6 +31,9 @@
     "packages/adapters/node": {
       "name": "@kiln/node-adapter",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/utils": "*",
+      },
       "devDependencies": {
         "bun-types": "^1.3.14",
       },

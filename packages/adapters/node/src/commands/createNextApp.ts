@@ -17,8 +17,6 @@ export async function createNextAppWithBun({
     await mkdir(appsDir, { recursive: true });
 
     console.log(`Creating Next.js app: ${appName}...`);
-    console.log('projectRoot:', projectRoot);
-    console.log('appPath:', appPath);
 
     const result = Bun.spawnSync(
         [
