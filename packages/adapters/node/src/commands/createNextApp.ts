@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { mkdir } from 'fs/promises';
 import { writeKilnMetadata } from '../metadata/writeKilnMetadata';
+import { existsSync } from 'fs';
 
 interface CreateNextAppOptions {
     appName: string;
@@ -14,6 +15,10 @@ export async function createNextAppWithBun({
     const appsDir = join(projectRoot, 'apps');
     const appPath = join(appsDir, appName);
 
+    if (existsSync(appPath)) {
+        throw new Error(`App already exists: ${appName}`);
+    }
+    
     await mkdir(appsDir, { recursive: true });
 
     console.log(`Creating Next.js app: ${appName}...`);
