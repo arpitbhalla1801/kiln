@@ -57,3 +57,36 @@ Kiln metadata from the workspace root.
 - detected package manager
 - detected project type, such as `nextjs`, `express`, or `node`
 - Kiln version from workspace-root `.kiln/project.json`, when present
+
+## Manifest model
+
+The `@kiln/project-model` package now defines a typed manifest contract and
+loader for capability and adapter declarations.
+
+Manifest files are expected to include:
+
+- `name`: manifest name
+- `dependencies`: package names required by the manifest
+- `transforms`: reserved transform declarations
+- `hooks`: reserved hook declarations
+- `validations`: reserved validation declarations
+- `ownershipDeclarations`: reserved ownership declarations
+
+The future-facing declaration fields are intentionally stubbed as arrays of
+objects. They can be empty while those systems are still undefined.
+
+Example manifest:
+
+```json
+{
+  "name": "node-nextjs",
+  "dependencies": ["next", "react", "react-dom"],
+  "transforms": [],
+  "hooks": [],
+  "validations": [],
+  "ownershipDeclarations": []
+}
+```
+
+`parseManifest` validates the required shape, and `loadManifest` reads a JSON
+manifest from disk before returning a validated `KilnManifest`.

@@ -18,7 +18,6 @@ export async function createNextAppWithBun({
     if (existsSync(appPath)) {
         throw new Error(`App already exists: ${appName}`);
     }
-    
     await mkdir(appsDir, { recursive: true });
 
     console.log(`Creating Next.js app: ${appName}...`);
