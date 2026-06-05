@@ -45,6 +45,9 @@
     "packages/capabilities/env": {
       "name": "@kiln/env-capability",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/project-model": "workspace:*",
+      },
     },
     "packages/core": {
       "name": "@kiln/core",

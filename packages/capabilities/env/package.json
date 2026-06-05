@@ -8,5 +8,8 @@
     "build": "tsc",
     "lint": "eslint .",
     "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@kiln/project-model": "workspace:*"
   }
 }
