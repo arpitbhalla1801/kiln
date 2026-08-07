@@ -63,15 +63,22 @@ export interface EnvVarOwnership {
   ownerCapabilityId: CapabilityId;
 }
 
+/** Ownership record for arbitrary project metadata keys. */
+export interface MetadataOwnership {
+  key: string;
+  ownerCapabilityId: CapabilityId;
+}
+
 /**
  * Serializable ownership metadata for `.kiln/ownership.json`.
- * Aggregates ownership across files, dependencies, scripts, and env vars.
+ * Aggregates ownership across files, dependencies, scripts, env vars, and metadata.
  */
 export interface OwnershipMetadata {
   files: FileOwnership[];
   dependencies: DependencyOwnership[];
   scripts: ScriptOwnership[];
   envVars: EnvVarOwnership[];
+  metadata: MetadataOwnership[];
 }
 
 /**

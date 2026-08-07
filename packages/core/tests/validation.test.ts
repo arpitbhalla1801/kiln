@@ -84,7 +84,74 @@ describe('ValidationRunner', () => {
       transforms: []
     };
 
-    expect(() => runner.validatePlan(invalidPlan))
-      .toThrow("Duplicate ownership detected: File 'shared.ts' is already owned by 'core'");
+    expect(() => runner.validatePlan(invalidPlan)).toThrow(
+      "Ownership conflict detected: file 'shared.ts' is already owned by 'core'"
+    );
+  });
+
+  test('throws on dependency ownership conflicts', () => {
+    const state: ProjectState = {
+      capabilities: [
+        {
+          id: 'auth',
+          version: '1.0',
+          dependencies: [],
+          ownedDependencies: ['next-auth'],
+        },
+      ],
+      fileOwnership: new Map(),
+      activeAdapters: [],
+    };
+
+    const runner = new ValidationRunner(state);
+
+    const invalidPlan: ExecutionPlan = {
+      capabilities: [
+        {
+          id: 'env',
+          version: '1.0',
+          dependencies: [],
+          ownedDependencies: ['next-auth'],
+        },
+      ],
+      transforms: [],
+    };
+
+    expect(() => runner.validatePlan(invalidPlan)).toThrow(
+      "Ownership conflict detected: dependency 'next-auth' is already owned by 'auth'"
+    );
+  });
+
+  test('throws on metadata ownership conflicts', () => {
+    const state: ProjectState = {
+      capabilities: [
+        {
+          id: 'core',
+          version: '1.0',
+          dependencies: [],
+          ownedMetadata: ['next.config.ts'],
+        },
+      ],
+      fileOwnership: new Map(),
+      activeAdapters: [],
+    };
+
+    const runner = new ValidationRunner(state);
+
+    const invalidPlan: ExecutionPlan = {
+      capabilities: [
+        {
+          id: 'auth',
+          version: '1.0',
+          dependencies: [],
+          ownedMetadata: ['next.config.ts'],
+        },
+      ],
+      transforms: [],
+    };
+
+    expect(() => runner.validatePlan(invalidPlan)).toThrow(
+      "Ownership conflict detected: metadata 'next.config.ts' is already owned by 'core'"
+    );
   });
 });

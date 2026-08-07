@@ -40,6 +40,7 @@ export function createEmptyOwnershipMetadata(): OwnershipMetadata {
     dependencies: [],
     scripts: [],
     envVars: [],
+    metadata: [],
   };
 }
 
@@ -165,6 +166,7 @@ export function ownershipFromProjectModel(model: KilnProjectModel): OwnershipMet
     dependencies: sortDependencyOwnership(dependencies),
     scripts: sortScriptOwnership(scripts),
     envVars: sortEnvVarOwnership(envVars),
+    metadata: sortMetadataOwnership([...model.ownership.metadata]),
   };
 }
 
@@ -232,4 +234,8 @@ function sortScriptOwnership(scripts: ScriptOwnership[]): ScriptOwnership[] {
 
 function sortEnvVarOwnership(envVars: EnvVarOwnership[]): EnvVarOwnership[] {
   return [...envVars].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function sortMetadataOwnership(metadata: OwnershipMetadata['metadata']): OwnershipMetadata['metadata'] {
+  return [...metadata].sort((left, right) => left.key.localeCompare(right.key));
 }

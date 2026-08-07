@@ -3,4 +3,5 @@
 export * from './types.js';
 export * from './project.js';
 export * from './ownership.js';
+export * from './ownership-bridge.js';
 export * from './lockfile.js';

@@ -25,7 +25,13 @@ export function parseOwnershipMetadata(content: string): OwnershipMetadata {
     throw new Error('Invalid ownership metadata format: missing required top-level fields');
   }
 
-  return sortOwnershipMetadata(parsed.ownership);
+  return sortOwnershipMetadata({
+    files: parsed.ownership.files ?? [],
+    dependencies: parsed.ownership.dependencies ?? [],
+    scripts: parsed.ownership.scripts ?? [],
+    envVars: parsed.ownership.envVars ?? [],
+    metadata: parsed.ownership.metadata ?? [],
+  });
 }
 
 function sortOwnershipMetadata(metadata: OwnershipMetadata): OwnershipMetadata {
@@ -36,5 +42,6 @@ function sortOwnershipMetadata(metadata: OwnershipMetadata): OwnershipMetadata {
     ),
     scripts: [...metadata.scripts].sort((left, right) => left.name.localeCompare(right.name)),
     envVars: [...metadata.envVars].sort((left, right) => left.name.localeCompare(right.name)),
+    metadata: [...metadata.metadata].sort((left, right) => left.key.localeCompare(right.key)),
   };
 }
