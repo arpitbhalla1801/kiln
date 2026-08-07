@@ -19,4 +19,5 @@ export interface TransformPlan {
 
 export interface TransformOptions {
   dryRun?: boolean;
+  rootDir?: string;
 }

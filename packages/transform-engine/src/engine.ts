@@ -1,19 +1,24 @@
 import { FileOperation, OperationSummary, TransformPlan, TransformOptions } from './types.js';
+import { FilesystemPersistence } from './persistence.js';
 import { VirtualFilesystem } from './vfs.js';
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
 
 export class TransformEngine {
   private vfs: VirtualFilesystem;
   private operationMetadata: Map<string, Pick<FileOperation, 'diffPreview'>>;
+  private persistence: FilesystemPersistence;
 
-  constructor(vfs?: VirtualFilesystem) {
+  constructor(vfs?: VirtualFilesystem, persistence?: FilesystemPersistence) {
     this.vfs = vfs ?? new VirtualFilesystem();
     this.operationMetadata = new Map();
+    this.persistence = persistence ?? new FilesystemPersistence();
   }
 
   getVirtualFilesystem(): VirtualFilesystem {
     return this.vfs;
+  }
+
+  getFilesystemPersistence(): FilesystemPersistence {
+    return this.persistence;
   }
 
   queueOperation(operation: FileOperation) {
@@ -56,31 +61,13 @@ export class TransformEngine {
       return plan;
     }
 
-    for (const op of plan.operations) {
-      if (op.type === 'create' || op.type === 'modify') {
-        const dir = path.dirname(op.filePath);
-        await fs.mkdir(dir, { recursive: true });
-        if (op.content !== undefined) {
-          await fs.writeFile(op.filePath, op.content, 'utf8');
-        }
-      } else if (op.type === 'delete') {
-        try {
-          await fs.unlink(op.filePath);
-        } catch (error: unknown) {
-          if (!isNodeError(error) || error.code !== 'ENOENT') {
-            throw error;
-          }
-        }
-      }
-    }
+    await this.persistence.persistVirtualFilesystem(this.vfs, {
+      rootDir: options.rootDir,
+    });
 
     this.vfs.commit();
     this.operationMetadata.clear();
 
     return plan;
   }
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return typeof error === 'object' && error !== null && 'code' in error;
 }
