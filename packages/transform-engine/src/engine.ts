@@ -1,38 +1,57 @@
 import { FileOperation, OperationSummary, TransformPlan, TransformOptions } from './types.js';
+import { VirtualFilesystem } from './vfs.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 export class TransformEngine {
-  private operations: FileOperation[] = [];
+  private vfs: VirtualFilesystem;
+  private operationMetadata: Map<string, Pick<FileOperation, 'diffPreview'>>;
+
+  constructor(vfs?: VirtualFilesystem) {
+    this.vfs = vfs ?? new VirtualFilesystem();
+    this.operationMetadata = new Map();
+  }
+
+  getVirtualFilesystem(): VirtualFilesystem {
+    return this.vfs;
+  }
 
   queueOperation(operation: FileOperation) {
-    this.operations.push(operation);
+    const normalizedPath = operation.filePath.replace(/\\/g, '/');
+
+    if (operation.type === 'create' || operation.type === 'modify') {
+      this.vfs.write(normalizedPath, operation.content ?? '');
+    } else if (operation.type === 'delete') {
+      this.vfs.delete(normalizedPath);
+    }
+
+    if (operation.diffPreview !== undefined) {
+      this.operationMetadata.set(normalizedPath, { diffPreview: operation.diffPreview });
+    }
   }
 
   getPlanPreview(): TransformPlan {
-    const summary: OperationSummary = {
-      created: 0,
-      modified: 0,
-      deleted: 0,
-      total: this.operations.length,
-    };
+    const diff = this.vfs.getDiff();
+    const operations: FileOperation[] = diff.entries.map((entry) => {
+      const metadata = this.operationMetadata.get(entry.path);
 
-    for (const op of this.operations) {
-      if (op.type === 'create') summary.created++;
-      if (op.type === 'modify') summary.modified++;
-      if (op.type === 'delete') summary.deleted++;
-    }
+      return {
+        type: entry.type,
+        filePath: entry.path,
+        content: entry.after,
+        diffPreview: metadata?.diffPreview,
+      };
+    });
 
     return {
-      operations: [...this.operations],
-      summary,
+      operations,
+      summary: diff.summary as OperationSummary,
     };
   }
 
   async execute(options: TransformOptions = {}): Promise<TransformPlan> {
     const plan = this.getPlanPreview();
 
-    // No-write mode
     if (options.dryRun) {
       return plan;
     }
@@ -42,17 +61,26 @@ export class TransformEngine {
         const dir = path.dirname(op.filePath);
         await fs.mkdir(dir, { recursive: true });
         if (op.content !== undefined) {
-            await fs.writeFile(op.filePath, op.content, 'utf8');
+          await fs.writeFile(op.filePath, op.content, 'utf8');
         }
       } else if (op.type === 'delete') {
         try {
           await fs.unlink(op.filePath);
-        } catch (e: any) {
-          if (e.code !== 'ENOENT') throw e;
+        } catch (error: unknown) {
+          if (!isNodeError(error) || error.code !== 'ENOENT') {
+            throw error;
+          }
         }
       }
     }
 
+    this.vfs.commit();
+    this.operationMetadata.clear();
+
     return plan;
   }
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return typeof error === 'object' && error !== null && 'code' in error;
 }

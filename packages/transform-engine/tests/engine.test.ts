@@ -56,17 +56,37 @@ describe('TransformEngine', () => {
   test('executes operations when dryRun is false', async () => {
     const engine = new TransformEngine();
     const filePath = path.join(testDir, 'actual.txt');
-    
-    engine.queueOperation({ 
-      type: 'create', 
-      filePath, 
-      content: 'world' 
+
+    engine.queueOperation({
+      type: 'create',
+      filePath,
+      content: 'world',
     });
 
     await engine.execute({ dryRun: false });
-    
-    // Assert file was created
+
     const content = await fs.readFile(filePath, 'utf8');
     expect(content).toBe('world');
+    expect(engine.getVirtualFilesystem().hasStagedChanges()).toBe(false);
+  });
+
+  test('mutations stay staged in memory until execute commits vfs', async () => {
+    const engine = new TransformEngine();
+    const vfs = engine.getVirtualFilesystem();
+
+    engine.queueOperation({
+      type: 'create',
+      filePath: 'staged.txt',
+      content: 'staged',
+    });
+
+    expect(vfs.read('staged.txt')).toBe('staged');
+    expect(vfs.hasStagedChanges()).toBe(true);
+
+    await engine.execute({ dryRun: true });
+    expect(vfs.hasStagedChanges()).toBe(true);
+
+    const filePath = path.join(testDir, 'staged.txt');
+    await expect(fs.access(filePath)).rejects.toThrow();
   });
 });
