@@ -8,20 +8,23 @@ describe('ProjectPlanner', () => {
     // Add manifests out of order
     planner.addManifest({
       id: 'db',
+      version: '1.0.0',
       dependencies: ['core'],
-      transforms: ['transform-db-schema', 'transform-db-client']
+      transforms: ['transform-db-schema', 'transform-db-client'],
     });
-    
+
     planner.addManifest({
       id: 'core',
+      version: '1.0.0',
       dependencies: [],
-      transforms: ['transform-base']
+      transforms: ['transform-base'],
     });
 
     planner.addManifest({
       id: 'auth',
+      version: '1.0.0',
       dependencies: ['core', 'db'],
-      transforms: ['transform-auth-middleware']
+      transforms: ['transform-auth-middleware'],
     });
 
     const plan = planner.generatePlan();
@@ -43,7 +46,8 @@ describe('ProjectPlanner', () => {
     const planner = new ProjectPlanner();
     planner.addManifest({
       id: 'ui',
-      dependencies: ['missing-core']
+      version: '1.0.0',
+      dependencies: ['missing-core'],
     });
 
     expect(() => planner.generatePlan()).toThrow('Node missing-core not found during traversal');
@@ -51,10 +55,10 @@ describe('ProjectPlanner', () => {
 
   test('throws if manifests are duplicated', () => {
     const planner = new ProjectPlanner();
-    planner.addManifest({ id: 'core', dependencies: [] });
-    
+    planner.addManifest({ id: 'core', version: '1.0.0', dependencies: [] });
+
     expect(() => {
-      planner.addManifest({ id: 'core', dependencies: [] });
+      planner.addManifest({ id: 'core', version: '1.0.0', dependencies: [] });
     }).toThrow('Manifest with id core already exists');
   });
 });

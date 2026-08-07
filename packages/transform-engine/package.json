@@ -7,7 +7,8 @@
   "scripts": {
     "build": "bunx tsc",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "bun test tests"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

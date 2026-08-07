@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "kiln-monorepo",
@@ -45,6 +46,9 @@
     "packages/planner": {
       "name": "@kiln/planner",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/core": "workspace:*",
+      },
     },
     "packages/project-model": {
       "name": "@kiln/project-model",

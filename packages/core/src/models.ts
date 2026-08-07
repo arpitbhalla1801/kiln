@@ -1,36 +1,91 @@
+/** Unique identifier for a capability module. */
+export type CapabilityId = string;
+
+/** Unique identifier for a transform step. */
+export type TransformId = string;
+
+/** Unique identifier for a platform/runtime adapter. */
+export type AdapterId = string;
+
+/** Supported transform operation kinds (expanded in transform API work). */
+export type TransformType =
+  | 'file-create'
+  | 'file-modify'
+  | 'file-delete'
+  | 'file-patch'
+  | 'json-mutation'
+  | 'package-json-mutation'
+  | 'env-mutation';
+
+/** Canonical list of transform types for validation and discovery. */
+export const TRANSFORM_TYPES: readonly TransformType[] = [
+  'file-create',
+  'file-modify',
+  'file-delete',
+  'file-patch',
+  'json-mutation',
+  'package-json-mutation',
+  'env-mutation',
+] as const;
+
+/** A single file or project mutation contributed by a capability. */
+export interface Transform {
+  id: TransformId;
+  name?: string;
+  type: TransformType;
+  /** Primary target path or resource identifier for the transform. */
+  target?: string;
+  /** Type-specific payload (patch content, JSON path, env key, etc.). */
+  payload?: Record<string, unknown>;
+}
+
+/** A versioned, composable feature module. */
 export interface Capability {
-  id: string;
+  id: CapabilityId;
   name?: string;
   version: string;
-  dependencies: string[];
-  adapters?: string[];
+  dependencies: CapabilityId[];
+  adapters?: AdapterId[];
   transforms?: Transform[];
   files?: string[];
 }
 
-export interface Transform {
-  id: string;
+/**
+ * Planning-time capability declaration.
+ * Transform references are IDs only; full definitions are resolved before execution.
+ */
+export interface CapabilityManifest {
+  id: CapabilityId;
   name?: string;
+  version: string;
+  dependencies: CapabilityId[];
+  adapters?: AdapterId[];
+  transforms?: TransformId[];
+  files?: string[];
 }
 
+/** Records which capability owns a given project file. */
 export interface FileOwnership {
   filePath: string;
-  ownerCapabilityId: string;
+  ownerCapabilityId: CapabilityId;
 }
 
+/** Snapshot of a kiln project's resolved capabilities, ownership, and adapters. */
 export interface ProjectState {
   capabilities: Capability[];
-  fileOwnership: Map<string, string>;
-  activeAdapters: string[];
+  fileOwnership: Map<string, CapabilityId>;
+  activeAdapters: AdapterId[];
 }
 
+/** Ordered capability resolution and transform execution schedule. */
 export interface ExecutionPlan {
   capabilities: Capability[];
-  transforms: string[];
+  transforms: TransformId[];
 }
 
+/** Contract implemented by platform adapters (node, etc.). */
 export interface AdapterContract {
-  id: string;
+  id: AdapterId;
   version: string;
   provides: string[];
 }

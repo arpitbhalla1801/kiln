@@ -1,4 +1,4 @@
-import { ExecutionPlan, ProjectState, Capability, AdapterContract } from './models.js';
+import { ExecutionPlan, ProjectState, Capability } from './models.js';
 
 export class ValidationRunner {
   state: ProjectState;
