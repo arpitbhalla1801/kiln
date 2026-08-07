@@ -7,6 +7,7 @@
   "scripts": {
     "build": "bunx tsc",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "bun test tests"
   }
 }

@@ -1,5 +1,5 @@
+import { CapabilityManifest, ExecutionPlan, capabilityFromManifest } from '@kiln/core';
 import { DependencyGraph } from './graph.js';
-import { CapabilityManifest, ExecutionPlan } from './types.js';
 
 export class ProjectPlanner {
   private manifests: Map<string, CapabilityManifest> = new Map();
@@ -35,14 +35,13 @@ export class ProjectPlanner {
       if (!node.data) {
         throw new Error(`Node ${node.id} is missing manifest data.`);
       }
-      return node.data;
+      return capabilityFromManifest(node.data);
     });
 
     const transforms: string[] = [];
-    for (const cap of capabilities) {
-      if (cap.transforms) {
-        // Collect transforms in the exact resolved order of capabilities
-        transforms.push(...cap.transforms);
+    for (const node of orderedNodes) {
+      if (node.data?.transforms) {
+        transforms.push(...node.data.transforms);
       }
     }
 

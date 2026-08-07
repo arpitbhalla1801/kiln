@@ -4,9 +4,13 @@
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "dependencies": {
+    "@kiln/core": "workspace:*"
+  },
   "scripts": {
     "build": "bunx tsc",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "bun test tests"
   }
 }
