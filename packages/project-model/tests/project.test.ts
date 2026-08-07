@@ -154,6 +154,7 @@ describe('project model operations', () => {
       dependencies: [{ name: 'next-auth', ownerCapabilityId: 'auth' }],
       scripts: [{ name: 'dev', ownerCapabilityId: 'core' }],
       envVars: [{ name: 'AUTH_SECRET', ownerCapabilityId: 'env' }],
+      metadata: [],
     });
   });
 });
@@ -165,6 +166,7 @@ describe('ownership metadata serialization', () => {
       dependencies: [{ name: 'zod', ownerCapabilityId: 'auth' }],
       scripts: [{ name: 'build', ownerCapabilityId: 'core' }],
       envVars: [{ name: 'AUTH_SECRET', ownerCapabilityId: 'env' }],
+      metadata: [{ key: 'next.config.ts', ownerCapabilityId: 'core' }],
     };
 
     const output = serializeOwnershipMetadata(metadata);
@@ -202,7 +204,8 @@ describe('ownership metadata serialization', () => {
         "name": "AUTH_SECRET",
         "ownerCapabilityId": "env"
       }
-    ]
+    ],
+    "metadata": []
   }
 }
 `;

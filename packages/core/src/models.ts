@@ -48,6 +48,10 @@ export interface Capability {
   adapters?: AdapterId[];
   transforms?: Transform[];
   files?: string[];
+  ownedDependencies?: string[];
+  ownedScripts?: string[];
+  ownedEnvVars?: string[];
+  ownedMetadata?: string[];
 }
 
 /**
