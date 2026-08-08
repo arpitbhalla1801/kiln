@@ -8,13 +8,18 @@ import type {
   TypedTransform,
 } from './transform-types.js';
 import type { VirtualFilesystem } from './vfs.js';
+import { StructuredMutationEngine } from './mutation-engine.js';
+import { PackageJsonMerger } from './package-json-merger.js';
+
+const mutationEngine = new StructuredMutationEngine();
+const packageJsonMerger = new PackageJsonMerger();
 
 /** Applies typed transforms to a virtual filesystem. */
 export class TransformApplier {
   apply(vfs: VirtualFilesystem, transform: TypedTransform): void {
     switch (transform.type) {
       case 'file-create':
-        vfs.write(normalizePath(transform.filePath), transform.content);
+        applyFileCreate(vfs, transform.filePath, transform.content);
         return;
       case 'file-patch':
         applyFilePatch(vfs, transform);
@@ -40,6 +45,17 @@ export class TransformApplier {
   }
 }
 
+function applyFileCreate(vfs: VirtualFilesystem, filePath: string, content: string): void {
+  const normalizedPath = normalizePath(filePath);
+  const current = vfs.read(normalizedPath);
+
+  if (current === content) {
+    return;
+  }
+
+  vfs.write(normalizedPath, content);
+}
+
 function applyFilePatch(vfs: VirtualFilesystem, transform: FilePatchTransform): void {
   const filePath = normalizePath(transform.filePath);
   const current = vfs.read(filePath);
@@ -48,61 +64,55 @@ function applyFilePatch(vfs: VirtualFilesystem, transform: FilePatchTransform): 
     throw new Error(`Cannot patch missing file: ${filePath}`);
   }
 
-  if (!current.includes(transform.search)) {
-    throw new Error(`Patch search text not found in file: ${filePath}`);
+  if (current.includes(transform.search)) {
+    const patched = current.replace(transform.search, transform.replace);
+    if (patched !== current) {
+      vfs.write(filePath, patched);
+    }
+    return;
   }
 
-  vfs.write(filePath, current.replace(transform.search, transform.replace));
+  if (current.includes(transform.replace)) {
+    return;
+  }
+
+  throw new Error(`Patch search text not found in file: ${filePath}`);
 }
 
 function applyJsonMutation(vfs: VirtualFilesystem, transform: JsonMutationTransform): void {
   const filePath = normalizePath(transform.filePath);
   const current = vfs.read(filePath);
-  const document = current ? parseJson(current, filePath) : {};
+  const document = current ? mutationEngine.parse(current, filePath) : {};
   const operation = transform.operation ?? 'set';
 
   if (operation === 'delete') {
-    deleteJsonPath(document, transform.path);
+    mutationEngine.apply(document, { type: 'delete', path: transform.path });
   } else {
-    setJsonPath(document, transform.path, transform.value);
+    mutationEngine.apply(document, {
+      type: 'set',
+      path: transform.path,
+      value: transform.value,
+    });
   }
 
-  vfs.write(filePath, stringifyJson(document));
+  const serialized = mutationEngine.serialize(document);
+  const existing = current ?? '';
+
+  if (serialized !== existing) {
+    vfs.write(filePath, serialized);
+  }
 }
 
 function applyPackageJsonMutation(vfs: VirtualFilesystem, transform: PackageJsonMutationTransform): void {
   const filePath = normalizePath(transform.filePath ?? 'package.json');
   const current = vfs.read(filePath);
-  const packageJson = current ? parseJson(current, filePath) : {};
+  const packageJson = current ? mutationEngine.parse(current, filePath) : {};
+  const merged = packageJsonMerger.merge(packageJson, transform);
+  const serialized = mutationEngine.serialize(merged);
 
-  if (transform.dependencies) {
-    packageJson.dependencies = mergeRecords(packageJson.dependencies ?? {}, transform.dependencies);
+  if (serialized !== (current ?? '')) {
+    vfs.write(filePath, serialized);
   }
-
-  if (transform.devDependencies) {
-    packageJson.devDependencies = mergeRecords(
-      packageJson.devDependencies ?? {},
-      transform.devDependencies
-    );
-  }
-
-  if (transform.scripts) {
-    packageJson.scripts = mergeRecords(packageJson.scripts ?? {}, transform.scripts);
-  }
-
-  for (const dependency of transform.removeDependencies ?? []) {
-    delete packageJson.dependencies?.[dependency];
-  }
-
-  for (const dependency of transform.removeDevDependencies ?? []) {
-    delete packageJson.devDependencies?.[dependency];
-  }
-
-  for (const script of transform.removeScripts ?? []) {
-    delete packageJson.scripts?.[script];
-  }
-
-  vfs.write(filePath, stringifyJson(packageJson));
 }
 
 function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransform): void {
@@ -126,8 +136,11 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
   const mergedLines = Array.from(lineMap.values()).sort((left, right) =>
     left.key.localeCompare(right.key)
   );
+  const serialized = formatEnvLines(mergedLines);
 
-  vfs.write(filePath, formatEnvLines(mergedLines));
+  if (serialized !== current) {
+    vfs.write(filePath, serialized);
+  }
 }
 
 interface EnvLine {
@@ -176,98 +189,6 @@ function normalizeEnvDefinition(
   }
 
   return definition;
-}
-
-function parseJson(content: string, filePath: string): Record<string, unknown> {
-  try {
-    const parsed = JSON.parse(content) as unknown;
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      throw new Error('JSON root must be an object');
-    }
-
-    return parsed as Record<string, unknown>;
-  } catch (error) {
-    throw new Error(
-      `Invalid JSON in '${filePath}': ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
-}
-
-function stringifyJson(value: Record<string, unknown>): string {
-  return `${JSON.stringify(sortJsonKeys(value), null, 2)}\n`;
-}
-
-function sortJsonKeys(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((entry) => sortJsonKeys(entry));
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    const sortedEntries = Object.entries(value as Record<string, unknown>).sort(([left], [right]) =>
-      left.localeCompare(right)
-    );
-
-    return Object.fromEntries(sortedEntries.map(([key, entry]) => [key, sortJsonKeys(entry)]));
-  }
-
-  return value;
-}
-
-function mergeRecords(
-  target: Record<string, string>,
-  source: Record<string, string>
-): Record<string, string> {
-  return sortRecord({ ...target, ...source });
-}
-
-function sortRecord(record: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(record).sort(([left], [right]) => left.localeCompare(right))
-  );
-}
-
-function setJsonPath(target: Record<string, unknown>, jsonPath: string, value: unknown): void {
-  const segments = jsonPath.split('.').filter(Boolean);
-  if (segments.length === 0) {
-    throw new Error('JSON path must not be empty');
-  }
-
-  let current: Record<string, unknown> = target;
-
-  for (let index = 0; index < segments.length - 1; index++) {
-    const segment = segments[index];
-    const next = current[segment];
-
-    if (typeof next !== 'object' || next === null || Array.isArray(next)) {
-      current[segment] = {};
-    }
-
-    current = current[segment] as Record<string, unknown>;
-  }
-
-  current[segments[segments.length - 1]] = value;
-}
-
-function deleteJsonPath(target: Record<string, unknown>, jsonPath: string): void {
-  const segments = jsonPath.split('.').filter(Boolean);
-  if (segments.length === 0) {
-    throw new Error('JSON path must not be empty');
-  }
-
-  let current: Record<string, unknown> = target;
-
-  for (let index = 0; index < segments.length - 1; index++) {
-    const segment = segments[index];
-    const next = current[segment];
-
-    if (typeof next !== 'object' || next === null || Array.isArray(next)) {
-      return;
-    }
-
-    current = next as Record<string, unknown>;
-  }
-
-  delete current[segments[segments.length - 1]];
 }
 
 function normalizePath(path: string): string {
