@@ -13,6 +13,9 @@
   "dependencies": {
     "@kiln/core": "workspace:*"
   },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  },
   "scripts": {
     "build": "bunx tsc",
     "lint": "eslint .",
