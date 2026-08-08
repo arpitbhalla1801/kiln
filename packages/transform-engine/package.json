@@ -10,6 +10,9 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@kiln/core": "workspace:*"
+  },
   "scripts": {
     "build": "bunx tsc",
     "lint": "eslint .",

@@ -1,16 +1,20 @@
 import { FileOperation, OperationSummary, TransformPlan, TransformOptions } from './types.js';
 import { FilesystemPersistence } from './persistence.js';
 import { VirtualFilesystem } from './vfs.js';
+import { TransformApplier } from './transform-applier.js';
+import type { TransformPipeline, TypedTransform } from './transform-types.js';
 
 export class TransformEngine {
   private vfs: VirtualFilesystem;
   private operationMetadata: Map<string, Pick<FileOperation, 'diffPreview'>>;
   private persistence: FilesystemPersistence;
+  private applier: TransformApplier;
 
   constructor(vfs?: VirtualFilesystem, persistence?: FilesystemPersistence) {
     this.vfs = vfs ?? new VirtualFilesystem();
     this.operationMetadata = new Map();
     this.persistence = persistence ?? new FilesystemPersistence();
+    this.applier = new TransformApplier();
   }
 
   getVirtualFilesystem(): VirtualFilesystem {
@@ -19,6 +23,18 @@ export class TransformEngine {
 
   getFilesystemPersistence(): FilesystemPersistence {
     return this.persistence;
+  }
+
+  getTransformApplier(): TransformApplier {
+    return this.applier;
+  }
+
+  queueTransform(transform: TypedTransform): void {
+    this.applier.apply(this.vfs, transform);
+  }
+
+  queueTransforms(transforms: TransformPipeline): void {
+    this.applier.applyAll(this.vfs, transforms);
   }
 
   queueOperation(operation: FileOperation) {
