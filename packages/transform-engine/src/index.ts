@@ -5,4 +5,7 @@ export * from './vfs-types.js';
 export * from './vfs.js';
 export * from './persistence-types.js';
 export * from './persistence.js';
+export * from './transform-types.js';
+export * from './transform-builders.js';
+export * from './transform-applier.js';
 export * from './engine.js';
