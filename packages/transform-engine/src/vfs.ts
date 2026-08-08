@@ -147,6 +147,25 @@ export class VirtualFilesystem {
     return { files };
   }
 
+  /** Restore baseline and clear staging from a snapshot. */
+  restoreFromSnapshot(snapshot: VfsSnapshot): void {
+    this.baseline.clear();
+    this.staging.clear();
+
+    for (const [filePath, content] of Object.entries(snapshot.files)) {
+      this.baseline.set(normalizePath(filePath), content);
+    }
+  }
+
+  /** Export a copy of the current baseline file map. */
+  exportBaseline(): Record<string, string> {
+    const files: Record<string, string> = {};
+    for (const [filePath, content] of this.baseline.entries()) {
+      files[filePath] = content;
+    }
+    return files;
+  }
+
   /** Access staged mutation map size for diagnostics. */
   getStagedMutationCount(): number {
     return this.staging.size;
