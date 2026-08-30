@@ -5,7 +5,12 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@kiln/core": "workspace:*"
+    "@kiln/core": "workspace:*",
+    "@kiln/transform-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@kiln/auth-capability": "workspace:*",
+    "@types/node": "^25.9.1"
   },
   "scripts": {
     "build": "bunx tsc",

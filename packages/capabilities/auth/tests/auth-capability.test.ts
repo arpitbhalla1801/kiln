@@ -61,7 +61,7 @@ describe('AuthCapability', () => {
     expect(vfs.read('middleware.ts')).toContain('export default auth');
     expect(vfs.read('.env.example')).toContain('AUTH_SECRET=replace-me');
     expect(plan.capability.ownedDependencies).toContain('next-auth');
-    expect(plan.capability.ownedEnvVars).toContain('AUTH_SECRET');
+    expect(plan.capability.ownedEnvVars).toBeUndefined();
   });
 
   test('uses src directory when app router project is detected', async () => {

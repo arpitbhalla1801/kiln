@@ -194,7 +194,6 @@ function buildCapabilityWithOwnership(
       ...manifest.ownership,
       files: ownedFiles,
       dependencies: mergeUnique(manifest.ownership?.dependencies ?? [], [NEXT_AUTH_PACKAGE]),
-      envVars: mergeUnique(manifest.ownership?.envVars ?? [], ['AUTH_SECRET']),
     },
   });
 }
