@@ -84,7 +84,7 @@ describe('PlanExecutor', () => {
 
     const result = executor.finalize();
 
-    expect(result.resolvedDependencies.get('next-auth')).toBe('^5.0.0');
+    expect(result.resolvedDependencies.get('next-auth')).toBe('^5.0.0-beta.32');
     expect(tracker.getOwner('dependency', 'next-auth')).toBe('auth');
     expect(tracker.getOwner('envVar', 'AUTH_SECRET')).toBe('env');
     expect(engine.getVirtualFilesystem().read('auth.ts')).toContain('NextAuth');

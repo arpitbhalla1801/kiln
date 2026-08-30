@@ -4,7 +4,7 @@ import type { EnvCapabilityPlan } from '@kiln/env-capability';
 
 export const AUTH_CAPABILITY_ID = 'auth';
 export const NEXT_AUTH_PACKAGE = 'next-auth';
-export const NEXT_AUTH_VERSION = '^5.0.0';
+export const NEXT_AUTH_VERSION = '^5.0.0-beta.32';
 
 export interface AuthFilePaths {
   authFile: string;

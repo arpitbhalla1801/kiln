@@ -57,7 +57,7 @@ describe('CapabilityRuntime', () => {
     expect(paths).toContain('auth.ts');
     expect(paths).toContain('middleware.ts');
     expect(paths).toContain('.env.example');
-    expect(result.resolvedDependencies.get('next-auth')).toBe('^5.0.0');
+    expect(result.resolvedDependencies.get('next-auth')).toBe('^5.0.0-beta.32');
   });
 
   test('runs install phase through adapter when not dry-run', async () => {
@@ -93,6 +93,6 @@ describe('CapabilityRuntime', () => {
     const runtime = new CapabilityRuntime({ adapter: adapter as import('@kiln/node-adapter').NodeAdapter });
     await runtime.addAuth({ cwd: root, dryRun: false });
 
-    expect(installCalls).toEqual([{ 'next-auth': '^5.0.0' }]);
+    expect(installCalls).toEqual([{ 'next-auth': '^5.0.0-beta.32' }]);
   });
 });
