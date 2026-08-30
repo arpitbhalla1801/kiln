@@ -2,3 +2,5 @@
 export * from './graph.js';
 export * from './types.js';
 export * from './planner.js';
+export * from './transform-registry.js';
+export * from './plan-executor.js';

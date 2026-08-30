@@ -72,6 +72,11 @@
       "version": "0.0.0",
       "dependencies": {
         "@kiln/core": "workspace:*",
+        "@kiln/transform-engine": "workspace:*",
+      },
+      "devDependencies": {
+        "@kiln/auth-capability": "workspace:*",
+        "@types/node": "^25.9.1",
       },
     },
     "packages/project-model": {

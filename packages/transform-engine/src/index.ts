@@ -13,4 +13,5 @@ export * from './package-json-merger.js';
 export * from './transform-types.js';
 export * from './transform-builders.js';
 export * from './transform-applier.js';
+export * from './transform-resolver.js';
 export * from './engine.js';
