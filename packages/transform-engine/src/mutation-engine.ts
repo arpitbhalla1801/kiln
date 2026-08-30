@@ -188,7 +188,10 @@ export function mergeJsonObjects(
       value !== null &&
       !Array.isArray(value)
     ) {
-      merged[key] = mergeJsonObjects(existing as Record<string, unknown>, value);
+      merged[key] = mergeJsonObjects(
+        existing as Record<string, unknown>,
+        value as Record<string, unknown>
+      );
       continue;
     }
 

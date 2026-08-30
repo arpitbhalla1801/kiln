@@ -44,6 +44,13 @@
     "packages/capabilities/env": {
       "name": "@kiln/env-capability",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/core": "workspace:*",
+        "@kiln/transform-engine": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
     },
     "packages/core": {
       "name": "@kiln/core",
