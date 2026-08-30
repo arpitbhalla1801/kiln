@@ -1,0 +1,34 @@
+{
+  "id": "env",
+  "name": "Environment Variables",
+  "version": "1.0.0",
+  "dependencies": [],
+  "adapters": ["node-adapter"],
+  "transformDefinitions": [
+    {
+      "id": "env-example",
+      "type": "env-mutation",
+      "target": ".env.example",
+      "payload": {
+        "variables": {}
+      }
+    }
+  ],
+  "hooks": [
+    {
+      "event": "after:transform",
+      "handler": "./hooks/after-transform.ts"
+    }
+  ],
+  "validations": [
+    {
+      "id": "env-no-duplicate-vars",
+      "type": "no-duplicate-env",
+      "message": "Environment variables must not be owned by multiple capabilities"
+    }
+  ],
+  "ownership": {
+    "files": [".env.example"],
+    "envVars": []
+  }
+}

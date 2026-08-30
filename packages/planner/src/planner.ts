@@ -43,6 +43,10 @@ export class ProjectPlanner {
       if (node.data?.transforms) {
         transforms.push(...node.data.transforms);
       }
+
+      if (node.data?.transformDefinitions) {
+        transforms.push(...node.data.transformDefinitions.map((transform) => transform.id));
+      }
     }
 
     return {

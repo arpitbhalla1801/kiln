@@ -1,6 +1,7 @@
 ﻿export const name = '@kiln/core';
 
 export * from './lifecycle/index.js';
+export * from './manifest.js';
 export * from './models.js';
 export * from './ownership-types.js';
 export * from './ownership.js';
