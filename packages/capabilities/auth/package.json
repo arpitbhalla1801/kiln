@@ -2,11 +2,21 @@
   "name": "@kiln/auth-capability",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "dependencies": {
+    "@kiln/core": "workspace:*",
+    "@kiln/env-capability": "workspace:*",
+    "@kiln/transform-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "bun test tests"
   }
 }
