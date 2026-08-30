@@ -56,6 +56,10 @@ export function ownershipTrackerFromMetadata(metadata: OwnershipMetadata): Owner
 
 /** Load ownership metadata from `.kiln/ownership.json` into a tracker. */
 export async function loadOwnershipTracker(projectRoot: string): Promise<OwnershipTracker> {
+  if (!(await OwnershipMetadataStore.exists(projectRoot))) {
+    return new OwnershipTracker();
+  }
+
   const metadata = await OwnershipMetadataStore.load(projectRoot);
   return ownershipTrackerFromMetadata(metadata);
 }

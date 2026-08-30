@@ -1,0 +1,26 @@
+{
+  "name": "@kiln/runtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@kiln/auth-capability": "workspace:*",
+    "@kiln/core": "workspace:*",
+    "@kiln/env-capability": "workspace:*",
+    "@kiln/node-adapter": "workspace:*",
+    "@kiln/planner": "workspace:*",
+    "@kiln/project-model": "workspace:*",
+    "@kiln/transform-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "bun test tests"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../planner" },
+    { "path": "../transform-engine" },
+    { "path": "../project-model" },
+    { "path": "../adapters/node" },
+    { "path": "../capabilities/env" },
+    { "path": "../capabilities/auth" }
+  ]
+}

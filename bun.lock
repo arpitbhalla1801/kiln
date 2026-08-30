@@ -89,6 +89,22 @@
         "@types/node": "^25.9.1",
       },
     },
+    "packages/runtime": {
+      "name": "@kiln/runtime",
+      "version": "0.0.0",
+      "dependencies": {
+        "@kiln/auth-capability": "workspace:*",
+        "@kiln/core": "workspace:*",
+        "@kiln/env-capability": "workspace:*",
+        "@kiln/node-adapter": "workspace:*",
+        "@kiln/planner": "workspace:*",
+        "@kiln/project-model": "workspace:*",
+        "@kiln/transform-engine": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
+    },
     "packages/transform-engine": {
       "name": "@kiln/transform-engine",
       "version": "0.0.0",
@@ -144,6 +160,8 @@
     "@kiln/planner": ["@kiln/planner@workspace:packages/planner"],
 
     "@kiln/project-model": ["@kiln/project-model@workspace:packages/project-model"],
+
+    "@kiln/runtime": ["@kiln/runtime@workspace:packages/runtime"],
 
     "@kiln/transform-engine": ["@kiln/transform-engine@workspace:packages/transform-engine"],
 
