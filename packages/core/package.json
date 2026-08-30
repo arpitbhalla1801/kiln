@@ -15,5 +15,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "bun test tests"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }

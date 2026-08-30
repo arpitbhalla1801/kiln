@@ -30,6 +30,12 @@
     "packages/adapters/node": {
       "name": "@kiln/node-adapter",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
     },
     "packages/capabilities/auth": {
       "name": "@kiln/auth-capability",
@@ -42,6 +48,9 @@
     "packages/core": {
       "name": "@kiln/core",
       "version": "0.0.0",
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
     },
     "packages/planner": {
       "name": "@kiln/planner",
@@ -53,10 +62,19 @@
     "packages/project-model": {
       "name": "@kiln/project-model",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
     },
     "packages/transform-engine": {
       "name": "@kiln/transform-engine",
       "version": "0.0.0",
+      "dependencies": {
+        "@kiln/core": "workspace:*",
+      },
       "devDependencies": {
         "@types/node": "^25.9.1",
       },

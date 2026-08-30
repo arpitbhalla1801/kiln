@@ -37,6 +37,14 @@ export function withActiveAdapters(state: ProjectState, adapters: AdapterId[]): 
   };
 }
 
+function ownershipFiles(manifest: CapabilityManifest): string[] | undefined {
+  const ownedFiles = manifest.ownership?.files ?? [];
+  const declaredFiles = manifest.files ?? [];
+  const merged = [...ownedFiles, ...declaredFiles];
+
+  return merged.length > 0 ? merged : undefined;
+}
+
 /** Convert a planning manifest into a resolved capability record. */
 export function capabilityFromManifest(manifest: CapabilityManifest): Capability {
   return {
@@ -45,6 +53,13 @@ export function capabilityFromManifest(manifest: CapabilityManifest): Capability
     version: manifest.version,
     dependencies: [...manifest.dependencies],
     adapters: manifest.adapters ? [...manifest.adapters] : undefined,
-    files: manifest.files ? [...manifest.files] : undefined,
+    transforms: manifest.transformDefinitions ? [...manifest.transformDefinitions] : undefined,
+    files: ownershipFiles(manifest),
+    ownedDependencies: manifest.ownership?.dependencies
+      ? [...manifest.ownership.dependencies]
+      : undefined,
+    ownedScripts: manifest.ownership?.scripts ? [...manifest.ownership.scripts] : undefined,
+    ownedEnvVars: manifest.ownership?.envVars ? [...manifest.ownership.envVars] : undefined,
+    ownedMetadata: manifest.ownership?.metadata ? [...manifest.ownership.metadata] : undefined,
   };
 }
