@@ -56,7 +56,7 @@ describe('AuthCapability', () => {
     applier.applyAll(vfs, plan.transforms);
 
     const packageJson = JSON.parse(vfs.read('package.json') ?? '{}');
-    expect(packageJson.dependencies).toEqual({ 'next-auth': '^5.0.0' });
+    expect(packageJson.dependencies).toEqual({ 'next-auth': '^5.0.0-beta.32' });
     expect(vfs.read('auth.ts')).toContain('NextAuth');
     expect(vfs.read('middleware.ts')).toContain('export default auth');
     expect(vfs.read('.env.example')).toContain('AUTH_SECRET=replace-me');
@@ -83,7 +83,7 @@ describe('AuthCapability', () => {
       'package.json': JSON.stringify({
         name: 'demo-app',
         version: '1.0.0',
-        dependencies: { 'next-auth': '^5.0.0' },
+        dependencies: { 'next-auth': '^5.0.0-beta.32' },
       }),
     });
     const auth = new AuthCapability();
@@ -98,7 +98,7 @@ describe('AuthCapability', () => {
         'package.json': JSON.stringify({
           name: 'demo-app',
           version: '1.0.0',
-          dependencies: { 'next-auth': '^5.0.0' },
+          dependencies: { 'next-auth': '^5.0.0-beta.32' },
         }),
         'auth.ts': 'existing auth',
         'middleware.ts': 'existing middleware',

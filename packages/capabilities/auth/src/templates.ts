@@ -12,9 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 export function createMiddlewareContent(authImportPath: string): string {
   return `import { auth } from "${authImportPath}";
 
-export default auth((req) => {
-  return;
-});
+export default auth(() => undefined);
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],

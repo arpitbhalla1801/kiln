@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "ownership": {
+    "files": [
+      {
+        "filePath": ".env.example",
+        "ownerCapabilityId": "env"
+      },
+      {
+        "filePath": "src/auth.ts",
+        "ownerCapabilityId": "auth"
+      },
+      {
+        "filePath": "src/middleware.ts",
+        "ownerCapabilityId": "auth"
+      }
+    ],
+    "dependencies": [
+      {
+        "name": "next-auth",
+        "ownerCapabilityId": "auth"
+      }
+    ],
+    "scripts": [],
+    "envVars": [
+      {
+        "name": "AUTH_SECRET",
+        "ownerCapabilityId": "env"
+      },
+      {
+        "name": "DATABASE_URL",
+        "ownerCapabilityId": "env"
+      }
+    ],
+    "metadata": []
+  }
+}
