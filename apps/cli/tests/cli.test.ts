@@ -32,12 +32,23 @@ describe('kiln cli', () => {
     expect(await readFile(join(projectDir, 'src/app/page.tsx'), 'utf8')).toContain('Kiln project');
   });
 
-  test('parseEnvVariables reads --var flags', () => {
-    const vars = parseEnvVariables(['--var', 'DATABASE_URL=postgres://localhost', '--var=NODE_ENV=dev']);
+  test('parseEnvVariables reads --var flags from full command argv', () => {
+    const vars = parseEnvVariables([
+      'add',
+      'env',
+      '--var',
+      'DATABASE_URL=postgres://localhost',
+      '--var=NODE_ENV=dev',
+    ]);
     expect(vars).toEqual({
       DATABASE_URL: 'postgres://localhost',
       NODE_ENV: 'dev',
     });
+  });
+
+  test('parseEnvVariables reads space-separated --var flags', () => {
+    const vars = parseEnvVariables(['add', 'env', '--var', 'CUSTOM_KEY=hello']);
+    expect(vars).toEqual({ CUSTOM_KEY: 'hello' });
   });
 
   test('dry-run add env produces deterministic transform output', async () => {
@@ -77,6 +88,40 @@ describe('kiln cli', () => {
     expect(envExample).toContain('AUTH_SECRET=');
   });
 
+  test('re-running add env reports no changes when already applied', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    try {
+      await runAdd('env', { cwd: root, dryRun: false });
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(logs.join('\n')).toContain('no changes');
+  });
+
+  test('add env --var merges custom variables into existing .env.example', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+
+    await runAdd(
+      'env',
+      { cwd: root, dryRun: false },
+      parseEnvVariables(['add', 'env', '--var', 'API_URL=https://api.example.com'])
+    );
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('DATABASE_URL=');
+    expect(envExample).toContain('API_URL=https://api.example.com');
+  });
+
   test('formatTransformPlan sorts operations deterministically', () => {
     const formatted = formatTransformPlan(
       {
@@ -90,5 +135,17 @@ describe('kiln cli', () => {
     );
 
     expect(formatted.indexOf('a.ts')).toBeLessThan(formatted.indexOf('z.ts'));
+  });
+
+  test('formatTransformPlan reports no changes for empty plans', () => {
+    const formatted = formatTransformPlan(
+      {
+        operations: [],
+        summary: { created: 0, modified: 0, deleted: 0, total: 0 },
+      },
+      false
+    );
+
+    expect(formatted).toContain('no changes');
   });
 });

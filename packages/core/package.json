@@ -11,7 +11,7 @@
     }
   },
   "scripts": {
-    "build": "bunx tsc",
+    "build": "bunx tsc -b --force",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "bun test tests"

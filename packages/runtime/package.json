@@ -18,7 +18,7 @@
     "@types/node": "^25.9.1"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b --force",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "bun test tests"

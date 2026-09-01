@@ -21,7 +21,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bunx tsc",
+    "build": "bunx tsc -b --force",
     "dev": "bun src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
