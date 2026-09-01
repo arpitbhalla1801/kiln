@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseEnvVariables, runAdd } from '../src/commands/add.js';
 import { runCreate } from '../src/commands/create.js';
+import { runDoctor } from '../src/commands/doctor.js';
 import { formatTransformPlan } from '../src/output.js';
+import { writeFile } from 'node:fs/promises';
 
 const tempRoots: string[] = [];
 
@@ -58,6 +60,30 @@ describe('kiln cli', () => {
     expect(output).toContain('Capability: env');
     expect(output).toContain('Mode: dry-run');
     expect(output).toContain('.env.example');
+  });
+
+  test('doctor fails when package.json is corrupted in a Next.js project', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { 'next-auth': '^5.0.0-beta.32' } }, null, 2) + '\n',
+      'utf8'
+    );
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    await expect(runDoctor({ cwd: root })).rejects.toThrow('Doctor found 1 failing check(s)');
+
+    console.log = originalLog;
+
+    const output = logs.join('\n');
+    expect(output).toContain('[fail] package-json-health:');
+    expect(output).toContain('missing scripts.dev');
+    expect(output).toContain('missing dependencies.next');
   });
 
   test('formatTransformPlan sorts operations deterministically', () => {
