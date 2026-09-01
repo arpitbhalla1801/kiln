@@ -60,6 +60,23 @@ describe('kiln cli', () => {
     expect(output).toContain('.env.example');
   });
 
+  test('add auth preserves existing package.json fields', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+    await runAdd('auth', { cwd: root, dryRun: false });
+
+    const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+    expect(packageJson.name).toBe('demo-app');
+    expect(packageJson.scripts?.build).toBe('next build');
+    expect(packageJson.dependencies?.next).toBe('^15.0.0');
+    expect(packageJson.dependencies?.['next-auth']).toBe('^5.0.0-beta.32');
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('DATABASE_URL=');
+    expect(envExample).toContain('AUTH_SECRET=');
+  });
+
   test('formatTransformPlan sorts operations deterministically', () => {
     const formatted = formatTransformPlan(
       {
