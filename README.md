@@ -65,10 +65,24 @@ Global flags: `--dry-run`, `--help`, `--version`
 | Script | Description |
 |--------|-------------|
 | `bun run build` | Build all packages |
-| `bun test` | Run all tests |
+| `bun test` / `bun run test` | Package unit tests via turbo |
+| `bun run test:unit` | Unit tests in `apps` and `packages` only |
+| `bun run test:post-deploy` | Version-upgrade smoke tests (run after `bun run build`) |
 | `bun run link-cli` | Link `@kiln/cli` globally via `bun link` |
+| `bun run test:post-deploy` | Version-upgrade smoke tests (run after `bun run build`) |
 | `bun run lint` | Lint all packages |
 | `bun run format` | Format all packages |
+
+## Version upgrade / post-deploy checks
+
+After each kiln version is built, run the business-journey suite against the compiled CLI:
+
+```bash
+bun run build
+bun run test:post-deploy
+```
+
+That gate covers CLI contract, new-project onboarding (`create` → `add env` → `add auth` → `build`), and compatibility with the existing example app. Catalog and wiring notes live in [`tests/post-deploy/README.md`](tests/post-deploy/README.md). GitHub Actions (`.github/workflows/post-deploy.yml`) runs the same suite on pull requests, `main`, version tags `v*`, and manual `workflow_dispatch`.
 
 ## Project structure
 

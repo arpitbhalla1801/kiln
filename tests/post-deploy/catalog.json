@@ -1,0 +1,128 @@
+{
+  "suite": "kiln-post-deploy",
+  "purpose": "Business-level smoke tests for each kiln version upgrade. Run after build, before publishing or tagging a release.",
+  "command": "bun run test:post-deploy",
+  "journeys": [
+    {
+      "id": "cli-contract",
+      "title": "CLI contract stays stable",
+      "businessValue": "Developers can discover and invoke kiln the same way after an upgrade.",
+      "cases": [
+        {
+          "id": "PD-01",
+          "name": "help lists create, add, inspect, doctor",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-02",
+          "name": "version prints package version",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-03",
+          "name": "unknown command exits non-zero",
+          "severity": "major"
+        },
+        {
+          "id": "PD-04",
+          "name": "add without capability exits non-zero",
+          "severity": "major"
+        },
+        {
+          "id": "PD-05",
+          "name": "add unsupported capability exits non-zero",
+          "severity": "major"
+        },
+        {
+          "id": "PD-06",
+          "name": "inspect outside a project exits non-zero",
+          "severity": "major"
+        }
+      ]
+    },
+    {
+      "id": "new-project",
+      "title": "Onboard a new Next.js app",
+      "businessValue": "A developer can scaffold, add env + auth, and ship a working Next.js app.",
+      "cases": [
+        {
+          "id": "PD-10",
+          "name": "create scaffolds Next.js app router files",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-11",
+          "name": "dry-run add env does not write files",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-12",
+          "name": "add env creates DATABASE_URL in .env.example",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-13",
+          "name": "add env --var merges custom keys",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-14",
+          "name": "add auth preserves package.json and env vars",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-15",
+          "name": "ownership.json tracks env and auth resources",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-16",
+          "name": "inspect reports Next.js app router project",
+          "severity": "major"
+        },
+        {
+          "id": "PD-17",
+          "name": "doctor passes on generated project",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-18",
+          "name": "re-running add env is a no-op",
+          "severity": "major"
+        },
+        {
+          "id": "PD-19",
+          "name": "generated app production-builds",
+          "severity": "blocker"
+        }
+      ]
+    },
+    {
+      "id": "upgrade-compat",
+      "title": "Existing kiln projects keep working",
+      "businessValue": "Teams already using kiln can upgrade the CLI without rewriting their apps.",
+      "cases": [
+        {
+          "id": "PD-20",
+          "name": "example app inspect still detects Next.js and ownership",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-21",
+          "name": "example app doctor does not fail",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-22",
+          "name": "example app still production-builds",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-23",
+          "name": "re-applying auth on example is idempotent",
+          "severity": "major"
+        }
+      ]
+    }
+  ]
+}

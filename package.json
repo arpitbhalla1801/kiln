@@ -17,6 +17,8 @@
     "lint": "turbo run lint",
     "format": "turbo run format",
     "test": "turbo run test",
+    "test:unit": "bun test apps packages",
+    "test:post-deploy": "bun test tests/post-deploy",
     "link-cli": "bun run build --filter=@kiln/cli && cd apps/cli && bun link"
   },
   "devDependencies": {

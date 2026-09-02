@@ -1,0 +1,27 @@
+name: Post-deploy upgrade smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  post-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install
+        run: bun install
+      - name: Build version
+        run: bun run build
+      - name: Unit tests
+        run: bun test apps packages
+      - name: Post-deploy upgrade journeys
+        run: bun run test:post-deploy
