@@ -30,8 +30,22 @@ describe('kiln cli', () => {
 
     const packageJson = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8'));
     expect(packageJson.name).toBe('demo-app');
+    expect(packageJson.devDependencies['@types/react-dom']).toBe('^19.0.0');
     expect(await readFile(join(projectDir, 'src/app/page.tsx'), 'utf8')).toContain('Kiln project');
     expect(await readFile(join(projectDir, 'src/app/layout.tsx'), 'utf8')).toContain('RootLayout');
+  });
+
+  test('create rejects empty and invalid project names', async () => {
+    const parent = await createTempDir();
+    await expect(runCreate(join(parent, 'bad'), '')).rejects.toThrow('Project name is required');
+    await expect(runCreate(join(parent, 'bad'), 'Weird Name')).rejects.toThrow('Invalid project name');
+  });
+
+  test('create refuses to overwrite a non-empty directory', async () => {
+    const parent = await createTempDir();
+    const projectDir = join(parent, 'existing-app');
+    await runCreate(projectDir, 'existing-app');
+    await expect(runCreate(projectDir, 'existing-app')).rejects.toThrow('already exists and is not empty');
   });
 
   test('create scaffolds a buildable Next.js project', async () => {

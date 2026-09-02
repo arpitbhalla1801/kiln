@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { repoRoot, runKiln } from './cli-runner.js';
 
@@ -22,6 +23,7 @@ describe('post-deploy CLI contract', () => {
     const result = runKiln(['--version']);
     expect(result.exitCode).toBe(0);
     expect(result.stdout.trim()).toBe(packageJson.version);
+    expect(result.stdout.trim()).toBe('1.0.0');
   });
 
   test('PD-03 unknown command exits non-zero', () => {
@@ -46,5 +48,26 @@ describe('post-deploy CLI contract', () => {
     const result = runKiln(['inspect'], '/tmp');
     expect(result.exitCode).not.toBe(0);
     expect(result.output).toContain('No kiln project found');
+  });
+
+  test('PD-07 create rejects missing, invalid, and existing targets', () => {
+    const missing = runKiln(['create']);
+    expect(missing.exitCode).not.toBe(0);
+    expect(missing.output).toContain('Project name is required');
+
+    const invalid = runKiln(['create', 'Bad Name']);
+    expect(invalid.exitCode).not.toBe(0);
+    expect(invalid.output).toContain('Invalid project name');
+
+    const parent = mkdtempSync(join(tmpdir(), 'kiln-create-guard-'));
+    try {
+      const first = runKiln(['create', 'taken-app'], parent);
+      expect(first.exitCode).toBe(0);
+      const second = runKiln(['create', 'taken-app'], parent);
+      expect(second.exitCode).not.toBe(0);
+      expect(second.output).toContain('already exists and is not empty');
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
   });
 });

@@ -37,6 +37,11 @@
           "id": "PD-06",
           "name": "inspect outside a project exits non-zero",
           "severity": "major"
+        },
+        {
+          "id": "PD-07",
+          "name": "create rejects missing, invalid, and existing targets",
+          "severity": "blocker"
         }
       ]
     },
