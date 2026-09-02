@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseEnvVariables, runAdd } from '../src/commands/add.js';
 import { runCreate } from '../src/commands/create.js';
+import { runDoctor } from '../src/commands/doctor.js';
 import { formatTransformPlan } from '../src/output.js';
 
 const tempRoots: string[] = [];
@@ -30,6 +31,15 @@ describe('kiln cli', () => {
     const packageJson = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8'));
     expect(packageJson.name).toBe('demo-app');
     expect(await readFile(join(projectDir, 'src/app/page.tsx'), 'utf8')).toContain('Kiln project');
+    expect(await readFile(join(projectDir, 'src/app/layout.tsx'), 'utf8')).toContain('RootLayout');
+  });
+
+  test('create scaffolds a buildable Next.js project', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await expect(readFile(join(root, 'next.config.ts'), 'utf8')).resolves.toContain('NextConfig');
+    await expect(readFile(join(root, 'next-env.d.ts'), 'utf8')).resolves.toContain('next');
   });
 
   test('parseEnvVariables reads --var flags from full command argv', () => {
@@ -120,6 +130,30 @@ describe('kiln cli', () => {
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
     expect(envExample).toContain('DATABASE_URL=');
     expect(envExample).toContain('API_URL=https://api.example.com');
+  });
+
+  test('doctor fails when package.json is corrupted in a Next.js project', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { 'next-auth': '^5.0.0-beta.32' } }, null, 2) + '\n',
+      'utf8'
+    );
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    await expect(runDoctor({ cwd: root })).rejects.toThrow('Doctor found 1 failing check(s)');
+
+    console.log = originalLog;
+
+    const output = logs.join('\n');
+    expect(output).toContain('[fail] package-json-health:');
+    expect(output).toContain('missing scripts.dev');
+    expect(output).toContain('missing dependencies.next');
   });
 
   test('formatTransformPlan sorts operations deterministically', () => {

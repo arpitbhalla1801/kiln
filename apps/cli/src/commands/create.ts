@@ -51,6 +51,26 @@ export async function runCreate(targetDir: string, projectName: string): Promise
 }
 `;
 
+  const layoutSource = `export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+`;
+
+  const nextConfigSource = `import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {};
+
+export default nextConfig;
+`;
+
+  const nextEnvSource = `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+`;
+
   const gitignore = `node_modules
 .next
 .env
@@ -60,7 +80,10 @@ export async function runCreate(targetDir: string, projectName: string): Promise
 
   await writeFile(join(targetDir, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
   await writeFile(join(targetDir, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(join(targetDir, 'next.config.ts'), nextConfigSource);
+  await writeFile(join(targetDir, 'next-env.d.ts'), nextEnvSource);
   await writeFile(join(targetDir, 'src', 'app', 'page.tsx'), pageSource);
+  await writeFile(join(targetDir, 'src', 'app', 'layout.tsx'), layoutSource);
   await writeFile(join(targetDir, '.gitignore'), gitignore);
 
   console.log(`Created kiln project '${projectName}' at ${targetDir}`);
