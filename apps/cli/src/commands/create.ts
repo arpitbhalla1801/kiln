@@ -1,12 +1,16 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { validateProjectName } from '../validation/project-name.js';
 
 export async function runCreate(targetDir: string, projectName: string): Promise<void> {
+  const name = validateProjectName(projectName);
+  await ensureTargetAvailable(targetDir);
+
   await mkdir(targetDir, { recursive: true });
   await mkdir(join(targetDir, 'src', 'app'), { recursive: true });
 
   const packageJson = {
-    name: projectName,
+    name,
     version: '0.0.0',
     private: true,
     packageManager: 'bun@1.3.14',
@@ -24,6 +28,7 @@ export async function runCreate(targetDir: string, projectName: string): Promise
       typescript: '^5.0.0',
       '@types/node': '^25.9.1',
       '@types/react': '^19.0.0',
+      '@types/react-dom': '^19.0.0',
     },
   };
 
@@ -51,6 +56,26 @@ export async function runCreate(targetDir: string, projectName: string): Promise
 }
 `;
 
+  const layoutSource = `export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+`;
+
+  const nextConfigSource = `import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {};
+
+export default nextConfig;
+`;
+
+  const nextEnvSource = `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+`;
+
   const gitignore = `node_modules
 .next
 .env
@@ -60,12 +85,38 @@ export async function runCreate(targetDir: string, projectName: string): Promise
 
   await writeFile(join(targetDir, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
   await writeFile(join(targetDir, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(join(targetDir, 'next.config.ts'), nextConfigSource);
+  await writeFile(join(targetDir, 'next-env.d.ts'), nextEnvSource);
   await writeFile(join(targetDir, 'src', 'app', 'page.tsx'), pageSource);
+  await writeFile(join(targetDir, 'src', 'app', 'layout.tsx'), layoutSource);
   await writeFile(join(targetDir, '.gitignore'), gitignore);
 
-  console.log(`Created kiln project '${projectName}' at ${targetDir}`);
+  console.log(`Created kiln project '${name}' at ${targetDir}`);
   console.log('Next steps:');
   console.log('  bun install');
   console.log('  kiln add env');
   console.log('  kiln add auth');
+}
+
+async function ensureTargetAvailable(targetDir: string): Promise<void> {
+  try {
+    await access(targetDir);
+  } catch {
+    return;
+  }
+
+  let entries: string[] = [];
+  try {
+    entries = await readdir(targetDir);
+  } catch {
+    throw new Error(
+      `Cannot create project at '${targetDir}' because a file with that name already exists.`
+    );
+  }
+
+  if (entries.length > 0) {
+    throw new Error(
+      `Target directory '${targetDir}' already exists and is not empty. Choose a new name or remove the directory.`
+    );
+  }
 }

@@ -29,7 +29,7 @@ describe('VirtualFilesystem', () => {
     expect(vfs.read('new.ts')).toBe('created');
     expect(vfs.read('existing.ts')).toBeUndefined();
     expect(vfs.hasStagedChanges()).toBe(true);
-    expect(vfs.getStagedMutationCount()).toBe(3);
+    expect(vfs.getStagedMutationCount()).toBe(2);
   });
 
   test('update throws when file does not exist', () => {

@@ -15,3 +15,5 @@ export * from './transform-builders.js';
 export * from './transform-applier.js';
 export * from './transform-resolver.js';
 export * from './engine.js';
+export * from './disk-seed.js';
+export * from './path-utils.js';

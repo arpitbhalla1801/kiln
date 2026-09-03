@@ -77,16 +77,17 @@ describe('FilesystemPersistence', () => {
     const blockerPath = path.join(testDir, 'blocker.txt');
     await fs.writeFile(blockerPath, 'blocker', 'utf8');
 
-    const originalPath = path.join(testDir, 'safe.txt');
+    const safePath = 'aaa-safe.txt';
+    const originalPath = path.join(testDir, safePath);
     await fs.writeFile(originalPath, 'safe-original', 'utf8');
 
     await expect(
       persistence.persistOperations(
         [
-          { type: 'modify', filePath: originalPath, content: 'safe-updated' },
+          { type: 'modify', filePath: safePath, content: 'safe-updated' },
           {
             type: 'create',
-            filePath: path.join(testDir, 'blocker.txt', 'nested.txt'),
+            filePath: path.join('blocker.txt', 'nested.txt'),
             content: 'should-fail',
           },
         ],
