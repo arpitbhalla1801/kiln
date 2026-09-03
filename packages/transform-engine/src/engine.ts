@@ -3,6 +3,7 @@ import { FilesystemPersistence } from './persistence.js';
 import { RollbackManager } from './rollback.js';
 import { VirtualFilesystem } from './vfs.js';
 import { TransformApplier } from './transform-applier.js';
+import { seedVfsFromDisk, collectTransformFilePaths } from './disk-seed.js';
 import type { TransformPipeline, TypedTransform } from './transform-types.js';
 
 export class TransformEngine {
@@ -46,6 +47,18 @@ export class TransformEngine {
 
   queueTransforms(transforms: TransformPipeline): void {
     this.applier.applyAll(this.vfs, transforms);
+  }
+
+  async seedFromDisk(rootDir: string, transforms: TransformPipeline): Promise<void> {
+    await seedVfsFromDisk(this.vfs, rootDir, collectTransformFilePaths(transforms));
+  }
+
+  async queueTransformsFromDisk(
+    rootDir: string,
+    transforms: TransformPipeline
+  ): Promise<void> {
+    await this.seedFromDisk(rootDir, transforms);
+    this.queueTransforms(transforms);
   }
 
   queueOperation(operation: FileOperation) {
@@ -102,7 +115,9 @@ export class TransformEngine {
       this.operationMetadata.clear();
       this.rollbackManager.deleteSnapshot(rollbackSnapshot.id);
     } catch (error) {
-      await this.rollbackManager.recover(this.vfs, rollbackSnapshot, rootDir);
+      if (rollbackSnapshot.disk.length > 0 && options.rootDir) {
+        await this.rollbackManager.rollbackDisk(options.rootDir, rollbackSnapshot.disk);
+      }
       this.rollbackManager.deleteSnapshot(rollbackSnapshot.id);
       throw error;
     }

@@ -10,6 +10,7 @@ import type {
 import type { VirtualFilesystem } from './vfs.js';
 import { StructuredMutationEngine } from './mutation-engine.js';
 import { PackageJsonMerger } from './package-json-merger.js';
+import { normalizePath } from './path-utils.js';
 
 const mutationEngine = new StructuredMutationEngine();
 const packageJsonMerger = new PackageJsonMerger();
@@ -191,6 +192,3 @@ function normalizeEnvDefinition(
   return definition;
 }
 
-function normalizePath(path: string): string {
-  return path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '');
-}

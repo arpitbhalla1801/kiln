@@ -17,8 +17,12 @@ describe('TransformEngine', () => {
 
   test('plan preview generates operation summary and file diff structure', () => {
     const engine = new TransformEngine();
-    engine.queueOperation({ type: 'create', filePath: 'a.ts', diffPreview: '+ a' });
-    engine.queueOperation({ type: 'modify', filePath: 'b.ts', diffPreview: '~ b' });
+    const vfs = engine.getVirtualFilesystem();
+    vfs.loadBaseline('b.ts', 'before-b');
+    vfs.loadBaseline('c.ts', 'before-c');
+
+    engine.queueOperation({ type: 'create', filePath: 'a.ts', content: 'a', diffPreview: '+ a' });
+    engine.queueOperation({ type: 'modify', filePath: 'b.ts', content: 'after-b', diffPreview: '~ b' });
     engine.queueOperation({ type: 'delete', filePath: 'c.ts', diffPreview: '- c' });
 
     const plan = engine.getPlanPreview();

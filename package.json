@@ -1,6 +1,6 @@
 {
   "name": "kiln-monorepo",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "packageManager": "bun@1.3.14",
   "type": "module",
@@ -16,7 +16,10 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "turbo run format",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "test:unit": "bun test apps packages",
+    "test:post-deploy": "bun test tests/post-deploy",
+    "link-cli": "bun run build --filter=@kiln/cli && cd apps/cli && bun link"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

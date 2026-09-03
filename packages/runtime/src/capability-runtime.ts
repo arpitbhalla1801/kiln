@@ -150,6 +150,7 @@ export class CapabilityRuntime {
       const engine = new TransformEngine();
       const planExecutor = createPlanExecutor(engine, tracker);
 
+      await engine.seedFromDisk(context.rootPath, context.capabilityPlan.transforms);
       planExecutor.queueCapabilityPlan(context.capabilityPlan);
       const finalized = planExecutor.finalize();
 

@@ -1,4 +1,5 @@
 import type { VfsDiff, VfsDiffEntry, VfsDiffSummary, VfsSnapshot, VirtualFilesystemOptions } from './vfs-types.js';
+import { normalizePath } from './path-utils.js';
 
 type StagedValue = string | null;
 
@@ -157,6 +158,11 @@ export class VirtualFilesystem {
     }
   }
 
+  /** Load disk content into baseline without staging (for merge transforms). */
+  loadBaseline(path: string, content: string): void {
+    this.baseline.set(normalizePath(path), content);
+  }
+
   /** Export a copy of the current baseline file map. */
   exportBaseline(): Record<string, string> {
     const files: Record<string, string> = {};
@@ -170,10 +176,6 @@ export class VirtualFilesystem {
   getStagedMutationCount(): number {
     return this.staging.size;
   }
-}
-
-function normalizePath(path: string): string {
-  return path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '');
 }
 
 function summarizeDiff(entries: VfsDiffEntry[]): VfsDiffSummary {
