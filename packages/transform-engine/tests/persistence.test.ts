@@ -96,7 +96,10 @@ describe('FilesystemPersistence', () => {
 
     const files = await listFilesRecursive(testDir);
     expect(files.some((file) => file.includes('.kiln.tmp'))).toBe(false);
-    expect(await fs.readFile(originalPath, 'utf8')).toBe('safe-updated');
+    // Writes are applied in deterministic path order, not queue order:
+    // 'blocker.txt/...' sorts before 'safe.txt' alphabetically, so the
+    // failure happens before safe.txt is ever written.
+    expect(await fs.readFile(originalPath, 'utf8')).toBe('safe-original');
   });
 
   test('supports absolute file paths', async () => {

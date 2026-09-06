@@ -12,8 +12,9 @@ import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { NodeAdapter } from '@kiln/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
 import { loadOwnershipTracker, saveOwnershipTracker } from '@kiln/project-model';
-import { TransformEngine } from '@kiln/transform-engine';
+import { TransformEngine, VirtualFilesystem } from '@kiln/transform-engine';
 import { extractInstallDependencies } from './install.js';
+import { collectTransformFilePaths, loadInitialFiles } from './vfs-seed.js';
 import type {
   KilnRuntimeContext,
   RuntimeExecutionResult,
@@ -147,7 +148,9 @@ export class CapabilityRuntime {
       }
 
       const tracker = await loadOwnershipTracker(context.rootPath);
-      const engine = new TransformEngine();
+      const filePaths = collectTransformFilePaths(context.capabilityPlan.transforms);
+      const initialFiles = await loadInitialFiles(context.rootPath, filePaths);
+      const engine = new TransformEngine(new VirtualFilesystem({ initialFiles }));
       const planExecutor = createPlanExecutor(engine, tracker);
 
       planExecutor.queueCapabilityPlan(context.capabilityPlan);

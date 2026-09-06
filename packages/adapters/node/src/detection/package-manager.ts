@@ -76,10 +76,8 @@ function readDeclaredPackageManager(
 }
 
 async function isPackageManagerInstalled(kind: PackageManagerKind): Promise<boolean> {
-  const command = process.platform === 'win32' ? `${kind}.cmd` : kind;
-
   try {
-    const result = await runCommand(command, ['--version']);
+    const result = await runCommand(kind, ['--version']);
     return result.exitCode === 0;
   } catch {
     return false;
@@ -89,7 +87,6 @@ async function isPackageManagerInstalled(kind: PackageManagerKind): Promise<bool
 async function runCommand(command: string, args: string[]): Promise<{ exitCode: number }> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
-      shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 

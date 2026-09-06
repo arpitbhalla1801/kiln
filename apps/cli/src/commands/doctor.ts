@@ -95,7 +95,6 @@ async function checkBunInstalled(): Promise<DoctorCheck> {
 function runCommand(command: string, args: string[]): Promise<number> {
   return new Promise((resolve) => {
     const child = spawn(command, args, {
-      shell: process.platform === 'win32',
       stdio: 'ignore',
     });
 

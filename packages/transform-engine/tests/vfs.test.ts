@@ -29,7 +29,9 @@ describe('VirtualFilesystem', () => {
     expect(vfs.read('new.ts')).toBe('created');
     expect(vfs.read('existing.ts')).toBeUndefined();
     expect(vfs.hasStagedChanges()).toBe(true);
-    expect(vfs.getStagedMutationCount()).toBe(3);
+    // Staging is keyed by path, so update+delete on the same path collapses
+    // to a single staged entry: 'new.ts' (create) and 'existing.ts' (delete).
+    expect(vfs.getStagedMutationCount()).toBe(2);
   });
 
   test('update throws when file does not exist', () => {

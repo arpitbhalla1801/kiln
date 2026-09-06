@@ -1,7 +1,43 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+const NPM_PACKAGE_NAME_PATTERN =
+  /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+
+export function validateProjectName(projectName: string): void {
+  if (projectName.length === 0 || projectName.length > 214) {
+    throw new Error(
+      `Invalid project name '${projectName}': must be between 1 and 214 characters.`
+    );
+  }
+
+  if (!NPM_PACKAGE_NAME_PATTERN.test(projectName)) {
+    throw new Error(
+      `Invalid project name '${projectName}': must be a valid npm package name ` +
+        '(lowercase letters, digits, and - . _ ~, optionally scoped).'
+    );
+  }
+}
+
+async function isNonEmptyDirectory(targetDir: string): Promise<boolean> {
+  try {
+    const entries = await readdir(targetDir);
+    return entries.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function runCreate(targetDir: string, projectName: string): Promise<void> {
+  validateProjectName(projectName);
+
+  if (await isNonEmptyDirectory(targetDir)) {
+    throw new Error(
+      `Directory '${targetDir}' already exists and is not empty. ` +
+        'Choose a different project name or remove the existing directory first.'
+    );
+  }
+
   await mkdir(targetDir, { recursive: true });
   await mkdir(join(targetDir, 'src', 'app'), { recursive: true });
 

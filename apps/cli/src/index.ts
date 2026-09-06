@@ -98,6 +98,10 @@ async function main(argv: string[]): Promise<void> {
   }
 
   if (firstArg === 'create') {
+    if (secondArg !== undefined && secondArg.trim().length === 0) {
+      throw new Error('Project name cannot be empty. Usage: kiln create <project-name>');
+    }
+
     const projectName = secondArg ?? 'my-kiln-app';
     const targetDir = resolve(cliOptions.cwd, projectName);
     await runCreate(targetDir, projectName);
