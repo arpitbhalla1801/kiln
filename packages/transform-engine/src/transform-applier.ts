@@ -118,67 +118,82 @@ function applyPackageJsonMutation(vfs: VirtualFilesystem, transform: PackageJson
 function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransform): void {
   const filePath = normalizePath(transform.filePath);
   const current = vfs.read(filePath) ?? '';
-  const lines = parseEnvLines(current);
-  const lineMap = new Map(lines.map((line) => [line.key, line]));
+  const entries = parseEnvEntries(current);
+  const varEntries = new Map(
+    entries.filter((entry): entry is EnvVarEntry => entry.type === 'var').map((entry) => [entry.key, entry])
+  );
 
   for (const [key, definition] of Object.entries(transform.variables)) {
     const normalized = normalizeEnvDefinition(definition);
-    const existing = lineMap.get(key);
+    const existing = varEntries.get(key);
+    const value = normalized.value ?? normalized.example ?? existing?.value;
 
-    lineMap.set(key, {
-      key,
-      value: normalized.value ?? existing?.value,
-      example: normalized.example ?? existing?.example,
-      required: normalized.required ?? existing?.required,
-    });
+    if (existing) {
+      existing.value = value ?? existing.value;
+      continue;
+    }
+
+    const created: EnvVarEntry = { type: 'var', key, value: value ?? '' };
+    varEntries.set(key, created);
+    entries.push(created);
   }
 
-  const mergedLines = Array.from(lineMap.values()).sort((left, right) =>
-    left.key.localeCompare(right.key)
-  );
-  const serialized = formatEnvLines(mergedLines);
+  const serialized = formatEnvEntries(entries);
 
   if (serialized !== current) {
     vfs.write(filePath, serialized);
   }
 }
 
-interface EnvLine {
+interface EnvVarEntry {
+  type: 'var';
   key: string;
-  value?: string;
-  example?: string;
-  required?: boolean;
+  value: string;
 }
 
-function parseEnvLines(content: string): EnvLine[] {
-  const lines: EnvLine[] = [];
+interface EnvRawEntry {
+  type: 'raw';
+  text: string;
+}
 
-  for (const rawLine of content.split('\n')) {
+type EnvEntry = EnvVarEntry | EnvRawEntry;
+
+function parseEnvEntries(content: string): EnvEntry[] {
+  if (content.length === 0) {
+    return [];
+  }
+
+  const rawLines = content.split('\n');
+  // A trailing newline produces a final empty split element; drop it so a
+  // single trailing newline round-trips without accumulating blank lines.
+  if (rawLines[rawLines.length - 1] === '') {
+    rawLines.pop();
+  }
+
+  return rawLines.map((rawLine): EnvEntry => {
     const line = rawLine.trim();
-    if (!line || line.startsWith('#')) {
-      continue;
-    }
-
     const separatorIndex = line.indexOf('=');
-    if (separatorIndex === -1) {
-      continue;
+
+    if (!line || line.startsWith('#') || separatorIndex === -1) {
+      return { type: 'raw', text: rawLine };
     }
 
     const key = line.slice(0, separatorIndex).trim();
     const value = line.slice(separatorIndex + 1).trim();
-    lines.push({ key, value });
-  }
-
-  return lines;
+    return { type: 'var', key, value };
+  });
 }
 
-function formatEnvLines(lines: EnvLine[]): string {
-  const rendered = lines.map((line) => {
-    const value = line.example ?? line.value ?? '';
-    return `${line.key}=${value}`;
-  });
+function formatEnvEntries(entries: EnvEntry[]): string {
+  if (entries.length === 0) {
+    return '';
+  }
 
-  return rendered.length > 0 ? `${rendered.join('\n')}\n` : '';
+  const rendered = entries.map((entry) =>
+    entry.type === 'var' ? `${entry.key}=${entry.value}` : entry.text
+  );
+
+  return `${rendered.join('\n')}\n`;
 }
 
 function normalizeEnvDefinition(

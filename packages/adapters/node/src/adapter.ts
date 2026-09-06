@@ -94,7 +94,12 @@ async function readPackageJson(rootPath: string): Promise<Record<string, unknown
   }
 
   const content = await readFile(packageJsonPath, 'utf8');
-  return JSON.parse(content) as Record<string, unknown>;
+  try {
+    return JSON.parse(content) as Record<string, unknown>;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse ${packageJsonPath}: ${reason}`);
+  }
 }
 
 async function pathExists(path: string): Promise<boolean> {
