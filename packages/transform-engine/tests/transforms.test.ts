@@ -114,8 +114,24 @@ describe('TransformApplier', () => {
       })
     );
 
+    // Existing lines (including comments) keep their original position;
+    // new variables are appended in the order they're declared.
     expect(vfs.read('.env.example')).toBe(
-      'AUTH_SECRET=replace-me\nDATABASE_URL=postgres://localhost\nEXISTING=value\n'
+      'EXISTING=value\nAUTH_SECRET=replace-me\nDATABASE_URL=postgres://localhost\n'
+    );
+  });
+
+  test('env mutation preserves comments and blank lines', () => {
+    const vfs = new VirtualFilesystem({
+      initialFiles: {
+        '.env.example': '# Database\nDATABASE_URL=postgres://localhost\n\n# Third party\nSTRIPE_KEY=sk_test\n',
+      },
+    });
+
+    applier.apply(vfs, envMutation('env', '.env.example', { AUTH_SECRET: 'replace-me' }));
+
+    expect(vfs.read('.env.example')).toBe(
+      '# Database\nDATABASE_URL=postgres://localhost\n\n# Third party\nSTRIPE_KEY=sk_test\nAUTH_SECRET=replace-me\n'
     );
   });
 });

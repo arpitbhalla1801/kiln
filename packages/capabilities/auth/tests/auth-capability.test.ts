@@ -121,7 +121,7 @@ describe('AuthCapability', () => {
     expect(secondPlan.transforms[0].type).toBe('env-mutation');
 
     applier.applyAll(vfs, secondPlan.transforms);
-    expect(vfs.read('.env.example')).toBe('AUTH_SECRET=replace-me\n');
+    expect(vfs.read('.env.example')).toBe('# Environment variables\nAUTH_SECRET=replace-me\n');
   });
 
   test('rejects ownership conflicts', () => {

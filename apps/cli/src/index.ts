@@ -114,7 +114,7 @@ async function main(argv: string[]): Promise<void> {
       throw new Error('Missing capability. Usage: kiln add <env|auth>');
     }
 
-    const envVariables = capabilityId === 'env' ? parseEnvVariables([...flags, ...args.slice(2)]) : {};
+    const envVariables = capabilityId === 'env' ? parseEnvVariables(argv.slice(2)) : {};
     await runAdd(capabilityId, cliOptions, envVariables);
     return;
   }

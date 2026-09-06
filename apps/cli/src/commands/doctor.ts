@@ -1,5 +1,4 @@
-import { spawn } from 'node:child_process';
-import { NodeAdapter } from '@kiln/node-adapter';
+import { NodeAdapter, spawnSafely } from '@kiln/node-adapter';
 import { OwnershipMetadataStore } from '@kiln/project-model';
 import { resolveProjectRoot } from '../project.js';
 import type { CliOptions } from '../output.js';
@@ -94,7 +93,7 @@ async function checkBunInstalled(): Promise<DoctorCheck> {
 
 function runCommand(command: string, args: string[]): Promise<number> {
   return new Promise((resolve) => {
-    const child = spawn(command, args, {
+    const child = spawnSafely(command, args, {
       stdio: 'ignore',
     });
 

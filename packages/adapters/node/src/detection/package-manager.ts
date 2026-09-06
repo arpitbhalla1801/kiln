@@ -1,7 +1,7 @@
 import { access } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
 import { join } from 'node:path';
+import { spawnSafely } from '../spawn-safe.js';
 import type { PackageManagerInfo, PackageManagerKind } from '../types.js';
 
 const LOCKFILES: Array<{ file: string; kind: PackageManagerKind }> = [
@@ -86,7 +86,7 @@ async function isPackageManagerInstalled(kind: PackageManagerKind): Promise<bool
 
 async function runCommand(command: string, args: string[]): Promise<{ exitCode: number }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawnSafely(command, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 

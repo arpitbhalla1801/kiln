@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawnSafely } from '../spawn-safe.js';
 import type { CommandResult, DependencyInstallOptions } from '../types.js';
 import type { PackageManagerKind } from '../types.js';
 
@@ -44,7 +44,7 @@ async function runPackageManager(
   const command = resolveCommand(kind);
 
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawnSafely(command, args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
