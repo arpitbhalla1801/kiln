@@ -1,7 +1,11 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { NodeAdapter, spawnSafely } from '@kiln/node-adapter';
 import { OwnershipMetadataStore } from '@kiln/project-model';
 import { resolveProjectRoot } from '../project.js';
 import type { CliOptions } from '../output.js';
+import { expectsNextJsProject } from '../validation/nextjs-project.js';
+import { validatePackageJson } from '../validation/package-json.js';
 
 interface DoctorCheck {
   name: string;
@@ -24,6 +28,10 @@ export async function runDoctor(options: CliOptions): Promise<void> {
       status: inspection.filesystem.packageJson ? 'pass' : 'fail',
       detail: inspection.filesystem.packageJson ? 'found' : 'missing',
     });
+
+    if (inspection.filesystem.packageJson) {
+      checks.push(await checkPackageJsonHealth(rootPath));
+    }
 
     checks.push({
       name: 'package-manager',
@@ -79,6 +87,21 @@ export async function runDoctor(options: CliOptions): Promise<void> {
   if (failures > 0) {
     throw new Error(`Doctor found ${failures} failing check(s)`);
   }
+}
+
+async function checkPackageJsonHealth(rootPath: string): Promise<DoctorCheck> {
+  const packageJsonPath = join(rootPath, 'package.json');
+  const content = await readFile(packageJsonPath, 'utf8');
+  const packageJson = JSON.parse(content) as Record<string, unknown>;
+  const validation = validatePackageJson(packageJson, {
+    expectsNextJs: await expectsNextJsProject(rootPath),
+  });
+
+  return {
+    name: 'package-json-health',
+    status: validation.status,
+    detail: validation.detail,
+  };
 }
 
 async function checkBunInstalled(): Promise<DoctorCheck> {

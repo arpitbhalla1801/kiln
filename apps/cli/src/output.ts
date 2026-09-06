@@ -9,6 +9,12 @@ export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): strin
   const lines: string[] = [];
   const header = dryRun ? 'Dry-run transform plan' : 'Applied transforms';
   lines.push(header);
+
+  if (plan.summary.total === 0) {
+    lines.push('  no changes');
+    return lines.join('\n');
+  }
+
   lines.push(`  created: ${plan.summary.created}`);
   lines.push(`  modified: ${plan.summary.modified}`);
   lines.push(`  deleted: ${plan.summary.deleted}`);

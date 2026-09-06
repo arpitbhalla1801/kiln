@@ -1,6 +1,6 @@
-﻿{
+{
   "name": "@kiln/core",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
     }
   },
   "scripts": {
-    "build": "bunx tsc",
+    "build": "bunx tsc -b --force",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "bun test tests"
