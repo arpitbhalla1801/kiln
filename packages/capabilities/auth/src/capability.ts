@@ -74,6 +74,9 @@ export class AuthCapability {
     const nextAuthInstalled =
       options.nextAuthInstalled ?? (await hasDependency(rootPath, NEXT_AUTH_PACKAGE));
 
+    assertNoUnownedFile(tracker, paths.authFile, authFileExists, AUTH_CAPABILITY_ID);
+    assertNoUnownedFile(tracker, paths.middlewareFile, middlewareFileExists, AUTH_CAPABILITY_ID);
+
     const authTransforms = buildAuthTransforms(
       paths,
       authFileExists,
@@ -161,6 +164,33 @@ export function buildAuthTransforms(
   }
 
   return builder.build();
+}
+
+function assertNoUnownedFile(
+  tracker: OwnershipTracker,
+  filePath: string,
+  fileExists: boolean,
+  ownerCapabilityId: string
+): void {
+  if (!fileExists) {
+    return;
+  }
+
+  const currentOwner = tracker.getOwner('file', filePath);
+  if (currentOwner === ownerCapabilityId) {
+    return;
+  }
+
+  if (currentOwner !== undefined) {
+    // A different capability already owns this file; let the ownership
+    // conflict check surface a consistent error for that case.
+    return;
+  }
+
+  throw new Error(
+    `Refusing to add auth: '${filePath}' already exists and was not created by kiln. ` +
+      'Remove or rename the file, or run kiln in a project without a pre-existing auth setup.'
+  );
 }
 
 async function detectSourceRoot(rootPath: string): Promise<string> {
