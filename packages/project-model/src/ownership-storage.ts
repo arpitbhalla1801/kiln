@@ -34,6 +34,16 @@ export class OwnershipMetadataStore {
     await fs.mkdir(kilnDirectory, { recursive: true });
 
     const content = serializeOwnershipMetadata(metadata);
+    const existing = await readIfExists(filePath);
+
+    // Skip the write when nothing changed so re-running a capability that
+    // makes no ownership changes doesn't touch the file's mtime, and so a
+    // CRLF checkout of this file (e.g. via git's core.autocrlf) isn't
+    // silently rewritten to LF on every unrelated `kiln add`.
+    if (existing !== undefined && existing.replace(/\r\n/g, '\n') === content) {
+      return;
+    }
+
     await atomicWriteFile(filePath, content);
   }
 
@@ -46,6 +56,14 @@ export class OwnershipMetadataStore {
   /** Reload ownership metadata from disk (alias for load). */
   static async reload(projectRoot: string): Promise<OwnershipMetadata> {
     return OwnershipMetadataStore.load(projectRoot);
+  }
+}
+
+async function readIfExists(filePath: string): Promise<string | undefined> {
+  try {
+    return await fs.readFile(filePath, 'utf8');
+  } catch {
+    return undefined;
   }
 }
 

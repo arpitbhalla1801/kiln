@@ -141,7 +141,7 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
 
   const serialized = formatEnvEntries(entries);
 
-  if (serialized !== current) {
+  if (serialized !== current.replace(/\r\n/g, '\n')) {
     vfs.write(filePath, serialized);
   }
 }
@@ -164,7 +164,10 @@ function parseEnvEntries(content: string): EnvEntry[] {
     return [];
   }
 
-  const rawLines = content.split('\n');
+  // Normalize CRLF to LF so files checked out with Windows-style line
+  // endings (e.g. via git's core.autocrlf) don't look "changed" on every
+  // run just because kiln always serializes with plain '\n'.
+  const rawLines = content.replace(/\r\n/g, '\n').split('\n');
   // A trailing newline produces a final empty split element; drop it so a
   // single trailing newline round-trips without accumulating blank lines.
   if (rawLines[rawLines.length - 1] === '') {

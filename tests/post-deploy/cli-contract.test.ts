@@ -45,9 +45,14 @@ describe('post-deploy CLI contract', () => {
   });
 
   test('PD-06 inspect outside a project exits non-zero', () => {
-    const result = runKiln(['inspect'], '/tmp');
-    expect(result.exitCode).not.toBe(0);
-    expect(result.output).toContain('No kiln project found');
+    const emptyDir = mkdtempSync(join(tmpdir(), 'kiln-no-project-'));
+    try {
+      const result = runKiln(['inspect'], emptyDir);
+      expect(result.exitCode).not.toBe(0);
+      expect(result.output).toContain('No kiln project found');
+    } finally {
+      rmSync(emptyDir, { recursive: true, force: true });
+    }
   });
 
   test('PD-07 create rejects missing, invalid, and existing targets', () => {

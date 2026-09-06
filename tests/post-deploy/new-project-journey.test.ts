@@ -16,7 +16,7 @@ afterAll(async () => {
   for (const root of tempRoots) {
     await rm(root, { recursive: true, force: true });
   }
-});
+}, 30000);
 
 describe('post-deploy new project journey', () => {
   test('PD-10 through PD-19 onboard env + auth and build', async () => {
