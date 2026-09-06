@@ -1,13 +1,14 @@
 import { access } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import {
   type Capability,
   type CapabilityManifest,
   capabilityFromManifest,
   loadManifestFromFile,
+  loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
+import { ENV_MANIFEST } from './manifest-data.js';
 import {
   createTransformPipeline,
   type TransformPipeline,
@@ -27,14 +28,18 @@ import {
 } from './validation.js';
 
 export class EnvCapability {
-  readonly manifestPath: string;
+  readonly manifestPath?: string;
 
   constructor(manifestPath?: string) {
-    this.manifestPath = manifestPath ?? defaultManifestPath();
+    this.manifestPath = manifestPath;
   }
 
   async getManifest(): Promise<CapabilityManifest> {
-    return loadManifestFromFile(this.manifestPath);
+    if (this.manifestPath) {
+      return loadManifestFromFile(this.manifestPath);
+    }
+
+    return loadManifestFromObject(ENV_MANIFEST);
   }
 
   async getCapability(): Promise<Capability> {
@@ -162,8 +167,4 @@ async function fileExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-function defaultManifestPath(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), '../kiln.manifest.json');
 }
