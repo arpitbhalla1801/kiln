@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 
 import { resolve } from 'node:path';
 import { runAdd, parseEnvVariables } from './commands/add.js';

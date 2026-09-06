@@ -1,14 +1,15 @@
 import { access } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import {
   type Capability,
   type CapabilityManifest,
   capabilityFromManifest,
   loadManifestFromFile,
+  loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
+import { AUTH_MANIFEST } from './manifest-data.js';
 import {
   EnvCapability,
   type EnvVariableMap,
@@ -40,16 +41,20 @@ const AUTH_ENV_VARS: EnvVariableMap = {
 };
 
 export class AuthCapability {
-  readonly manifestPath: string;
+  readonly manifestPath?: string;
   private readonly envCapability: EnvCapability;
 
   constructor(manifestPath?: string, envCapability?: EnvCapability) {
-    this.manifestPath = manifestPath ?? defaultManifestPath();
+    this.manifestPath = manifestPath;
     this.envCapability = envCapability ?? new EnvCapability();
   }
 
   async getManifest(): Promise<CapabilityManifest> {
-    return loadManifestFromFile(this.manifestPath);
+    if (this.manifestPath) {
+      return loadManifestFromFile(this.manifestPath);
+    }
+
+    return loadManifestFromObject(AUTH_MANIFEST);
   }
 
   async getCapability(): Promise<Capability> {
@@ -272,8 +277,4 @@ async function fileExists(path: string): Promise<boolean> {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function defaultManifestPath(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), '../kiln.manifest.json');
 }

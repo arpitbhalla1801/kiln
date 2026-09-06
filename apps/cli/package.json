@@ -1,27 +1,32 @@
 {
-  "name": "@kiln/cli",
+  "name": "@kiln-cli/kiln",
   "version": "1.0.0",
-  "private": true,
-  "type": "module",
+  "description": "Capability-based scaffolding CLI for Node/Next.js projects",
+  "license": "MIT",
   "bin": {
     "kiln": "./dist/index.js"
   },
-  "dependencies": {
+  "files": [
+    "dist/index.js"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
     "@kiln/core": "workspace:*",
     "@kiln/env-capability": "workspace:*",
     "@kiln/node-adapter": "workspace:*",
     "@kiln/planner": "workspace:*",
     "@kiln/project-model": "workspace:*",
     "@kiln/runtime": "workspace:*",
-    "@kiln/transform-engine": "workspace:*"
+    "@kiln/transform-engine": "workspace:*",
+    "@types/node": "^25.9.1",
+    "esbuild": "^0.28.2"
   },
-  "devDependencies": {
-    "@types/node": "^25.9.1"
-  },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bunx tsc -b --force",
+    "build": "bunx tsc -b --force && bun run bundle",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.js",
+    "prepublishOnly": "bun run build",
     "dev": "bun src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
