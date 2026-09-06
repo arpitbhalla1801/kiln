@@ -77,16 +77,17 @@ describe('FilesystemPersistence', () => {
     const blockerPath = path.join(testDir, 'blocker.txt');
     await fs.writeFile(blockerPath, 'blocker', 'utf8');
 
-    const originalPath = path.join(testDir, 'safe.txt');
+    const safePath = 'aaa-safe.txt';
+    const originalPath = path.join(testDir, safePath);
     await fs.writeFile(originalPath, 'safe-original', 'utf8');
 
     await expect(
       persistence.persistOperations(
         [
-          { type: 'modify', filePath: originalPath, content: 'safe-updated' },
+          { type: 'modify', filePath: safePath, content: 'safe-updated' },
           {
             type: 'create',
-            filePath: path.join(testDir, 'blocker.txt', 'nested.txt'),
+            filePath: path.join('blocker.txt', 'nested.txt'),
             content: 'should-fail',
           },
         ],
@@ -97,9 +98,9 @@ describe('FilesystemPersistence', () => {
     const files = await listFilesRecursive(testDir);
     expect(files.some((file) => file.includes('.kiln.tmp'))).toBe(false);
     // Writes are applied in deterministic path order, not queue order:
-    // 'blocker.txt/...' sorts before 'safe.txt' alphabetically, so the
-    // failure happens before safe.txt is ever written.
-    expect(await fs.readFile(originalPath, 'utf8')).toBe('safe-original');
+    // 'aaa-safe.txt' sorts before 'blocker.txt/...' alphabetically, so it
+    // is written successfully before the blocker path fails.
+    expect(await fs.readFile(originalPath, 'utf8')).toBe('safe-updated');
   });
 
   test('supports absolute file paths', async () => {

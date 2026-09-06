@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseEnvVariables, runAdd } from '../src/commands/add.js';
 import { runCreate } from '../src/commands/create.js';
+import { runDoctor } from '../src/commands/doctor.js';
 import { formatTransformPlan } from '../src/output.js';
 
 const tempRoots: string[] = [];
@@ -29,15 +30,49 @@ describe('kiln cli', () => {
 
     const packageJson = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8'));
     expect(packageJson.name).toBe('demo-app');
+    expect(packageJson.devDependencies['@types/react-dom']).toBe('^19.0.0');
     expect(await readFile(join(projectDir, 'src/app/page.tsx'), 'utf8')).toContain('Kiln project');
+    expect(await readFile(join(projectDir, 'src/app/layout.tsx'), 'utf8')).toContain('RootLayout');
   });
 
-  test('parseEnvVariables reads --var flags', () => {
-    const vars = parseEnvVariables(['--var', 'DATABASE_URL=postgres://localhost', '--var=NODE_ENV=dev']);
+  test('create rejects empty and invalid project names', async () => {
+    const parent = await createTempDir();
+    await expect(runCreate(join(parent, 'bad'), '')).rejects.toThrow('Project name is required');
+    await expect(runCreate(join(parent, 'bad'), 'Weird Name')).rejects.toThrow('Invalid project name');
+  });
+
+  test('create refuses to overwrite a non-empty directory', async () => {
+    const parent = await createTempDir();
+    const projectDir = join(parent, 'existing-app');
+    await runCreate(projectDir, 'existing-app');
+    await expect(runCreate(projectDir, 'existing-app')).rejects.toThrow('already exists and is not empty');
+  });
+
+  test('create scaffolds a buildable Next.js project', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await expect(readFile(join(root, 'next.config.ts'), 'utf8')).resolves.toContain('NextConfig');
+    await expect(readFile(join(root, 'next-env.d.ts'), 'utf8')).resolves.toContain('next');
+  });
+
+  test('parseEnvVariables reads --var flags from full command argv', () => {
+    const vars = parseEnvVariables([
+      'add',
+      'env',
+      '--var',
+      'DATABASE_URL=postgres://localhost',
+      '--var=NODE_ENV=dev',
+    ]);
     expect(vars).toEqual({
       DATABASE_URL: 'postgres://localhost',
       NODE_ENV: 'dev',
     });
+  });
+
+  test('parseEnvVariables reads space-separated --var flags', () => {
+    const vars = parseEnvVariables(['add', 'env', '--var', 'CUSTOM_KEY=hello']);
+    expect(vars).toEqual({ CUSTOM_KEY: 'hello' });
   });
 
   test('dry-run add env produces deterministic transform output', async () => {
@@ -60,6 +95,81 @@ describe('kiln cli', () => {
     expect(output).toContain('.env.example');
   });
 
+  test('add auth preserves existing package.json fields', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+    await runAdd('auth', { cwd: root, dryRun: false });
+
+    const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+    expect(packageJson.name).toBe('demo-app');
+    expect(packageJson.scripts?.build).toBe('next build');
+    expect(packageJson.dependencies?.next).toBe('^15.0.0');
+    expect(packageJson.dependencies?.['next-auth']).toBe('^5.0.0-beta.32');
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('DATABASE_URL=');
+    expect(envExample).toContain('AUTH_SECRET=');
+  }, 30000);
+
+  test('re-running add env reports no changes when already applied', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    try {
+      await runAdd('env', { cwd: root, dryRun: false });
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(logs.join('\n')).toContain('no changes');
+  });
+
+  test('add env --var merges custom variables into existing .env.example', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+
+    await runAdd(
+      'env',
+      { cwd: root, dryRun: false },
+      parseEnvVariables(['add', 'env', '--var', 'API_URL=https://api.example.com'])
+    );
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('DATABASE_URL=');
+    expect(envExample).toContain('API_URL=https://api.example.com');
+  });
+
+  test('doctor fails when package.json is corrupted in a Next.js project', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { 'next-auth': '^5.0.0-beta.32' } }, null, 2) + '\n',
+      'utf8'
+    );
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    await expect(runDoctor({ cwd: root })).rejects.toThrow('Doctor found 1 failing check(s)');
+
+    console.log = originalLog;
+
+    const output = logs.join('\n');
+    expect(output).toContain('[fail] package-json-health:');
+    expect(output).toContain('missing scripts.dev');
+    expect(output).toContain('missing dependencies.next');
+  });
+
   test('formatTransformPlan sorts operations deterministically', () => {
     const formatted = formatTransformPlan(
       {
@@ -73,5 +183,17 @@ describe('kiln cli', () => {
     );
 
     expect(formatted.indexOf('a.ts')).toBeLessThan(formatted.indexOf('z.ts'));
+  });
+
+  test('formatTransformPlan reports no changes for empty plans', () => {
+    const formatted = formatTransformPlan(
+      {
+        operations: [],
+        summary: { created: 0, modified: 0, deleted: 0, total: 0 },
+      },
+      false
+    );
+
+    expect(formatted).toContain('no changes');
   });
 });

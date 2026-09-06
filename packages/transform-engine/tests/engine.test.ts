@@ -1,6 +1,5 @@
 import { describe, expect, test, afterAll, beforeAll } from 'bun:test';
 import { TransformEngine } from '../src/engine.js';
-import { VirtualFilesystem } from '../src/vfs.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -17,11 +16,13 @@ describe('TransformEngine', () => {
   });
 
   test('plan preview generates operation summary and file diff structure', () => {
-    const engine = new TransformEngine(
-      new VirtualFilesystem({ initialFiles: { 'b.ts': 'before', 'c.ts': 'before' } })
-    );
-    engine.queueOperation({ type: 'create', filePath: 'a.ts', diffPreview: '+ a' });
-    engine.queueOperation({ type: 'modify', filePath: 'b.ts', diffPreview: '~ b' });
+    const engine = new TransformEngine();
+    const vfs = engine.getVirtualFilesystem();
+    vfs.loadBaseline('b.ts', 'before-b');
+    vfs.loadBaseline('c.ts', 'before-c');
+
+    engine.queueOperation({ type: 'create', filePath: 'a.ts', content: 'a', diffPreview: '+ a' });
+    engine.queueOperation({ type: 'modify', filePath: 'b.ts', content: 'after-b', diffPreview: '~ b' });
     engine.queueOperation({ type: 'delete', filePath: 'c.ts', diffPreview: '- c' });
 
     const plan = engine.getPlanPreview();

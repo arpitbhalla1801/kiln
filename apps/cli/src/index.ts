@@ -13,7 +13,7 @@ declare const process: {
 };
 
 export const name = '@kiln/cli';
-export const version = '0.0.0';
+export const version = '1.0.0';
 
 type CommandName = 'create' | 'add' | 'inspect' | 'doctor';
 
@@ -31,6 +31,11 @@ function printHelp(topic?: string): void {
     console.log();
     console.log(commands[command]);
     console.log();
+
+    if (command === 'create') {
+      console.log('Usage: kiln create <name>');
+      console.log('Name must be npm-safe: lowercase letters, numbers, hyphens, underscores.');
+    }
 
     if (command === 'add') {
       console.log('Usage: kiln add <capability>');
@@ -98,11 +103,10 @@ async function main(argv: string[]): Promise<void> {
   }
 
   if (firstArg === 'create') {
-    if (secondArg !== undefined && secondArg.trim().length === 0) {
-      throw new Error('Project name cannot be empty. Usage: kiln create <project-name>');
+    if (secondArg === undefined) {
+      throw new Error('Project name is required. Usage: kiln create <name>');
     }
-
-    const projectName = secondArg ?? 'my-kiln-app';
+    const projectName = secondArg;
     const targetDir = resolve(cliOptions.cwd, projectName);
     await runCreate(targetDir, projectName);
     return;
@@ -114,7 +118,7 @@ async function main(argv: string[]): Promise<void> {
       throw new Error('Missing capability. Usage: kiln add <env|auth>');
     }
 
-    const envVariables = capabilityId === 'env' ? parseEnvVariables(argv.slice(2)) : {};
+    const envVariables = capabilityId === 'env' ? parseEnvVariables(argv) : {};
     await runAdd(capabilityId, cliOptions, envVariables);
     return;
   }

@@ -1,48 +1,16 @@
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-
-const NPM_PACKAGE_NAME_PATTERN =
-  /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
-
-export function validateProjectName(projectName: string): void {
-  if (projectName.length === 0 || projectName.length > 214) {
-    throw new Error(
-      `Invalid project name '${projectName}': must be between 1 and 214 characters.`
-    );
-  }
-
-  if (!NPM_PACKAGE_NAME_PATTERN.test(projectName)) {
-    throw new Error(
-      `Invalid project name '${projectName}': must be a valid npm package name ` +
-        '(lowercase letters, digits, and - . _ ~, optionally scoped).'
-    );
-  }
-}
-
-async function isNonEmptyDirectory(targetDir: string): Promise<boolean> {
-  try {
-    const entries = await readdir(targetDir);
-    return entries.length > 0;
-  } catch {
-    return false;
-  }
-}
+import { validateProjectName } from '../validation/project-name.js';
 
 export async function runCreate(targetDir: string, projectName: string): Promise<void> {
-  validateProjectName(projectName);
-
-  if (await isNonEmptyDirectory(targetDir)) {
-    throw new Error(
-      `Directory '${targetDir}' already exists and is not empty. ` +
-        'Choose a different project name or remove the existing directory first.'
-    );
-  }
+  const name = validateProjectName(projectName);
+  await ensureTargetAvailable(targetDir);
 
   await mkdir(targetDir, { recursive: true });
   await mkdir(join(targetDir, 'src', 'app'), { recursive: true });
 
   const packageJson = {
-    name: projectName,
+    name,
     version: '0.0.0',
     private: true,
     packageManager: 'bun@1.3.14',
@@ -60,6 +28,7 @@ export async function runCreate(targetDir: string, projectName: string): Promise
       typescript: '^5.0.0',
       '@types/node': '^25.9.1',
       '@types/react': '^19.0.0',
+      '@types/react-dom': '^19.0.0',
     },
   };
 
@@ -87,6 +56,26 @@ export async function runCreate(targetDir: string, projectName: string): Promise
 }
 `;
 
+  const layoutSource = `export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+`;
+
+  const nextConfigSource = `import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {};
+
+export default nextConfig;
+`;
+
+  const nextEnvSource = `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+`;
+
   const gitignore = `node_modules
 .next
 .env
@@ -96,12 +85,38 @@ export async function runCreate(targetDir: string, projectName: string): Promise
 
   await writeFile(join(targetDir, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`);
   await writeFile(join(targetDir, 'tsconfig.json'), `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(join(targetDir, 'next.config.ts'), nextConfigSource);
+  await writeFile(join(targetDir, 'next-env.d.ts'), nextEnvSource);
   await writeFile(join(targetDir, 'src', 'app', 'page.tsx'), pageSource);
+  await writeFile(join(targetDir, 'src', 'app', 'layout.tsx'), layoutSource);
   await writeFile(join(targetDir, '.gitignore'), gitignore);
 
-  console.log(`Created kiln project '${projectName}' at ${targetDir}`);
+  console.log(`Created kiln project '${name}' at ${targetDir}`);
   console.log('Next steps:');
   console.log('  bun install');
   console.log('  kiln add env');
   console.log('  kiln add auth');
+}
+
+async function ensureTargetAvailable(targetDir: string): Promise<void> {
+  try {
+    await access(targetDir);
+  } catch {
+    return;
+  }
+
+  let entries: string[] = [];
+  try {
+    entries = await readdir(targetDir);
+  } catch {
+    throw new Error(
+      `Cannot create project at '${targetDir}' because a file with that name already exists.`
+    );
+  }
+
+  if (entries.length > 0) {
+    throw new Error(
+      `Target directory '${targetDir}' already exists and is not empty. Choose a new name or remove the directory.`
+    );
+  }
 }

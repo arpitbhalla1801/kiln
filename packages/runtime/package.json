@@ -1,7 +1,6 @@
 {
   "name": "@kiln/runtime",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,9 +17,10 @@
     "@types/node": "^25.9.1"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b --force",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "bun test tests"
-  }
+  },
+  "private": true
 }

@@ -91,10 +91,10 @@ describe('TransformEngine rollback recovery', () => {
 
     expect(await fs.readFile(existingPath, 'utf8')).toBe('stable');
     await expect(fs.access(path.join(testDir, 'should-not-exist.txt'))).rejects.toThrow();
-    // Recovery restores the vfs to its pre-transform snapshot, folding the
-    // in-flight edits back into baseline rather than leaving them staged.
+    // Recovery only rolls back disk; staged vfs mutations are left in place
+    // so the caller can retry execute() after fixing the underlying issue.
     expect(engine.getVirtualFilesystem().read(existingPath)).toBe('updated');
-    expect(engine.getVirtualFilesystem().hasStagedChanges()).toBe(false);
+    expect(engine.getVirtualFilesystem().hasStagedChanges()).toBe(true);
   });
 
   test('commits when persistence succeeds and clears rollback snapshot', async () => {
