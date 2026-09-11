@@ -16,14 +16,16 @@ jobs:
           bun-version: latest
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org'
+      - name: Update npm
+        run: npm install -g npm@latest
       - name: Install
         run: bun install
       - name: Build
         run: bun run build
-      - name: Publish @kiln-cli/kiln
-        run: npm publish --access public
+      - name: Stage @kiln-cli/kiln for publish
+        run: npm stage publish --access public
         working-directory: apps/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
