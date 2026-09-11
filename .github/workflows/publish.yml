@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: 'First publish of a brand-new package (npm stage publish 404s until a package exists at all -- use direct npm publish just this once, then switch back)'
+        type: boolean
+        default: false
 
 jobs:
   publish:
@@ -24,7 +29,14 @@ jobs:
         run: bun install
       - name: Build
         run: bun run build
+      - name: Publish @kiln-cli/kiln directly (bootstrap only)
+        if: ${{ inputs.bootstrap }}
+        run: npm publish --access public
+        working-directory: apps/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Stage @kiln-cli/kiln for publish
+        if: ${{ !inputs.bootstrap }}
         run: npm stage publish --access public
         working-directory: apps/cli
         env:
