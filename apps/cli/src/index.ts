@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { resolve } from 'node:path';
+import pkg from '../package.json';
 import { runAdd, parseEnvVariables } from './commands/add.js';
 import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
@@ -12,8 +13,8 @@ declare const process: {
   exitCode?: number;
 };
 
-export const name = '@kiln/cli';
-export const version = '1.0.0';
+export const name = pkg.name;
+export const version = pkg.version;
 
 type CommandName = 'create' | 'add' | 'inspect' | 'doctor';
 

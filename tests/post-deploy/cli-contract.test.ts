@@ -23,7 +23,6 @@ describe('post-deploy CLI contract', () => {
     const result = runKiln(['--version']);
     expect(result.exitCode).toBe(0);
     expect(result.stdout.trim()).toBe(packageJson.version);
-    expect(result.stdout.trim()).toBe('1.0.0');
   });
 
   test('PD-03 unknown command exits non-zero', () => {
