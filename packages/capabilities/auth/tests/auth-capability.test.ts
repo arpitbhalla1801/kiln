@@ -59,7 +59,7 @@ describe('AuthCapability', () => {
     expect(packageJson.dependencies).toEqual({ 'next-auth': '^5.0.0-beta.32' });
     expect(vfs.read('auth.ts')).toContain('NextAuth');
     expect(vfs.read('middleware.ts')).toContain('export default auth');
-    expect(vfs.read('.env.example')).toContain('AUTH_SECRET=replace-me');
+    expect(vfs.read('.env.example')).toMatch(/AUTH_SECRET=\S+/);
     expect(plan.capability.ownedDependencies).toContain('next-auth');
     expect(plan.capability.ownedEnvVars).toBeUndefined();
   });
@@ -136,14 +136,15 @@ describe('AuthCapability', () => {
           version: '1.0.0',
           dependencies: { 'next-auth': '^5.0.0-beta.32' },
         }),
-        'auth.ts': 'existing auth',
-        'middleware.ts': 'existing middleware',
-        '.env.example': 'AUTH_SECRET=replace-me\n',
       },
     });
 
     const applier = new TransformApplier();
     applier.applyAll(vfs, firstPlan.transforms);
+
+    const generatedSecret = vfs.read('.env.example');
+    expect(generatedSecret).toMatch(/AUTH_SECRET=\S+/);
+    expect(generatedSecret).not.toContain('AUTH_SECRET=replace-me');
 
     const secondPlan = await auth.planAdd(root, {
       tracker,
@@ -153,11 +154,10 @@ describe('AuthCapability', () => {
       envExampleExists: true,
     });
 
-    expect(secondPlan.transforms).toHaveLength(1);
-    expect(secondPlan.transforms[0].type).toBe('env-mutation');
+    expect(secondPlan.transforms).toHaveLength(0);
 
     applier.applyAll(vfs, secondPlan.transforms);
-    expect(vfs.read('.env.example')).toBe('# Environment variables\nAUTH_SECRET=replace-me\n');
+    expect(vfs.read('.env.example')).toBe(generatedSecret);
   });
 
   test('rejects ownership conflicts', () => {
