@@ -13,17 +13,14 @@ export function buildAuthOwnershipRegistrations(
   paths: AuthFilePaths,
   ownerCapabilityId = AUTH_CAPABILITY_ID
 ): OwnershipRegistration[] {
+  const fileRegistrations: OwnershipRegistration[] = Object.values(paths).map((filePath) => ({
+    resourceType: 'file',
+    resourceKey: filePath,
+    ownerCapabilityId,
+  }));
+
   return [
-    {
-      resourceType: 'file',
-      resourceKey: paths.authFile,
-      ownerCapabilityId,
-    },
-    {
-      resourceType: 'file',
-      resourceKey: paths.middlewareFile,
-      ownerCapabilityId,
-    },
+    ...fileRegistrations,
     {
       resourceType: 'dependency',
       resourceKey: NEXT_AUTH_PACKAGE,
