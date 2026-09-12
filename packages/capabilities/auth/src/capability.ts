@@ -21,6 +21,7 @@ import {
 import {
   createAuthConfigContent,
   createMiddlewareContent,
+  createRouteHandlerContent,
   resolveAuthImportPath,
 } from './templates.js';
 import {
@@ -82,16 +83,26 @@ export class AuthCapability {
     const middlewareFileExists =
       options.middlewareFileExists ??
       (await fileExists(join(rootPath, paths.middlewareFile)));
+    const routeHandlerFileExists =
+      options.routeHandlerFileExists ??
+      (await fileExists(join(rootPath, paths.routeHandlerFile)));
     const nextAuthInstalled =
       options.nextAuthInstalled ?? (await hasDependency(rootPath, NEXT_AUTH_PACKAGE));
 
     assertNoUnownedFile(tracker, paths.authFile, authFileExists, AUTH_CAPABILITY_ID);
     assertNoUnownedFile(tracker, paths.middlewareFile, middlewareFileExists, AUTH_CAPABILITY_ID);
+    assertNoUnownedFile(
+      tracker,
+      paths.routeHandlerFile,
+      routeHandlerFileExists,
+      AUTH_CAPABILITY_ID
+    );
 
     const authTransforms = buildAuthTransforms(
       paths,
       authFileExists,
       middlewareFileExists,
+      routeHandlerFileExists,
       nextAuthInstalled,
       providers
     );
@@ -136,6 +147,7 @@ export function buildAuthFilePaths(sourceRoot = ''): AuthFilePaths {
   return {
     authFile: `${prefix}auth.ts`,
     middlewareFile: `${prefix}middleware.ts`,
+    routeHandlerFile: `${prefix}app/api/auth/[...nextauth]/route.ts`,
   };
 }
 
@@ -143,6 +155,7 @@ export function buildAuthTransforms(
   paths: AuthFilePaths,
   authFileExists: boolean,
   middlewareFileExists: boolean,
+  routeHandlerFileExists: boolean,
   nextAuthInstalled: boolean,
   providers: string[] = []
 ): TransformPipeline {
@@ -165,6 +178,15 @@ export function buildAuthTransforms(
       paths.authFile,
       createAuthConfigContent(providers),
       'Create auth config'
+    );
+  }
+
+  if (providers.length > 0 && !routeHandlerFileExists) {
+    builder.fileCreate(
+      `${AUTH_CAPABILITY_ID}-create-route-handler`,
+      paths.routeHandlerFile,
+      createRouteHandlerContent(),
+      'Create NextAuth route handler'
     );
   }
 
