@@ -75,6 +75,18 @@ describe('kiln cli', () => {
     expect(vars).toEqual({ CUSTOM_KEY: 'hello' });
   });
 
+  test('parseEnvVariables rejects newlines in --var values to prevent env injection', () => {
+    expect(() =>
+      parseEnvVariables(['add', 'env', '--var', 'API_KEY=abc\nDATABASE_URL=http://evil.example'])
+    ).toThrow(/cannot contain newlines/);
+  });
+
+  test('parseEnvVariables rejects newlines in --var=KEY=value form', () => {
+    expect(() =>
+      parseEnvVariables(['add', 'env', '--var=API_KEY=abc\nINJECTED=evil'])
+    ).toThrow(/cannot contain newlines/);
+  });
+
   test('dry-run add env produces deterministic transform output', async () => {
     const root = await createTempDir();
     await runCreate(root, 'demo-app');
