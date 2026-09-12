@@ -11,9 +11,15 @@ import {
 
 export function buildAuthOwnershipRegistrations(
   paths: AuthFilePaths,
-  ownerCapabilityId = AUTH_CAPABILITY_ID
+  ownerCapabilityId = AUTH_CAPABILITY_ID,
+  providers: string[] = []
 ): OwnershipRegistration[] {
-  const fileRegistrations: OwnershipRegistration[] = Object.values(paths).map((filePath) => ({
+  const activePaths: Record<string, string> = { ...paths };
+  if (providers.length === 0) {
+    delete activePaths.routeHandlerFile;
+  }
+
+  const fileRegistrations: OwnershipRegistration[] = Object.values(activePaths).map((filePath) => ({
     resourceType: 'file',
     resourceKey: filePath,
     ownerCapabilityId,
@@ -32,9 +38,10 @@ export function buildAuthOwnershipRegistrations(
 export function validateAuthOwnership(
   paths: AuthFilePaths,
   tracker: OwnershipTracker,
-  ownerCapabilityId = AUTH_CAPABILITY_ID
+  ownerCapabilityId = AUTH_CAPABILITY_ID,
+  providers: string[] = []
 ): void {
-  const registrations = buildAuthOwnershipRegistrations(paths, ownerCapabilityId);
+  const registrations = buildAuthOwnershipRegistrations(paths, ownerCapabilityId, providers);
   const conflicts = tracker.detectConflicts(registrations);
 
   if (conflicts.length > 0) {

@@ -70,7 +70,8 @@ describe('post-deploy new project journey', () => {
 
     const envAfterAuth = await readFile(join(projectDir, '.env.example'), 'utf8');
     expect(envAfterAuth).toContain('DATABASE_URL=');
-    expect(envAfterAuth).toContain('AUTH_SECRET=replace-me');
+    expect(envAfterAuth).toMatch(/AUTH_SECRET=\S+/);
+    expect(envAfterAuth).not.toContain('AUTH_SECRET=replace-me');
     expect(envAfterAuth).toContain('API_URL=https://api.example.com');
 
     expect(await readFile(join(projectDir, 'src/auth.ts'), 'utf8')).toContain('NextAuth');

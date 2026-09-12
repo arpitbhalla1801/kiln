@@ -47,27 +47,37 @@ describe('createAuthConfigContent', () => {
 });
 
 describe('buildAuthEnvVars', () => {
-  test('always includes AUTH_SECRET with no providers', () => {
-    expect(buildAuthEnvVars([])).toEqual({
-      AUTH_SECRET: { example: 'replace-me', required: true },
-    });
+  test('generates a real random AUTH_SECRET value by default', () => {
+    const envVars = buildAuthEnvVars([]);
+    expect(Object.keys(envVars)).toEqual(['AUTH_SECRET']);
+    const secret = envVars.AUTH_SECRET;
+    expect(typeof secret).toBe('object');
+    expect((secret as { value?: string }).value).toMatch(/^[A-Za-z0-9+/=]{20,}$/);
+    expect((secret as { example?: string }).example).toBeUndefined();
   });
 
-  test('adds id/secret env vars for oauth providers', () => {
+  test('two calls generate different secrets', () => {
+    const first = buildAuthEnvVars([]).AUTH_SECRET as { value?: string };
+    const second = buildAuthEnvVars([]).AUTH_SECRET as { value?: string };
+    expect(first.value).not.toBe(second.value);
+  });
+
+  test('omits AUTH_SECRET entirely when generateSecret is false, to avoid overwriting an existing one', () => {
+    expect(buildAuthEnvVars([], false)).toEqual({});
+  });
+
+  test('adds id/secret env vars for oauth providers alongside AUTH_SECRET', () => {
     const envVars = buildAuthEnvVars(['github']);
     expect(Object.keys(envVars)).toEqual(['AUTH_SECRET', 'AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET']);
   });
 
   test('credentials provider contributes no extra env vars', () => {
-    expect(buildAuthEnvVars(['credentials'])).toEqual({
-      AUTH_SECRET: { example: 'replace-me', required: true },
-    });
+    expect(Object.keys(buildAuthEnvVars(['credentials']))).toEqual(['AUTH_SECRET']);
   });
 
-  test('multiple providers union their env vars', () => {
-    const envVars = buildAuthEnvVars(['github', 'google']);
+  test('multiple providers union their env vars, unaffected by generateSecret', () => {
+    const envVars = buildAuthEnvVars(['github', 'google'], false);
     expect(Object.keys(envVars)).toEqual([
-      'AUTH_SECRET',
       'AUTH_GITHUB_ID',
       'AUTH_GITHUB_SECRET',
       'AUTH_GOOGLE_ID',

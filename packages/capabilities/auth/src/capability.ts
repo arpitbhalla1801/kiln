@@ -1,5 +1,6 @@
 import { access } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import {
   type Capability,
@@ -38,10 +39,10 @@ import {
 } from './validation.js';
 import { resolveProvider } from './providers.js';
 
-export function buildAuthEnvVars(providers: string[]): EnvVariableMap {
-  const envVars: EnvVariableMap = {
-    AUTH_SECRET: { example: 'replace-me', required: true },
-  };
+export function buildAuthEnvVars(providers: string[], generateSecret = true): EnvVariableMap {
+  const envVars: EnvVariableMap = generateSecret
+    ? { AUTH_SECRET: { value: randomBytes(32).toString('base64'), required: true } }
+    : {};
 
   for (const providerId of providers) {
     const provider = resolveProvider(providerId);
@@ -87,7 +88,7 @@ export class AuthCapability {
     const paths = buildAuthFilePaths(sourceRoot);
 
     const tracker = options.tracker ?? new OwnershipTracker();
-    validateAuthOwnership(paths, tracker, AUTH_CAPABILITY_ID);
+    validateAuthOwnership(paths, tracker, AUTH_CAPABILITY_ID, providers);
 
     const authFileExists =
       options.authFileExists ?? (await fileExists(join(rootPath, paths.authFile)));
@@ -118,16 +119,16 @@ export class AuthCapability {
       providers
     );
 
-    const envPlan = await this.envCapability.planAdd(rootPath, buildAuthEnvVars(providers), {
+    const envPlan = await this.envCapability.planAdd(rootPath, buildAuthEnvVars(providers, !authFileExists), {
       tracker,
       envExamplePath: options.envExamplePath,
       envExampleExists: options.envExampleExists,
     });
 
     const manifest = await this.getManifest();
-    const capability = buildCapabilityWithOwnership(manifest, paths);
+    const capability = buildCapabilityWithOwnership(manifest, paths, providers);
     const ownershipRegistrations = [
-      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID),
+      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, providers),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -142,7 +143,7 @@ export class AuthCapability {
   }
 
   registerOwnership(tracker: OwnershipTracker, paths: AuthFilePaths, providers: string[] = []): void {
-    const registrations = buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID);
+    const registrations = buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, providers);
 
     for (const registration of registrations) {
       tracker.register(registration);
@@ -258,9 +259,15 @@ async function detectSourceRoot(rootPath: string): Promise<string> {
 
 function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
-  paths: AuthFilePaths
+  paths: AuthFilePaths,
+  providers: string[] = []
 ): Capability {
-  const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
+  const activePaths: Record<string, string> = { ...paths };
+  if (providers.length === 0) {
+    delete activePaths.routeHandlerFile;
+  }
+
+  const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(activePaths));
 
   return capabilityFromManifest({
     ...manifest,
