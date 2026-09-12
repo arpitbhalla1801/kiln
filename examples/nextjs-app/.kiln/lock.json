@@ -1,0 +1,19 @@
+{
+  "lockfileVersion": 1,
+  "project": {
+    "name": "kiln-nextjs-example",
+    "version": "0.0.0"
+  },
+  "snapshot": {
+    "timestamp": "2026-09-12T11:47:47.725Z",
+    "engineVersion": "1.0.0",
+    "capabilities": [
+      {
+        "id": "auth",
+        "version": "1.0.0",
+        "resolved": "capability:auth@1.0.0",
+        "dependencies": {}
+      }
+    ]
+  }
+}

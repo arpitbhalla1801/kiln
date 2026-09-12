@@ -204,7 +204,31 @@ describe('kiln cli', () => {
     const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
     expect(ownership.ownership.dependencies).toEqual([]);
     expect(ownership.ownership.files).toEqual([{ filePath: '.env.example', ownerCapabilityId: 'env' }]);
+
+    const lockfile = JSON.parse(await readFile(join(root, '.kiln/lock.json'), 'utf8'));
+    const capabilityIds = lockfile.snapshot.capabilities.map((entry: { id: string }) => entry.id);
+    expect(capabilityIds).toEqual(['env']);
   }, 30000);
+
+  test('add writes .kiln/lock.json with capability id, version, and resolved dependencies', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+
+    const lockfile = JSON.parse(await readFile(join(root, '.kiln/lock.json'), 'utf8'));
+    expect(lockfile.project.name).toBe('demo-app');
+    expect(lockfile.snapshot.capabilities).toEqual([
+      { id: 'env', version: '1.0.0', resolved: 'capability:env@1.0.0', dependencies: {} },
+    ]);
+  });
+
+  test('add --dry-run does not write .kiln/lock.json', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: true });
+
+    await expect(readFile(join(root, '.kiln/lock.json'), 'utf8')).rejects.toThrow();
+  });
 
   test('remove reports no-op for a capability that was never added', async () => {
     const root = await createTempDir();

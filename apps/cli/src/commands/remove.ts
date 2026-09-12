@@ -1,5 +1,6 @@
 import {
   loadOwnershipTracker,
+  LockfileStore,
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
 } from '@kiln/project-model';
@@ -85,5 +86,13 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
     };
 
     await OwnershipMetadataStore.save(ownershipMetadataFromSnapshot(remaining), rootPath);
+
+    const lockfile = await LockfileStore.load(rootPath);
+    if (lockfile) {
+      lockfile.snapshot.capabilities = lockfile.snapshot.capabilities.filter(
+        (entry) => entry.id !== capabilityId
+      );
+      await LockfileStore.save(lockfile, rootPath);
+    }
   }
 }
