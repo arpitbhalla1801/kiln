@@ -42,9 +42,10 @@ export function buildOwnershipRegistrations(
 export function validateEnvOwnership(
   variables: EnvVariableInput[],
   tracker: OwnershipTracker,
-  ownerCapabilityId: string
+  ownerCapabilityId: string,
+  envExamplePath: string
 ): void {
-  const registrations = buildOwnershipRegistrations(variables, '.env.example', ownerCapabilityId);
+  const registrations = buildOwnershipRegistrations(variables, envExamplePath, ownerCapabilityId);
   const conflicts = tracker.detectConflicts(registrations);
 
   if (conflicts.length > 0) {

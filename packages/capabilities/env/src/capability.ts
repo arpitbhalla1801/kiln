@@ -57,7 +57,7 @@ export class EnvCapability {
     validateEnvVariableNames(variableInputs);
 
     const tracker = options.tracker ?? new OwnershipTracker();
-    validateEnvOwnership(variableInputs, tracker, ENV_CAPABILITY_ID);
+    validateEnvOwnership(variableInputs, tracker, ENV_CAPABILITY_ID, envExamplePath);
 
     const ownershipRegistrations = buildOwnershipRegistrations(
       variableInputs,
