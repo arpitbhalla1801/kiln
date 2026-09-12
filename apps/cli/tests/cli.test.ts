@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { parseEnvVariables, runAdd } from '../src/commands/add.js';
+import { parseEnvVariables, parseProviders, runAdd } from '../src/commands/add.js';
 import { runCreate } from '../src/commands/create.js';
 import { runDoctor } from '../src/commands/doctor.js';
 import { runRemove } from '../src/commands/remove.js';
@@ -86,6 +86,26 @@ describe('kiln cli', () => {
     expect(() =>
       parseEnvVariables(['add', 'env', '--var=API_KEY=abc\nINJECTED=evil'])
     ).toThrow(/cannot contain newlines/);
+  });
+
+  test('parseProviders reads repeated --provider flags in both forms', () => {
+    const providers = parseProviders([
+      'add',
+      'auth',
+      '--provider',
+      'github',
+      '--provider=google',
+    ]);
+    expect(providers).toEqual(['github', 'google']);
+  });
+
+  test('add auth rejects an unknown provider', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await expect(
+      runAdd('auth', { cwd: root, dryRun: false }, {}, ['discord'])
+    ).rejects.toThrow(/Unknown auth provider 'discord'/);
   });
 
   test('dry-run add env produces deterministic transform output', async () => {
