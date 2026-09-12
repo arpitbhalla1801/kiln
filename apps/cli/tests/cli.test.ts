@@ -256,6 +256,45 @@ describe('kiln cli', () => {
     );
   });
 
+  test('dry-run shows a content diff for modified files', () => {
+    const formatted = formatTransformPlan(
+      {
+        operations: [
+          {
+            type: 'modify',
+            filePath: '.env.example',
+            before: 'DATABASE_URL=postgres://localhost\n',
+            content: 'DATABASE_URL=postgres://localhost\nAPI_URL=https://api.example.com\n',
+          },
+        ],
+        summary: { created: 0, modified: 1, deleted: 0, total: 1 },
+      },
+      true
+    );
+
+    expect(formatted).toContain('+ API_URL=https://api.example.com');
+    expect(formatted).not.toContain('- DATABASE_URL=postgres://localhost');
+  });
+
+  test('apply mode does not print a content diff', () => {
+    const formatted = formatTransformPlan(
+      {
+        operations: [
+          {
+            type: 'modify',
+            filePath: '.env.example',
+            before: 'DATABASE_URL=postgres://localhost\n',
+            content: 'DATABASE_URL=postgres://localhost\nAPI_URL=https://api.example.com\n',
+          },
+        ],
+        summary: { created: 0, modified: 1, deleted: 0, total: 1 },
+      },
+      false
+    );
+
+    expect(formatted).not.toContain('+ API_URL=https://api.example.com');
+  });
+
   test('formatTransformPlan sorts operations deterministically', () => {
     const formatted = formatTransformPlan(
       {

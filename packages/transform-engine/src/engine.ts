@@ -84,6 +84,7 @@ export class TransformEngine {
         type: entry.type,
         filePath: entry.path,
         content: entry.after,
+        before: entry.before,
         diffPreview: metadata?.diffPreview,
       };
     });
