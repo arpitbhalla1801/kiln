@@ -6,6 +6,7 @@ import type { TransformPlan } from '@kiln/transform-engine';
 export interface RuntimeOptions {
   dryRun?: boolean;
   cwd?: string;
+  providers?: string[];
 }
 
 export interface RuntimeExecutionResult {

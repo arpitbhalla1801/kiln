@@ -35,6 +35,7 @@ import {
   buildAuthOwnershipRegistrations,
   validateAuthOwnership,
 } from './validation.js';
+import { resolveProvider } from './providers.js';
 
 const AUTH_ENV_VARS: EnvVariableMap = {
   AUTH_SECRET: { example: 'replace-me', required: true },
@@ -65,6 +66,11 @@ export class AuthCapability {
     rootPath: string,
     options: AuthCapabilityPlanOptions = {}
   ): Promise<AuthCapabilityPlan> {
+    const providers = options.providers ?? [];
+    for (const providerId of providers) {
+      resolveProvider(providerId);
+    }
+
     const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath));
     const paths = buildAuthFilePaths(sourceRoot);
 
@@ -108,6 +114,7 @@ export class AuthCapability {
       ownershipRegistrations,
       envPlan,
       paths,
+      providers,
     };
   }
 

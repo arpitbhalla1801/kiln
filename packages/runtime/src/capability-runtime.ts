@@ -67,7 +67,10 @@ export class CapabilityRuntime {
   async addAuth(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
     const rootPath = options.cwd ?? process.cwd();
     const tracker = await loadOwnershipTracker(rootPath);
-    const capabilityPlan = await this.authCapability.planAdd(rootPath, { tracker });
+    const capabilityPlan = await this.authCapability.planAdd(rootPath, {
+      tracker,
+      providers: options.providers,
+    });
 
     return this.executeCapabilityPlan('auth', rootPath, capabilityPlan, options);
   }

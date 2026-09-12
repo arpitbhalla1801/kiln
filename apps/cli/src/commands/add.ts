@@ -14,7 +14,8 @@ const DEFAULT_ENV_VARS: EnvVariableMap = {
 export async function runAdd(
   capabilityId: string,
   options: CliOptions,
-  envVariables: EnvVariableMap = {}
+  envVariables: EnvVariableMap = {},
+  providers: string[] = []
 ): Promise<void> {
   if (!SUPPORTED_CAPABILITIES.includes(capabilityId as SupportedCapabilityId)) {
     throw new Error(
@@ -34,7 +35,7 @@ export async function runAdd(
   const result =
     capability === 'env'
       ? await runtime.addEnv(variables, { cwd: rootPath, dryRun: options.dryRun })
-      : await runtime.addAuth({ cwd: rootPath, dryRun: options.dryRun });
+      : await runtime.addAuth({ cwd: rootPath, dryRun: options.dryRun, providers });
 
   console.log(
     formatCapabilityResult(
@@ -81,6 +82,25 @@ export function parseEnvVariables(argv: string[]): EnvVariableMap {
   }
 
   return variables;
+}
+
+export function parseProviders(argv: string[]): string[] {
+  const providers: string[] = [];
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === '--provider' && argv[index + 1]) {
+      providers.push(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--provider=')) {
+      providers.push(arg.slice('--provider='.length));
+    }
+  }
+
+  return providers;
 }
 
 function assertSingleLine(key: string, value: string): void {

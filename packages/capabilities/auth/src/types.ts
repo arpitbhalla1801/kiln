@@ -19,6 +19,7 @@ export interface AuthCapabilityPlanOptions {
   authFileExists?: boolean;
   middlewareFileExists?: boolean;
   nextAuthInstalled?: boolean;
+  providers?: string[];
 }
 
 export interface AuthCapabilityPlan {
@@ -27,4 +28,5 @@ export interface AuthCapabilityPlan {
   ownershipRegistrations: OwnershipRegistration[];
   envPlan: EnvCapabilityPlan;
   paths: AuthFilePaths;
+  providers: string[];
 }

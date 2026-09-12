@@ -2,7 +2,7 @@
 
 import { resolve } from 'node:path';
 import pkg from '../package.json';
-import { runAdd, parseEnvVariables } from './commands/add.js';
+import { runAdd, parseEnvVariables, parseProviders } from './commands/add.js';
 import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
 import { runInspect } from './commands/inspect.js';
@@ -45,7 +45,7 @@ function printHelp(topic?: string): void {
       console.log('Usage: kiln add <capability>');
       console.log('Capabilities: env, auth');
       console.log('  kiln add env [--var KEY=value]');
-      console.log('  kiln add auth');
+      console.log('  kiln add auth [--provider github|google|credentials]');
     }
 
     if (command === 'remove') {
@@ -129,7 +129,8 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = capabilityId === 'env' ? parseEnvVariables(argv) : {};
-    await runAdd(capabilityId, cliOptions, envVariables);
+    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    await runAdd(capabilityId, cliOptions, envVariables, providers);
     return;
   }
 
