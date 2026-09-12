@@ -11,9 +11,15 @@ import {
 import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { NodeAdapter } from '@kiln/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
-import { loadOwnershipTracker, saveOwnershipTracker } from '@kiln/project-model';
+import {
+  loadOwnershipTracker,
+  LockfileStore,
+  saveOwnershipTracker,
+  type KilnLockfile,
+} from '@kiln/project-model';
 import { TransformEngine } from '@kiln/transform-engine';
 import { extractInstallDependencies } from './install.js';
+import pkg from '../package.json' with { type: 'json' };
 import type {
   KilnRuntimeContext,
   RuntimeExecutionResult,
@@ -196,7 +202,43 @@ export class CapabilityRuntime {
       }
 
       await saveOwnershipTracker(tracker, context.rootPath);
+      await this.updateLockfile(context);
     });
+  }
+
+  private async updateLockfile(context: KilnRuntimeContext): Promise<void> {
+    if (!context.capabilityPlan || !context.resolvedDependencies) {
+      return;
+    }
+
+    const existing = await LockfileStore.load(context.rootPath);
+    const capability = context.capabilityPlan.capability;
+
+    const entry = {
+      id: capability.id,
+      version: capability.version,
+      resolved: `capability:${capability.id}@${capability.version}`,
+      dependencies: Object.fromEntries(context.resolvedDependencies),
+    };
+
+    const otherCapabilities = (existing?.snapshot.capabilities ?? []).filter(
+      (item) => item.id !== capability.id
+    );
+
+    const lockfile: KilnLockfile = {
+      lockfileVersion: existing?.lockfileVersion ?? 1,
+      project: {
+        name: context.inspection?.packageName ?? 'unknown',
+        version: context.inspection?.packageVersion ?? '0.0.0',
+      },
+      snapshot: {
+        capabilities: [...otherCapabilities, entry],
+        timestamp: new Date().toISOString(),
+        engineVersion: pkg.version,
+      },
+    };
+
+    await LockfileStore.save(lockfile, context.rootPath);
   }
 
   private buildProjectState(context: KilnRuntimeContext, tracker: OwnershipTracker): ProjectState {
