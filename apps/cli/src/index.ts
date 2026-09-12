@@ -6,6 +6,7 @@ import { runAdd, parseEnvVariables } from './commands/add.js';
 import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
 import { runInspect } from './commands/inspect.js';
+import { runRemove } from './commands/remove.js';
 import { checkForUpdate } from './update-check.js';
 
 declare const process: {
@@ -17,11 +18,12 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'create' | 'add' | 'inspect' | 'doctor';
+type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor';
 
 const commands: Record<CommandName, string> = {
   create: 'Scaffold a new kiln project.',
   add: 'Add a capability to a kiln project (env, auth).',
+  remove: 'Remove a capability from a kiln project (env, auth).',
   inspect: 'Inspect the current kiln project.',
   doctor: 'Run environment checks for kiln.',
 };
@@ -44,6 +46,12 @@ function printHelp(topic?: string): void {
       console.log('Capabilities: env, auth');
       console.log('  kiln add env [--var KEY=value]');
       console.log('  kiln add auth');
+    }
+
+    if (command === 'remove') {
+      console.log('Usage: kiln remove <capability>');
+      console.log('Capabilities: env, auth');
+      console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
     }
 
     console.log();
@@ -122,6 +130,16 @@ async function main(argv: string[]): Promise<void> {
 
     const envVariables = capabilityId === 'env' ? parseEnvVariables(argv) : {};
     await runAdd(capabilityId, cliOptions, envVariables);
+    return;
+  }
+
+  if (firstArg === 'remove') {
+    const capabilityId = secondArg;
+    if (!capabilityId) {
+      throw new Error('Missing capability. Usage: kiln remove <env|auth>');
+    }
+
+    await runRemove(capabilityId, cliOptions);
     return;
   }
 

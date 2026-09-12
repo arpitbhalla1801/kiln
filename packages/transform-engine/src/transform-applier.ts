@@ -1,6 +1,7 @@
 import type {
   EnvMutationTransform,
   EnvVariableDefinition,
+  FileDeleteTransform,
   FilePatchTransform,
   JsonMutationTransform,
   PackageJsonMutationTransform,
@@ -24,6 +25,9 @@ export class TransformApplier {
         return;
       case 'file-patch':
         applyFilePatch(vfs, transform);
+        return;
+      case 'file-delete':
+        applyFileDelete(vfs, transform);
         return;
       case 'json-mutation':
         applyJsonMutation(vfs, transform);
@@ -78,6 +82,13 @@ function applyFilePatch(vfs: VirtualFilesystem, transform: FilePatchTransform): 
   }
 
   throw new Error(`Patch search text not found in file: ${filePath}`);
+}
+
+function applyFileDelete(vfs: VirtualFilesystem, transform: FileDeleteTransform): void {
+  const filePath = normalizePath(transform.filePath);
+  if (vfs.exists(filePath)) {
+    vfs.delete(filePath);
+  }
 }
 
 function applyJsonMutation(vfs: VirtualFilesystem, transform: JsonMutationTransform): void {
@@ -145,7 +156,12 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
     entries.push(created);
   }
 
-  const serialized = formatEnvEntries(entries);
+  const removeKeys = new Set(transform.removeVariables ?? []);
+  const remaining = removeKeys.size > 0
+    ? entries.filter((entry) => entry.type !== 'var' || !removeKeys.has(entry.key))
+    : entries;
+
+  const serialized = formatEnvEntries(remaining);
 
   if (serialized !== current.replace(/\r\n/g, '\n')) {
     vfs.write(filePath, serialized);

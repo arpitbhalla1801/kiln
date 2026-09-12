@@ -18,6 +18,11 @@ export interface FilePatchTransform extends TransformBase {
   replace: string;
 }
 
+export interface FileDeleteTransform extends TransformBase {
+  type: 'file-delete';
+  filePath: string;
+}
+
 export type JsonMutationOperation = 'set' | 'delete';
 
 export interface JsonMutationTransform extends TransformBase {
@@ -49,12 +54,14 @@ export interface EnvMutationTransform extends TransformBase {
   type: 'env-mutation';
   filePath: string;
   variables: Record<string, string | EnvVariableDefinition>;
+  removeVariables?: string[];
 }
 
 /** Discriminated union of supported kiln transforms. */
 export type TypedTransform =
   | FileCreateTransform
   | FilePatchTransform
+  | FileDeleteTransform
   | JsonMutationTransform
   | PackageJsonMutationTransform
   | EnvMutationTransform;
@@ -64,6 +71,7 @@ export type TransformPipeline = TypedTransform[];
 export const TYPED_TRANSFORM_TYPES: readonly TransformType[] = [
   'file-create',
   'file-patch',
+  'file-delete',
   'json-mutation',
   'package-json-mutation',
   'env-mutation',
