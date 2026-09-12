@@ -9,6 +9,7 @@ export const NEXT_AUTH_VERSION = '^5.0.0-beta.32';
 export interface AuthFilePaths {
   authFile: string;
   middlewareFile: string;
+  routeHandlerFile: string;
 }
 
 export interface AuthCapabilityPlanOptions {
@@ -18,6 +19,7 @@ export interface AuthCapabilityPlanOptions {
   sourceRoot?: string;
   authFileExists?: boolean;
   middlewareFileExists?: boolean;
+  routeHandlerFileExists?: boolean;
   nextAuthInstalled?: boolean;
   providers?: string[];
 }

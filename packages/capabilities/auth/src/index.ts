@@ -12,6 +12,7 @@ export {
 export {
   createAuthConfigContent,
   createMiddlewareContent,
+  createRouteHandlerContent,
   resolveAuthImportPath,
 } from './templates.js';
 export {

@@ -64,6 +64,39 @@ describe('AuthCapability', () => {
     expect(plan.capability.ownedEnvVars).toBeUndefined();
   });
 
+  test('does not scaffold a route handler when no providers are selected', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+    });
+    const auth = new AuthCapability();
+    const plan = await auth.planAdd(root);
+
+    const routeHandlerTransform = plan.transforms.find(
+      (transform) => transform.filePath === plan.paths.routeHandlerFile
+    );
+    expect(routeHandlerTransform).toBeUndefined();
+  });
+
+  test('scaffolds a route handler under the detected source root when a provider is selected', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+      'src/app/page.tsx': 'export default function Page() { return null; }',
+    });
+    const auth = new AuthCapability();
+    const plan = await auth.planAdd(root, { providers: ['github'] });
+
+    expect(plan.paths.routeHandlerFile).toBe('src/app/api/auth/[...nextauth]/route.ts');
+
+    const vfs = new VirtualFilesystem({
+      initialFiles: { 'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }) },
+    });
+    const applier = new TransformApplier();
+    applier.applyAll(vfs, plan.transforms);
+
+    expect(vfs.read(plan.paths.routeHandlerFile)).toContain('export const { GET, POST } = handlers;');
+    expect(plan.capability.files).toContain(plan.paths.routeHandlerFile);
+  });
+
   test('uses src directory when app router project is detected', async () => {
     const root = await createTempProject({
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
@@ -75,6 +108,7 @@ describe('AuthCapability', () => {
     expect(plan.paths).toEqual({
       authFile: 'src/auth.ts',
       middlewareFile: 'src/middleware.ts',
+      routeHandlerFile: 'src/app/api/auth/[...nextauth]/route.ts',
     });
   });
 

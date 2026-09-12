@@ -34,6 +34,13 @@ export const config = {
 `;
 }
 
+export function createRouteHandlerContent(): string {
+  return `import { handlers } from "../../../../auth";
+
+export const { GET, POST } = handlers;
+`;
+}
+
 export function resolveAuthImportPath(paths: AuthFilePaths): string {
   if (paths.authFile.startsWith('src/')) {
     return './auth';
