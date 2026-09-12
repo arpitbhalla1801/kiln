@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { parseEnvVariables, runAdd } from '../src/commands/add.js';
 import { runCreate } from '../src/commands/create.js';
 import { runDoctor } from '../src/commands/doctor.js';
+import { runRemove } from '../src/commands/remove.js';
 import { formatTransformPlan } from '../src/output.js';
 
 const tempRoots: string[] = [];
@@ -180,6 +181,55 @@ describe('kiln cli', () => {
     expect(output).toContain('[fail] package-json-health:');
     expect(output).toContain('missing scripts.dev');
     expect(output).toContain('missing dependencies.next');
+  });
+
+  test('remove auth deletes owned files/deps, leaves env-owned vars alone', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+    await runAdd('auth', { cwd: root, dryRun: false });
+
+    await runRemove('auth', { cwd: root, dryRun: false });
+
+    await expect(readFile(join(root, 'src/auth.ts'), 'utf8')).rejects.toThrow();
+    await expect(readFile(join(root, 'src/middleware.ts'), 'utf8')).rejects.toThrow();
+
+    const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+    expect(packageJson.dependencies?.['next-auth']).toBeUndefined();
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('AUTH_SECRET=');
+    expect(envExample).toContain('DATABASE_URL=');
+
+    const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
+    expect(ownership.ownership.dependencies).toEqual([]);
+    expect(ownership.ownership.files).toEqual([{ filePath: '.env.example', ownerCapabilityId: 'env' }]);
+  }, 30000);
+
+  test('remove reports no-op for a capability that was never added', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    try {
+      await runRemove('auth', { cwd: root, dryRun: false });
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(logs.join('\n')).toContain('not applied to this project');
+  });
+
+  test('remove rejects unsupported capabilities', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await expect(runRemove('payments', { cwd: root, dryRun: false })).rejects.toThrow(
+      "Unsupported capability 'payments'"
+    );
   });
 
   test('formatTransformPlan sorts operations deterministically', () => {

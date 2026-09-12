@@ -2,6 +2,7 @@ import type {
   EnvMutationTransform,
   EnvVariableDefinition,
   FileCreateTransform,
+  FileDeleteTransform,
   FilePatchTransform,
   JsonMutationOperation,
   JsonMutationTransform,
@@ -29,6 +30,10 @@ export function filePatch(
   return { id, name, type: 'file-patch', filePath, search, replace };
 }
 
+export function fileDelete(id: string, filePath: string, name?: string): FileDeleteTransform {
+  return { id, name, type: 'file-delete', filePath };
+}
+
 export function jsonMutation(
   id: string,
   filePath: string,
@@ -52,9 +57,10 @@ export function envMutation(
   id: string,
   filePath: string,
   variables: Record<string, string | EnvVariableDefinition>,
-  name?: string
+  name?: string,
+  removeVariables?: string[]
 ): EnvMutationTransform {
-  return { id, name, type: 'env-mutation', filePath, variables };
+  return { id, name, type: 'env-mutation', filePath, variables, removeVariables };
 }
 
 /** Compose transforms into an ordered pipeline. */
@@ -77,6 +83,10 @@ export class TransformPipelineBuilder {
 
   filePatch(id: string, filePath: string, search: string, replace: string, name?: string): this {
     return this.add(filePatch(id, filePath, search, replace, name));
+  }
+
+  fileDelete(id: string, filePath: string, name?: string): this {
+    return this.add(fileDelete(id, filePath, name));
   }
 
   jsonMutation(
@@ -102,9 +112,10 @@ export class TransformPipelineBuilder {
     id: string,
     filePath: string,
     variables: Record<string, string | EnvVariableDefinition>,
-    name?: string
+    name?: string,
+    removeVariables?: string[]
   ): this {
-    return this.add(envMutation(id, filePath, variables, name));
+    return this.add(envMutation(id, filePath, variables, name, removeVariables));
   }
 
   build(): TransformPipeline {

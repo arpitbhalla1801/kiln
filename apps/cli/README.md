@@ -38,6 +38,7 @@ Project names must be npm-safe: lowercase letters, numbers, hyphens, or undersco
 | `kiln create <name>` | Scaffold a new Next.js + TypeScript project |
 | `kiln add env [--var KEY=value]` | Add environment variable capability |
 | `kiln add auth` | Add auth capability ([next-auth](https://authjs.dev)) |
+| `kiln remove <env\|auth>` | Remove a capability: deletes its owned files, dependencies, scripts, and env vars |
 | `kiln inspect` | Inspect project metadata and ownership |
 | `kiln doctor` | Run environment and project health checks |
 

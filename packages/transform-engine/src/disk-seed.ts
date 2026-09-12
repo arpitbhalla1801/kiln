@@ -15,6 +15,7 @@ export function collectTransformFilePaths(transforms: TransformPipeline): string
         break;
       case 'file-create':
       case 'file-patch':
+      case 'file-delete':
       case 'json-mutation':
       case 'env-mutation':
         paths.add(transform.filePath);
