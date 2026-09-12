@@ -53,6 +53,8 @@ export async function runDoctor(options: CliOptions): Promise<void> {
       });
     }
 
+    checks.push(await checkRequiredEnvVars(rootPath));
+
     if (await OwnershipMetadataStore.exists(rootPath)) {
       checks.push({
         name: 'ownership',
@@ -101,6 +103,48 @@ async function checkPackageJsonHealth(rootPath: string): Promise<DoctorCheck> {
     name: 'package-json-health',
     status: validation.status,
     detail: validation.detail,
+  };
+}
+
+async function checkRequiredEnvVars(rootPath: string): Promise<DoctorCheck> {
+  const envExamplePath = join(rootPath, '.env.example');
+  let content: string;
+
+  try {
+    content = await readFile(envExamplePath, 'utf8');
+  } catch {
+    return { name: 'env-required-vars', status: 'pass', detail: 'no .env.example found' };
+  }
+
+  const lines = content.split(/\r?\n/);
+  const emptyRequired: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    if (lines[index].trim() !== '# required') {
+      continue;
+    }
+
+    const nextLine = lines[index + 1] ?? '';
+    const separatorIndex = nextLine.indexOf('=');
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const key = nextLine.slice(0, separatorIndex).trim();
+    const value = nextLine.slice(separatorIndex + 1).trim();
+    if (value === '') {
+      emptyRequired.push(key);
+    }
+  }
+
+  if (emptyRequired.length === 0) {
+    return { name: 'env-required-vars', status: 'pass', detail: 'all required vars have a value' };
+  }
+
+  return {
+    name: 'env-required-vars',
+    status: 'warn',
+    detail: `missing a value in .env.example: ${emptyRequired.join(', ')}`,
   };
 }
 

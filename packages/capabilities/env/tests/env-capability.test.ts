@@ -52,7 +52,7 @@ describe('EnvCapability', () => {
     applier.applyAll(vfs, plan.transforms);
 
     expect(vfs.read('.env.example')).toBe(
-      '# Environment variables\nDATABASE_URL=postgres://localhost:5432/app\nNODE_ENV=development\n'
+      '# Environment variables\n# required\nDATABASE_URL=postgres://localhost:5432/app\nNODE_ENV=development\n'
     );
     expect(plan.capability.ownedEnvVars).toEqual(['DATABASE_URL', 'NODE_ENV']);
     expect(plan.capability.files).toContain('.env.example');
@@ -79,7 +79,7 @@ describe('EnvCapability', () => {
     applier.applyAll(vfs, secondPlan.transforms);
 
     expect(vfs.read('.env.example')).toBe(
-      '# Environment variables\nDATABASE_URL=postgres://localhost:5432/app\n'
+      '# Environment variables\n# required\nDATABASE_URL=postgres://localhost:5432/app\n'
     );
     expect(secondPlan.transforms).toHaveLength(1);
   });

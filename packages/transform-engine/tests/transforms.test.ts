@@ -115,9 +115,10 @@ describe('TransformApplier', () => {
     );
 
     // Existing lines (including comments) keep their original position;
-    // new variables are appended in the order they're declared.
+    // new variables are appended in the order they're declared, with a
+    // '# required' marker preceding any required variable.
     expect(vfs.read('.env.example')).toBe(
-      'EXISTING=value\nAUTH_SECRET=replace-me\nDATABASE_URL=postgres://localhost\n'
+      'EXISTING=value\n# required\nAUTH_SECRET=replace-me\nDATABASE_URL=postgres://localhost\n'
     );
   });
 
