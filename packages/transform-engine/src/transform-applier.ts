@@ -129,6 +129,12 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
     const existing = varEntries.get(key);
     const value = normalized.value ?? normalized.example ?? existing?.value;
 
+    if (/[\r\n]/.test(key) || (value !== undefined && /[\r\n]/.test(value))) {
+      throw new Error(
+        `Refusing to write env var '${key}': keys and values cannot contain newlines (would inject untracked lines into ${filePath}).`
+      );
+    }
+
     if (existing) {
       existing.value = value ?? existing.value;
       continue;

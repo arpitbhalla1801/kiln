@@ -60,6 +60,7 @@ export function parseEnvVariables(argv: string[]): EnvVariableMap {
 
       const key = pair.slice(0, separator);
       const value = pair.slice(separator + 1);
+      assertSingleLine(key, value);
       variables[key] = value;
       index += 1;
       continue;
@@ -72,9 +73,20 @@ export function parseEnvVariables(argv: string[]): EnvVariableMap {
         throw new Error(`Invalid --var format '${arg}'. Use --var=KEY=value`);
       }
 
-      variables[pair.slice(0, separator)] = pair.slice(separator + 1);
+      const key = pair.slice(0, separator);
+      const value = pair.slice(separator + 1);
+      assertSingleLine(key, value);
+      variables[key] = value;
     }
   }
 
   return variables;
+}
+
+function assertSingleLine(key: string, value: string): void {
+  if (/[\r\n]/.test(key) || /[\r\n]/.test(value)) {
+    throw new Error(
+      `Invalid --var value for '${key}': env var keys and values cannot contain newlines.`
+    );
+  }
 }
