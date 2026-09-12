@@ -119,6 +119,38 @@ describe('EnvCapability', () => {
     ).toThrow(/Ownership conflict detected/);
   });
 
+  test('detects a file-ownership conflict against a custom envExamplePath, not the default', async () => {
+    const tracker = new OwnershipTracker();
+    tracker.registerFile('.env.staging', 'other-capability');
+
+    const env = new EnvCapability();
+    const root = await createTempProject();
+
+    await expect(
+      env.planAdd(
+        root,
+        { DATABASE_URL: 'postgres://localhost:5432/app' },
+        { tracker, envExamplePath: '.env.staging' }
+      )
+    ).rejects.toThrow(/Ownership conflict detected/);
+  });
+
+  test('does not falsely conflict against the default .env.example when using a custom path', async () => {
+    const tracker = new OwnershipTracker();
+    tracker.registerFile('.env.example', 'other-capability');
+
+    const env = new EnvCapability();
+    const root = await createTempProject();
+
+    const plan = await env.planAdd(
+      root,
+      { DATABASE_URL: 'postgres://localhost:5432/app' },
+      { tracker, envExamplePath: '.env.staging' }
+    );
+
+    expect(plan.transforms.some((transform) => transform.filePath === '.env.staging')).toBe(true);
+  });
+
   test('validates env variable names', () => {
     expect(() =>
       validateEnvVariableNames([{ name: 'invalid-name' }])
