@@ -41,6 +41,36 @@ export const { GET, POST } = handlers;
 `;
 }
 
+export interface ProviderMergePatch {
+  importSearch: string;
+  importReplace: string;
+  providersSearch: string;
+  providersReplace: string;
+}
+
+/**
+ * Anchors for merging new providers into a hand-edited auth.ts via file-patch.
+ * Both anchors are constant strings that any kiln-generated (or reasonably
+ * conventional) auth.ts contains, so repeated merges across multiple `kiln add
+ * auth --provider x` runs keep finding the same anchor.
+ */
+export function buildProviderMergePatch(newProviderIds: string[]): ProviderMergePatch {
+  const providers = newProviderIds.map(resolveProvider);
+
+  const newImports = providers
+    .map((provider) => `import ${provider.importName} from "${provider.importSpecifier}";`)
+    .join('\n');
+
+  const newEntries = providers.map((provider) => `    ${provider.factoryExpression},`).join('\n');
+
+  return {
+    importSearch: 'import NextAuth from "next-auth";',
+    importReplace: `import NextAuth from "next-auth";\n${newImports}`,
+    providersSearch: 'providers: [',
+    providersReplace: `providers: [\n${newEntries}`,
+  };
+}
+
 export function resolveAuthImportPath(paths: AuthFilePaths): string {
   if (paths.authFile.startsWith('src/')) {
     return './auth';

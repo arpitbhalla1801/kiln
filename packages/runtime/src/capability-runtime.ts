@@ -67,9 +67,13 @@ export class CapabilityRuntime {
   async addAuth(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
     const rootPath = options.cwd ?? process.cwd();
     const tracker = await loadOwnershipTracker(rootPath);
+    const lockfile = await LockfileStore.load(rootPath);
+    const existingProviders =
+      lockfile?.snapshot.capabilities.find((entry) => entry.id === 'auth')?.providers ?? [];
     const capabilityPlan = await this.authCapability.planAdd(rootPath, {
       tracker,
       providers: options.providers,
+      existingProviders,
     });
 
     return this.executeCapabilityPlan('auth', rootPath, capabilityPlan, options);
@@ -222,6 +226,7 @@ export class CapabilityRuntime {
       version: capability.version,
       resolved: `capability:${capability.id}@${capability.version}`,
       dependencies: Object.fromEntries(context.resolvedDependencies),
+      ...(context.capabilityPlan.providers ? { providers: context.capabilityPlan.providers } : {}),
     };
 
     const otherCapabilities = (existing?.snapshot.capabilities ?? []).filter(

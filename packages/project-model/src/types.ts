@@ -112,6 +112,7 @@ export interface CapabilityVersion {
   resolved: string;
   integrity?: string;
   dependencies: Record<string, string>;
+  providers?: string[];
 }
 
 /** Point-in-time install snapshot for reproducibility. */
