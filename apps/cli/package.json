@@ -1,6 +1,6 @@
 {
   "name": "@kiln-cli/kiln",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Capability-based scaffolding CLI for Node/Next.js projects",
   "license": "MIT",
   "repository": {
@@ -12,11 +12,15 @@
   "bugs": {
     "url": "https://github.com/arpitbhalla1801/kiln/issues"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "kiln": "./dist/index.js"
   },
   "files": [
-    "dist/index.js"
+    "dist/index.js",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"
