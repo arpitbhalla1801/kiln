@@ -22,3 +22,8 @@ export {
   type AuthCapabilityPlanOptions,
   type AuthFilePaths,
 } from './types.js';
+export {
+  AUTH_PROVIDERS,
+  resolveProvider,
+  type AuthProviderDescriptor,
+} from './providers.js';
