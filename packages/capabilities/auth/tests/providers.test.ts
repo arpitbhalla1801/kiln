@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { AUTH_PROVIDERS, resolveProvider } from '../src/providers.js';
 import { createAuthConfigContent } from '../src/templates.js';
+import { buildAuthEnvVars } from '../src/capability.js';
 
 describe('auth provider registry', () => {
   test('resolves known providers', () => {
@@ -42,5 +43,35 @@ describe('createAuthConfigContent', () => {
     expect(content).toContain('import GitHub from "next-auth/providers/github";');
     expect(content).toContain('import Google from "next-auth/providers/google";');
     expect(content).toContain('providers: [\n    GitHub,\n    Google,\n  ],');
+  });
+});
+
+describe('buildAuthEnvVars', () => {
+  test('always includes AUTH_SECRET with no providers', () => {
+    expect(buildAuthEnvVars([])).toEqual({
+      AUTH_SECRET: { example: 'replace-me', required: true },
+    });
+  });
+
+  test('adds id/secret env vars for oauth providers', () => {
+    const envVars = buildAuthEnvVars(['github']);
+    expect(Object.keys(envVars)).toEqual(['AUTH_SECRET', 'AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET']);
+  });
+
+  test('credentials provider contributes no extra env vars', () => {
+    expect(buildAuthEnvVars(['credentials'])).toEqual({
+      AUTH_SECRET: { example: 'replace-me', required: true },
+    });
+  });
+
+  test('multiple providers union their env vars', () => {
+    const envVars = buildAuthEnvVars(['github', 'google']);
+    expect(Object.keys(envVars)).toEqual([
+      'AUTH_SECRET',
+      'AUTH_GITHUB_ID',
+      'AUTH_GITHUB_SECRET',
+      'AUTH_GOOGLE_ID',
+      'AUTH_GOOGLE_SECRET',
+    ]);
   });
 });

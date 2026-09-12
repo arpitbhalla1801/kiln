@@ -2,6 +2,7 @@
 
 export {
   AuthCapability,
+  buildAuthEnvVars,
   buildAuthFilePaths,
   buildAuthTransforms,
 } from './capability.js';

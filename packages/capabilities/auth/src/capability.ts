@@ -38,9 +38,20 @@ import {
 } from './validation.js';
 import { resolveProvider } from './providers.js';
 
-const AUTH_ENV_VARS: EnvVariableMap = {
-  AUTH_SECRET: { example: 'replace-me', required: true },
-};
+export function buildAuthEnvVars(providers: string[]): EnvVariableMap {
+  const envVars: EnvVariableMap = {
+    AUTH_SECRET: { example: 'replace-me', required: true },
+  };
+
+  for (const providerId of providers) {
+    const provider = resolveProvider(providerId);
+    for (const envVar of provider.envVars) {
+      envVars[envVar] = { example: 'replace-me', required: true };
+    }
+  }
+
+  return envVars;
+}
 
 export class AuthCapability {
   readonly manifestPath?: string;
@@ -107,7 +118,7 @@ export class AuthCapability {
       providers
     );
 
-    const envPlan = await this.envCapability.planAdd(rootPath, AUTH_ENV_VARS, {
+    const envPlan = await this.envCapability.planAdd(rootPath, buildAuthEnvVars(providers), {
       tracker,
       envExamplePath: options.envExamplePath,
       envExampleExists: options.envExampleExists,
@@ -130,14 +141,14 @@ export class AuthCapability {
     };
   }
 
-  registerOwnership(tracker: OwnershipTracker, paths: AuthFilePaths): void {
+  registerOwnership(tracker: OwnershipTracker, paths: AuthFilePaths, providers: string[] = []): void {
     const registrations = buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID);
 
     for (const registration of registrations) {
       tracker.register(registration);
     }
 
-    this.envCapability.registerOwnership(tracker, AUTH_ENV_VARS);
+    this.envCapability.registerOwnership(tracker, buildAuthEnvVars(providers));
   }
 }
 

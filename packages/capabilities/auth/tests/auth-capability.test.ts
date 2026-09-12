@@ -95,6 +95,8 @@ describe('AuthCapability', () => {
 
     expect(vfs.read(plan.paths.routeHandlerFile)).toContain('export const { GET, POST } = handlers;');
     expect(plan.capability.files).toContain(plan.paths.routeHandlerFile);
+    expect(vfs.read('.env.example')).toContain('AUTH_GITHUB_ID=');
+    expect(vfs.read('.env.example')).toContain('AUTH_GITHUB_SECRET=');
   });
 
   test('uses src directory when app router project is detected', async () => {
