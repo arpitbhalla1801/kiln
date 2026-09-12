@@ -19,7 +19,10 @@
     "test": "turbo run test",
     "test:unit": "bun test apps packages",
     "test:post-deploy": "bun test tests/post-deploy",
-    "link-cli": "bun run build --filter=@kiln/cli && cd apps/cli && bun link"
+    "link-cli": "bun run build --filter=@kiln-cli/kiln && cd apps/cli && bun link"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
