@@ -92,7 +92,8 @@ export class AuthCapability {
       paths,
       authFileExists,
       middlewareFileExists,
-      nextAuthInstalled
+      nextAuthInstalled,
+      providers
     );
 
     const envPlan = await this.envCapability.planAdd(rootPath, AUTH_ENV_VARS, {
@@ -142,7 +143,8 @@ export function buildAuthTransforms(
   paths: AuthFilePaths,
   authFileExists: boolean,
   middlewareFileExists: boolean,
-  nextAuthInstalled: boolean
+  nextAuthInstalled: boolean,
+  providers: string[] = []
 ): TransformPipeline {
   const builder = createTransformPipeline();
   const authImportPath = resolveAuthImportPath(paths);
@@ -161,7 +163,7 @@ export function buildAuthTransforms(
     builder.fileCreate(
       `${AUTH_CAPABILITY_ID}-create-auth-config`,
       paths.authFile,
-      createAuthConfigContent(),
+      createAuthConfigContent(providers),
       'Create auth config'
     );
   }
