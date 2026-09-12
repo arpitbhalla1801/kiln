@@ -227,10 +227,7 @@ function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
   paths: AuthFilePaths
 ): Capability {
-  const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], [
-    paths.authFile,
-    paths.middlewareFile,
-  ]);
+  const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
 
   return capabilityFromManifest({
     ...manifest,
