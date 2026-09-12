@@ -6,6 +6,7 @@ import { runAdd, parseEnvVariables } from './commands/add.js';
 import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
 import { runInspect } from './commands/inspect.js';
+import { checkForUpdate } from './update-check.js';
 
 declare const process: {
   argv: string[];
@@ -144,7 +145,9 @@ async function main(argv: string[]): Promise<void> {
   process.exitCode = 1;
 }
 
-main(process.argv.slice(2)).catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+main(process.argv.slice(2))
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  })
+  .finally(() => checkForUpdate(version));
