@@ -2,6 +2,7 @@ export interface FileOperation {
   type: 'create' | 'modify' | 'delete';
   filePath: string;
   content?: string;
+  before?: string;
   diffPreview?: string;
 }
 
