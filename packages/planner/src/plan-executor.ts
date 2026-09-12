@@ -20,6 +20,7 @@ export interface CapabilityExecutionPlan {
   transforms: TransformPipeline;
   capability: Capability;
   ownershipRegistrations?: OwnershipRegistration[];
+  providers?: string[];
 }
 
 export interface PlanExecutionResult {

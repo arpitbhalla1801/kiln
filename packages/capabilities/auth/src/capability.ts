@@ -20,6 +20,7 @@ import {
   type TransformPipeline,
 } from '@kiln/transform-engine';
 import {
+  buildProviderMergePatch,
   createAuthConfigContent,
   createMiddlewareContent,
   createRouteHandlerContent,
@@ -79,16 +80,20 @@ export class AuthCapability {
     rootPath: string,
     options: AuthCapabilityPlanOptions = {}
   ): Promise<AuthCapabilityPlan> {
-    const providers = options.providers ?? [];
-    for (const providerId of providers) {
+    const requestedProviders = options.providers ?? [];
+    const existingProviders = options.existingProviders ?? [];
+    for (const providerId of [...requestedProviders, ...existingProviders]) {
       resolveProvider(providerId);
     }
+
+    const newProviders = requestedProviders.filter((id) => !existingProviders.includes(id));
+    const allProviders = [...existingProviders, ...newProviders];
 
     const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath));
     const paths = buildAuthFilePaths(sourceRoot);
 
     const tracker = options.tracker ?? new OwnershipTracker();
-    validateAuthOwnership(paths, tracker, AUTH_CAPABILITY_ID, providers);
+    validateAuthOwnership(paths, tracker, AUTH_CAPABILITY_ID, allProviders);
 
     const authFileExists =
       options.authFileExists ?? (await fileExists(join(rootPath, paths.authFile)));
@@ -116,19 +121,32 @@ export class AuthCapability {
       middlewareFileExists,
       routeHandlerFileExists,
       nextAuthInstalled,
-      providers
+      allProviders
     );
 
-    const envPlan = await this.envCapability.planAdd(rootPath, buildAuthEnvVars(providers, !authFileExists), {
-      tracker,
-      envExamplePath: options.envExamplePath,
-      envExampleExists: options.envExampleExists,
-    });
+    if (authFileExists && newProviders.length > 0) {
+      const currentAuthFileContent =
+        options.authFileContent ??
+        (await readFile(join(rootPath, paths.authFile), 'utf8').catch(() => undefined));
+      authTransforms.push(
+        ...buildProviderMergeTransforms(paths, currentAuthFileContent, existingProviders, newProviders)
+      );
+    }
+
+    const envPlan = await this.envCapability.planAdd(
+      rootPath,
+      buildAuthEnvVars(requestedProviders, !authFileExists),
+      {
+        tracker,
+        envExamplePath: options.envExamplePath,
+        envExampleExists: options.envExampleExists,
+      }
+    );
 
     const manifest = await this.getManifest();
-    const capability = buildCapabilityWithOwnership(manifest, paths, providers);
+    const capability = buildCapabilityWithOwnership(manifest, paths, allProviders);
     const ownershipRegistrations = [
-      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, providers),
+      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, allProviders),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -138,7 +156,7 @@ export class AuthCapability {
       ownershipRegistrations,
       envPlan,
       paths,
-      providers,
+      providers: allProviders,
     };
   }
 
@@ -212,6 +230,44 @@ export function buildAuthTransforms(
   }
 
   return builder.build();
+}
+
+function buildProviderMergeTransforms(
+  paths: AuthFilePaths,
+  currentAuthFileContent: string | undefined,
+  existingProviders: string[],
+  newProviders: string[]
+): TransformPipeline {
+  const expectedPriorContent = createAuthConfigContent(existingProviders);
+
+  if (currentAuthFileContent === expectedPriorContent) {
+    return createTransformPipeline()
+      .fileCreate(
+        `${AUTH_CAPABILITY_ID}-merge-providers`,
+        paths.authFile,
+        createAuthConfigContent([...existingProviders, ...newProviders]),
+        'Merge new providers into auth config'
+      )
+      .build();
+  }
+
+  const patch = buildProviderMergePatch(newProviders);
+  return createTransformPipeline()
+    .filePatch(
+      `${AUTH_CAPABILITY_ID}-merge-provider-imports`,
+      paths.authFile,
+      patch.importSearch,
+      patch.importReplace,
+      'Add new provider imports to auth config'
+    )
+    .filePatch(
+      `${AUTH_CAPABILITY_ID}-merge-provider-entries`,
+      paths.authFile,
+      patch.providersSearch,
+      patch.providersReplace,
+      'Add new providers to auth config providers array'
+    )
+    .build();
 }
 
 function assertNoUnownedFile(

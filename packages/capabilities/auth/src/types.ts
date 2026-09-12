@@ -22,6 +22,8 @@ export interface AuthCapabilityPlanOptions {
   routeHandlerFileExists?: boolean;
   nextAuthInstalled?: boolean;
   providers?: string[];
+  existingProviders?: string[];
+  authFileContent?: string;
 }
 
 export interface AuthCapabilityPlan {
