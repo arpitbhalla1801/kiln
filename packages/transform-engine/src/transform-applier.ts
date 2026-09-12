@@ -151,6 +151,10 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
       continue;
     }
 
+    if (normalized.required) {
+      entries.push({ type: 'raw', text: '# required' });
+    }
+
     const created: EnvVarEntry = { type: 'var', key, value: value ?? '' };
     varEntries.set(key, created);
     entries.push(created);

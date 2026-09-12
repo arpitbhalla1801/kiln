@@ -203,6 +203,40 @@ describe('kiln cli', () => {
     expect(output).toContain('missing dependencies.next');
   });
 
+  test('doctor warns when a required env var has no value', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await writeFile(join(root, '.env.example'), '# required\nAUTH_SECRET=\nDATABASE_URL=set\n', 'utf8');
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    await runDoctor({ cwd: root });
+
+    console.log = originalLog;
+
+    const output = logs.join('\n');
+    expect(output).toContain('[warn] env-required-vars:');
+    expect(output).toContain('AUTH_SECRET');
+  });
+
+  test('doctor passes when required env vars all have values', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+    await writeFile(join(root, '.env.example'), '# required\nAUTH_SECRET=abc123\n', 'utf8');
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    await runDoctor({ cwd: root });
+
+    console.log = originalLog;
+
+    expect(logs.join('\n')).toContain('[pass] env-required-vars:');
+  });
+
   test('remove auth deletes owned files/deps, leaves env-owned vars alone', async () => {
     const root = await createTempDir();
     await runCreate(root, 'demo-app');
