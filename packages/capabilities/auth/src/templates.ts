@@ -1,10 +1,24 @@
 import type { AuthFilePaths } from './types.js';
+import { resolveProvider } from './providers.js';
 
-export function createAuthConfigContent(): string {
-  return `import NextAuth from "next-auth";
+export function createAuthConfigContent(providerIds: string[] = []): string {
+  const providers = providerIds.map(resolveProvider);
+
+  const providerImports = providers
+    .map((provider) => `import ${provider.importName} from "${provider.importSpecifier}";`)
+    .join('\n');
+
+  const importBlock = providerImports
+    ? `import NextAuth from "next-auth";\n${providerImports}`
+    : 'import NextAuth from "next-auth";';
+
+  const providersList = providers.map((provider) => `    ${provider.factoryExpression},`).join('\n');
+  const providersArray = providersList ? `[\n${providersList}\n  ]` : '[]';
+
+  return `${importBlock}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [],
+  providers: ${providersArray},
 });
 `;
 }

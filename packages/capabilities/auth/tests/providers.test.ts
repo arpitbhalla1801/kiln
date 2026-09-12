@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { AUTH_PROVIDERS, resolveProvider } from '../src/providers.js';
+import { createAuthConfigContent } from '../src/templates.js';
 
 describe('auth provider registry', () => {
   test('resolves known providers', () => {
@@ -20,5 +21,26 @@ describe('auth provider registry', () => {
   test('oauth providers declare id/secret env vars', () => {
     expect(AUTH_PROVIDERS.github.envVars).toEqual(['AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET']);
     expect(AUTH_PROVIDERS.google.envVars).toEqual(['AUTH_GOOGLE_ID', 'AUTH_GOOGLE_SECRET']);
+  });
+});
+
+describe('createAuthConfigContent', () => {
+  test('defaults to an empty providers array', () => {
+    const content = createAuthConfigContent();
+    expect(content).toContain('providers: [],');
+    expect(content).not.toContain('next-auth/providers');
+  });
+
+  test('emits real imports and a populated providers array for one provider', () => {
+    const content = createAuthConfigContent(['github']);
+    expect(content).toContain('import GitHub from "next-auth/providers/github";');
+    expect(content).toContain('providers: [\n    GitHub,\n  ],');
+  });
+
+  test('emits imports and array entries for multiple providers in order', () => {
+    const content = createAuthConfigContent(['github', 'google']);
+    expect(content).toContain('import GitHub from "next-auth/providers/github";');
+    expect(content).toContain('import Google from "next-auth/providers/google";');
+    expect(content).toContain('providers: [\n    GitHub,\n    Google,\n  ],');
   });
 });
