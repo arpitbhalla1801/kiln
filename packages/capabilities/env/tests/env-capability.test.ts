@@ -74,14 +74,15 @@ describe('EnvCapability', () => {
 
     const secondPlan = await env.planAdd(root, {
       DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
-    }, { tracker, envExampleExists: true });
+    }, { tracker, envExampleExists: true, envLocalExists: true, gitignoreContent: null });
 
     applier.applyAll(vfs, secondPlan.transforms);
 
     expect(vfs.read('.env.example')).toBe(
       '# Environment variables\n# --- env ---\n# required\nDATABASE_URL=postgres://localhost:5432/app\n'
     );
-    expect(secondPlan.transforms).toHaveLength(1);
+    // one env-mutation for .env.example, one seeding .env.local
+    expect(secondPlan.transforms).toHaveLength(2);
   });
 
   test('merges into existing .env.example without recreating file', async () => {
@@ -93,7 +94,8 @@ describe('EnvCapability', () => {
       DATABASE_URL: 'postgres://localhost:5432/app',
     });
 
-    expect(plan.transforms).toHaveLength(1);
+    // env-mutation for .env.example, plus fileCreate + envMutation seeding .env.local
+    expect(plan.transforms).toHaveLength(3);
     expect(plan.transforms[0].type).toBe('env-mutation');
 
     const vfs = new VirtualFilesystem({ initialFiles: { '.env.example': 'EXISTING=value\n' } });

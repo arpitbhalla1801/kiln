@@ -1,4 +1,4 @@
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   type Capability,
@@ -16,6 +16,7 @@ import {
 import {
   ENV_CAPABILITY_ID,
   DEFAULT_ENV_EXAMPLE_PATH,
+  DEFAULT_ENV_LOCAL_PATH,
   type EnvCapabilityPlan,
   type EnvCapabilityPlanOptions,
   type EnvVariableMap,
@@ -66,12 +67,21 @@ export class EnvCapability {
       ENV_CAPABILITY_ID
     );
 
+    const envLocalExists =
+      options.envLocalExists ?? (await fileExists(join(rootPath, DEFAULT_ENV_LOCAL_PATH)));
+    const gitignoreContent =
+      options.gitignoreContent !== undefined
+        ? options.gitignoreContent
+        : await readGitignore(rootPath);
+
     const transforms = await buildTransforms(
       rootPath,
       envExamplePath,
       variables,
       options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath))),
-      ownerCapabilityId
+      ownerCapabilityId,
+      envLocalExists,
+      gitignoreContent
     );
 
     const manifest = await this.getManifest();
@@ -109,7 +119,9 @@ export async function buildTransforms(
   envExamplePath: string,
   variables: EnvVariableMap,
   envExampleExists?: boolean,
-  ownerCapabilityId: string = ENV_CAPABILITY_ID
+  ownerCapabilityId: string = ENV_CAPABILITY_ID,
+  envLocalExists?: boolean,
+  gitignoreContent?: string | null
 ): Promise<TransformPipeline> {
   const exists =
     envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)));
@@ -135,7 +147,80 @@ export async function buildTransforms(
     );
   }
 
+  const resolvedEnvLocalExists =
+    envLocalExists ?? (await fileExists(join(rootPath, DEFAULT_ENV_LOCAL_PATH)));
+
+  if (!resolvedEnvLocalExists) {
+    builder.fileCreate(
+      `${ENV_CAPABILITY_ID}-create-env-local`,
+      DEFAULT_ENV_LOCAL_PATH,
+      '',
+      'Create .env.local'
+    );
+  }
+
+  if (Object.keys(variables).length > 0) {
+    builder.envMutation(
+      `${ENV_CAPABILITY_ID}-seed-env-local`,
+      DEFAULT_ENV_LOCAL_PATH,
+      toFlatEnvLocalVariables(variables),
+      'Seed .env.local with default values',
+      undefined,
+      undefined,
+      true
+    );
+  }
+
+  const resolvedGitignoreContent =
+    gitignoreContent !== undefined ? gitignoreContent : await readGitignore(rootPath);
+  const updatedGitignore = ensureGitignoreCoversEnvLocal(resolvedGitignoreContent);
+
+  if (updatedGitignore !== undefined) {
+    builder.fileCreate(
+      `${ENV_CAPABILITY_ID}-gitignore-env-local`,
+      '.gitignore',
+      updatedGitignore,
+      'Ensure .env.local is gitignored'
+    );
+  }
+
   return builder.build();
+}
+
+function toFlatEnvLocalVariables(variables: EnvVariableMap): EnvVariableMap {
+  const flat: EnvVariableMap = {};
+
+  for (const [key, definition] of Object.entries(variables)) {
+    flat[key] =
+      typeof definition === 'string' ? definition : (definition.value ?? definition.example ?? '');
+  }
+
+  return flat;
+}
+
+async function readGitignore(rootPath: string): Promise<string | null> {
+  try {
+    return await readFile(join(rootPath, '.gitignore'), 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function ensureGitignoreCoversEnvLocal(content: string | null): string | undefined {
+  if (content === null) {
+    return undefined;
+  }
+
+  const alreadyCovered = content
+    .split(/\r?\n/)
+    .some((line) => line.trim() === DEFAULT_ENV_LOCAL_PATH);
+
+  if (alreadyCovered) {
+    return undefined;
+  }
+
+  const needsNewline = content.length > 0 && !content.endsWith('\n');
+  return `${content}${needsNewline ? '\n' : ''}${DEFAULT_ENV_LOCAL_PATH}\n`;
 }
 
 function buildCapabilityWithOwnership(

@@ -16,6 +16,8 @@ export interface AuthCapabilityPlanOptions {
   tracker?: import('@kiln/core').OwnershipTracker;
   envExamplePath?: string;
   envExampleExists?: boolean;
+  envLocalExists?: boolean;
+  gitignoreContent?: string | null;
   sourceRoot?: string;
   authFileExists?: boolean;
   middlewareFileExists?: boolean;

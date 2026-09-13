@@ -59,9 +59,19 @@ export function envMutation(
   variables: Record<string, string | EnvVariableDefinition>,
   name?: string,
   removeVariables?: string[],
-  section?: string
+  section?: string,
+  preserveExistingValues?: boolean
 ): EnvMutationTransform {
-  return { id, name, type: 'env-mutation', filePath, variables, removeVariables, section };
+  return {
+    id,
+    name,
+    type: 'env-mutation',
+    filePath,
+    variables,
+    removeVariables,
+    section,
+    preserveExistingValues,
+  };
 }
 
 /** Compose transforms into an ordered pipeline. */
@@ -115,9 +125,12 @@ export class TransformPipelineBuilder {
     variables: Record<string, string | EnvVariableDefinition>,
     name?: string,
     removeVariables?: string[],
-    section?: string
+    section?: string,
+    preserveExistingValues?: boolean
   ): this {
-    return this.add(envMutation(id, filePath, variables, name, removeVariables, section));
+    return this.add(
+      envMutation(id, filePath, variables, name, removeVariables, section, preserveExistingValues)
+    );
   }
 
   build(): TransformPipeline {
