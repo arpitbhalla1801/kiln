@@ -135,6 +135,11 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
     entries.filter((entry): entry is EnvVarEntry => entry.type === 'var').map((entry) => [entry.key, entry])
   );
 
+  const sectionHeader = transform.section ? `# --- ${transform.section} ---` : undefined;
+  let sectionHeaderPresent = sectionHeader
+    ? entries.some((entry) => entry.type === 'raw' && entry.text.trim() === sectionHeader)
+    : true;
+
   for (const [key, definition] of Object.entries(transform.variables)) {
     const normalized = normalizeEnvDefinition(definition);
     const existing = varEntries.get(key);
@@ -149,6 +154,11 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
     if (existing) {
       existing.value = value ?? existing.value;
       continue;
+    }
+
+    if (sectionHeader && !sectionHeaderPresent) {
+      entries.push({ type: 'raw', text: sectionHeader });
+      sectionHeaderPresent = true;
     }
 
     if (normalized.required) {

@@ -14,6 +14,7 @@ export interface EnvCapabilityPlanOptions {
   tracker?: import('@kiln/core').OwnershipTracker;
   envExamplePath?: string;
   envExampleExists?: boolean;
+  ownerCapabilityId?: string;
 }
 
 export interface EnvCapabilityPlan {
