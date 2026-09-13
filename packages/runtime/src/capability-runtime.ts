@@ -1,5 +1,6 @@
 import { AuthCapability } from '@kiln/auth-capability';
 import {
+  type Capability,
   createEmptyProjectState,
   LifecycleExecutor,
   LifecycleHooks,
@@ -18,6 +19,7 @@ import {
   type KilnLockfile,
 } from '@kiln/project-model';
 import { TransformEngine } from '@kiln/transform-engine';
+import { CAPABILITY_REGISTRY } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
 import pkg from '../package.json' with { type: 'json' };
 import type {
@@ -274,17 +276,30 @@ export class CapabilityRuntime {
     );
   }
 
+  private getCapabilityAccessor(capabilityId: string): (() => Promise<Capability>) | undefined {
+    const accessors: Record<string, () => Promise<Capability>> = {
+      env: () => this.envCapability.getCapability(),
+      auth: () => this.authCapability.getCapability(),
+    };
+
+    return accessors[capabilityId];
+  }
+
   private async buildValidationCapabilities(
     capabilityId: SupportedCapabilityId,
     capability: CapabilityExecutionPlan['capability']
   ): Promise<CapabilityExecutionPlan['capability'][]> {
-    const capabilities = [capability];
+    const dependencyIds = CAPABILITY_REGISTRY[capabilityId]?.dependencies ?? [];
+    const dependencies: Capability[] = [];
 
-    if (capabilityId === 'auth') {
-      capabilities.unshift(await this.envCapability.getCapability());
+    for (const dependencyId of dependencyIds) {
+      const accessor = this.getCapabilityAccessor(dependencyId);
+      if (accessor) {
+        dependencies.push(await accessor());
+      }
     }
 
-    return capabilities;
+    return [...dependencies, capability];
   }
 }
 
