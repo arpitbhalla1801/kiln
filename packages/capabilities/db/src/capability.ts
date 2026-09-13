@@ -11,6 +11,7 @@ import {
 import { DB_MANIFEST } from './manifest-data.js';
 import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { createTransformPipeline, type TransformPipeline } from '@kiln/transform-engine';
+import { createDbClientContent, createSchemaPrismaContent } from './templates.js';
 import {
   DB_CAPABILITY_ID,
   PRISMA_CLIENT_PACKAGE,
@@ -18,6 +19,7 @@ import {
   PRISMA_VERSION,
   type DbCapabilityPlan,
   type DbCapabilityPlanOptions,
+  type DbFilePaths,
 } from './types.js';
 import { buildDbOwnershipRegistrations, validateDbOwnership } from './validation.js';
 
@@ -50,13 +52,23 @@ export class DbCapability {
     rootPath: string,
     options: DbCapabilityPlanOptions = {}
   ): Promise<DbCapabilityPlan> {
+    const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath));
+    const paths = buildDbFilePaths(sourceRoot);
+
     const tracker = options.tracker ?? new OwnershipTracker();
-    validateDbOwnership(tracker, DB_CAPABILITY_ID);
+    validateDbOwnership(paths, tracker, DB_CAPABILITY_ID);
 
     const prismaInstalled =
       options.prismaInstalled ?? (await hasDependency(rootPath, PRISMA_CLI_PACKAGE));
+    const schemaFileExists =
+      options.schemaFileExists ?? (await fileExists(join(rootPath, paths.schemaFile)));
+    const clientFileExists =
+      options.clientFileExists ?? (await fileExists(join(rootPath, paths.clientFile)));
 
-    const dbTransforms = buildDbTransforms(prismaInstalled);
+    assertNoUnownedFile(tracker, paths.schemaFile, schemaFileExists);
+    assertNoUnownedFile(tracker, paths.clientFile, clientFileExists);
+
+    const dbTransforms = buildDbTransforms(paths, prismaInstalled, schemaFileExists, clientFileExists);
 
     const envPlan = await this.envCapability.planAdd(rootPath, DB_ENV_VARS, {
       tracker,
@@ -68,9 +80,9 @@ export class DbCapability {
     });
 
     const manifest = await this.getManifest();
-    const capability = capabilityFromManifest(manifest);
+    const capability = buildCapabilityWithOwnership(manifest, paths);
     const ownershipRegistrations = [
-      ...buildDbOwnershipRegistrations(DB_CAPABILITY_ID),
+      ...buildDbOwnershipRegistrations(paths, DB_CAPABILITY_ID),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -79,11 +91,12 @@ export class DbCapability {
       capability,
       ownershipRegistrations,
       envPlan,
+      paths,
     };
   }
 
-  registerOwnership(tracker: OwnershipTracker): void {
-    const registrations = buildDbOwnershipRegistrations(DB_CAPABILITY_ID);
+  registerOwnership(tracker: OwnershipTracker, paths: DbFilePaths): void {
+    const registrations = buildDbOwnershipRegistrations(paths, DB_CAPABILITY_ID);
 
     for (const registration of registrations) {
       tracker.register(registration);
@@ -93,7 +106,21 @@ export class DbCapability {
   }
 }
 
-export function buildDbTransforms(prismaInstalled: boolean): TransformPipeline {
+export function buildDbFilePaths(sourceRoot = ''): DbFilePaths {
+  const prefix = sourceRoot ? `${sourceRoot.replace(/\\/g, '/')}/` : '';
+
+  return {
+    schemaFile: 'prisma/schema.prisma',
+    clientFile: `${prefix}lib/db.ts`,
+  };
+}
+
+export function buildDbTransforms(
+  paths: DbFilePaths,
+  prismaInstalled: boolean,
+  schemaFileExists: boolean,
+  clientFileExists: boolean
+): TransformPipeline {
   const builder = createTransformPipeline();
 
   if (!prismaInstalled) {
@@ -107,7 +134,74 @@ export function buildDbTransforms(prismaInstalled: boolean): TransformPipeline {
     );
   }
 
+  if (!schemaFileExists) {
+    builder.fileCreate(
+      `${DB_CAPABILITY_ID}-create-schema`,
+      paths.schemaFile,
+      createSchemaPrismaContent(),
+      'Create Prisma schema'
+    );
+  }
+
+  if (!clientFileExists) {
+    builder.fileCreate(
+      `${DB_CAPABILITY_ID}-create-client`,
+      paths.clientFile,
+      createDbClientContent(),
+      'Create Prisma client singleton'
+    );
+  }
+
   return builder.build();
+}
+
+function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileExists: boolean): void {
+  if (!fileExists) {
+    return;
+  }
+
+  const currentOwner = tracker.getOwner('file', filePath);
+  if (currentOwner !== undefined) {
+    return;
+  }
+
+  throw new Error(
+    `Refusing to add db: '${filePath}' already exists and was not created by kiln. ` +
+      'Remove or rename the file, or run kiln in a project without a pre-existing db setup.'
+  );
+}
+
+async function detectSourceRoot(rootPath: string): Promise<string> {
+  if (await fileExists(join(rootPath, 'src', 'app'))) {
+    return 'src';
+  }
+
+  if (await fileExists(join(rootPath, 'src', 'pages'))) {
+    return 'src';
+  }
+
+  return '';
+}
+
+function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFilePaths): Capability {
+  const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
+
+  return capabilityFromManifest({
+    ...manifest,
+    ownership: {
+      ...manifest.ownership,
+      files: ownedFiles,
+    },
+  });
+}
+
+function mergeUnique(existing: string[], additions: string[]): string[] {
+  const merged = new Set(existing);
+  for (const entry of additions) {
+    merged.add(entry);
+  }
+
+  return Array.from(merged).sort((left, right) => left.localeCompare(right));
 }
 
 async function hasDependency(rootPath: string, dependencyName: string): Promise<boolean> {

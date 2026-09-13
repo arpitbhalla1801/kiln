@@ -7,6 +7,11 @@ export const PRISMA_CLIENT_PACKAGE = '@prisma/client';
 export const PRISMA_CLI_PACKAGE = 'prisma';
 export const PRISMA_VERSION = '^5.0.0';
 
+export interface DbFilePaths {
+  schemaFile: string;
+  clientFile: string;
+}
+
 export interface DbCapabilityPlanOptions {
   tracker?: import('@kiln/core').OwnershipTracker;
   envExamplePath?: string;
@@ -14,6 +19,9 @@ export interface DbCapabilityPlanOptions {
   envLocalExists?: boolean;
   gitignoreContent?: string | null;
   prismaInstalled?: boolean;
+  sourceRoot?: string;
+  schemaFileExists?: boolean;
+  clientFileExists?: boolean;
 }
 
 export interface DbCapabilityPlan {
@@ -21,4 +29,5 @@ export interface DbCapabilityPlan {
   capability: Capability;
   ownershipRegistrations: OwnershipRegistration[];
   envPlan: EnvCapabilityPlan;
+  paths: DbFilePaths;
 }

@@ -84,11 +84,13 @@ describe('DbCapability', () => {
     });
     const db = new DbCapability();
     const tracker = new OwnershipTracker();
-    db.registerOwnership(tracker);
+    db.registerOwnership(tracker, { schemaFile: 'prisma/schema.prisma', clientFile: 'lib/db.ts' });
 
     const plan = await db.planAdd(root, {
       tracker,
       prismaInstalled: true,
+      schemaFileExists: true,
+      clientFileExists: true,
       envExampleExists: true,
       envLocalExists: true,
       gitignoreContent: null,
@@ -98,6 +100,71 @@ describe('DbCapability', () => {
       (transform) => transform.type === 'package-json-mutation'
     );
     expect(packageJsonTransform).toBeUndefined();
+  });
+
+  test('scaffolds schema.prisma and a client singleton at the project root', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+    });
+    const db = new DbCapability();
+    const plan = await db.planAdd(root);
+
+    expect(plan.paths).toEqual({ schemaFile: 'prisma/schema.prisma', clientFile: 'lib/db.ts' });
+
+    const vfs = new VirtualFilesystem({
+      initialFiles: { 'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }) },
+    });
+    const applier = new TransformApplier();
+    applier.applyAll(vfs, plan.transforms);
+
+    expect(vfs.read('prisma/schema.prisma')).toContain('provider = "postgresql"');
+    expect(vfs.read('prisma/schema.prisma')).toContain('model User');
+    expect(vfs.read('lib/db.ts')).toContain('PrismaClient');
+    expect(plan.capability.files).toEqual(['lib/db.ts', 'prisma/schema.prisma']);
+  });
+
+  test('scaffolds the client under src/ when an app router project is detected, schema stays at project root', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+      'src/app/page.tsx': 'export default function Page() { return null; }',
+    });
+    const db = new DbCapability();
+    const plan = await db.planAdd(root);
+
+    expect(plan.paths).toEqual({ schemaFile: 'prisma/schema.prisma', clientFile: 'src/lib/db.ts' });
+  });
+
+  test('does not recreate schema.prisma or the client file when they already exist', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+    });
+    const db = new DbCapability();
+    const tracker = new OwnershipTracker();
+    const paths = { schemaFile: 'prisma/schema.prisma', clientFile: 'lib/db.ts' };
+    db.registerOwnership(tracker, paths);
+
+    const plan = await db.planAdd(root, {
+      tracker,
+      prismaInstalled: true,
+      schemaFileExists: true,
+      clientFileExists: true,
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
+    });
+
+    const fileTransform = plan.transforms.find((transform) => transform.type === 'file-create');
+    expect(fileTransform).toBeUndefined();
+  });
+
+  test('refuses to add db when schema.prisma exists but was not created by kiln', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+      'prisma/schema.prisma': 'datasource db { provider = "sqlite" }',
+    });
+    const db = new DbCapability();
+
+    await expect(db.planAdd(root)).rejects.toThrow(/already exists and was not created by kiln/);
   });
 
   test('rejects ownership conflicts', () => {
