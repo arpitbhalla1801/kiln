@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import {
   loadOwnershipTracker,
   LockfileStore,
@@ -48,8 +50,21 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
   }
 
   if (ownedDependencies.length > 0 || ownedScripts.length > 0) {
+    const devDependencyNames = await readDevDependencyNames(rootPath);
+    const removeDependencies: string[] = [];
+    const removeDevDependencies: string[] = [];
+
+    for (const entry of ownedDependencies) {
+      if (devDependencyNames.has(entry.name)) {
+        removeDevDependencies.push(entry.name);
+      } else {
+        removeDependencies.push(entry.name);
+      }
+    }
+
     builder.packageJsonMutation(`${capabilityId}-remove-package-json`, {
-      removeDependencies: ownedDependencies.map((entry) => entry.name),
+      removeDependencies,
+      removeDevDependencies,
       removeScripts: ownedScripts.map((entry) => entry.name),
     });
   }
@@ -93,5 +108,15 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
       );
       await LockfileStore.save(lockfile, rootPath);
     }
+  }
+}
+
+async function readDevDependencyNames(rootPath: string): Promise<Set<string>> {
+  try {
+    const content = await readFile(join(rootPath, 'package.json'), 'utf8');
+    const packageJson = JSON.parse(content) as { devDependencies?: Record<string, string> };
+    return new Set(Object.keys(packageJson.devDependencies ?? {}));
+  } catch {
+    return new Set();
   }
 }

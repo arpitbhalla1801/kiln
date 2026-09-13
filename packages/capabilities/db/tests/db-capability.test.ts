@@ -73,7 +73,7 @@ describe('DbCapability', () => {
     expect(plan.capability.ownedEnvVars).toBeUndefined();
   });
 
-  test('re-running with prisma already installed is a no-op for package.json', async () => {
+  test('re-running with prisma already installed skips the dependency install but still ensures scripts', async () => {
     const root = await createTempProject({
       'package.json': JSON.stringify({
         name: 'demo-app',
@@ -96,10 +96,73 @@ describe('DbCapability', () => {
       gitignoreContent: null,
     });
 
-    const packageJsonTransform = plan.transforms.find(
+    const packageJsonTransforms = plan.transforms.filter(
       (transform) => transform.type === 'package-json-mutation'
     );
-    expect(packageJsonTransform).toBeUndefined();
+    expect(packageJsonTransforms).toHaveLength(1);
+    expect(packageJsonTransforms[0]).not.toHaveProperty('dependencies');
+    expect(packageJsonTransforms[0]).not.toHaveProperty('devDependencies');
+
+    const vfs = new VirtualFilesystem({
+      initialFiles: {
+        'package.json': JSON.stringify({
+          name: 'demo-app',
+          version: '1.0.0',
+          dependencies: { '@prisma/client': '^5.0.0' },
+          devDependencies: { prisma: '^5.0.0' },
+        }),
+      },
+    });
+    const applier = new TransformApplier();
+    applier.applyAll(vfs, plan.transforms);
+
+    const packageJson = JSON.parse(vfs.read('package.json') ?? '{}');
+    expect(packageJson.scripts).toEqual({
+      'db:generate': 'prisma generate',
+      'db:migrate': 'prisma migrate dev',
+      'db:studio': 'prisma studio',
+    });
+  });
+
+  test('re-running when scripts already match is a true no-op for package.json content', async () => {
+    const initialPackageJson = {
+      name: 'demo-app',
+      version: '1.0.0',
+      dependencies: { '@prisma/client': '^5.0.0' },
+      devDependencies: { prisma: '^5.0.0' },
+      scripts: {
+        'db:generate': 'prisma generate',
+        'db:migrate': 'prisma migrate dev',
+        'db:studio': 'prisma studio',
+      },
+    };
+    const root = await createTempProject({
+      'package.json': JSON.stringify(initialPackageJson),
+    });
+    const db = new DbCapability();
+    const tracker = new OwnershipTracker();
+    db.registerOwnership(tracker, { schemaFile: 'prisma/schema.prisma', clientFile: 'lib/db.ts' });
+    const plan = await db.planAdd(root, {
+      tracker,
+      prismaInstalled: true,
+      schemaFileExists: true,
+      clientFileExists: true,
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
+    });
+
+    const sortedEntries = Object.fromEntries(
+      Object.entries(initialPackageJson).sort(([a], [b]) => a.localeCompare(b))
+    );
+    const alphabetizedPackageJson = JSON.stringify(sortedEntries, null, 2) + '\n';
+    const vfs = new VirtualFilesystem({
+      initialFiles: { 'package.json': alphabetizedPackageJson },
+    });
+    const applier = new TransformApplier();
+    applier.applyAll(vfs, plan.transforms);
+
+    expect(vfs.read('package.json')).toBe(alphabetizedPackageJson);
   });
 
   test('scaffolds schema.prisma and a client singleton at the project root', async () => {

@@ -6,6 +6,7 @@
   "adapters": ["node-adapter"],
   "ownership": {
     "files": [],
-    "dependencies": ["@prisma/client", "prisma"]
+    "dependencies": ["@prisma/client", "prisma"],
+    "scripts": ["db:generate", "db:migrate", "db:studio"]
   }
 }

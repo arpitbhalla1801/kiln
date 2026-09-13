@@ -7,6 +7,12 @@ export const PRISMA_CLIENT_PACKAGE = '@prisma/client';
 export const PRISMA_CLI_PACKAGE = 'prisma';
 export const PRISMA_VERSION = '^5.0.0';
 
+export const DB_SCRIPTS: Record<string, string> = {
+  'db:generate': 'prisma generate',
+  'db:migrate': 'prisma migrate dev',
+  'db:studio': 'prisma studio',
+};
+
 export interface DbFilePaths {
   schemaFile: string;
   clientFile: string;
