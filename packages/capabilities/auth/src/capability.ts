@@ -135,7 +135,7 @@ export class AuthCapability {
 
     const envPlan = await this.envCapability.planAdd(
       rootPath,
-      buildAuthEnvVars(requestedProviders, !authFileExists),
+      { ...buildAuthEnvVars(requestedProviders, !authFileExists), ...(options.extraEnvVars ?? {}) },
       {
         tracker,
         envExamplePath: options.envExamplePath,

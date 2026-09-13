@@ -45,7 +45,7 @@ function printHelp(topic?: string): void {
       console.log('Usage: kiln add <capability>');
       console.log('Capabilities: env, auth');
       console.log('  kiln add env [--var KEY=value]');
-      console.log('  kiln add auth [--provider github|google|credentials]');
+      console.log('  kiln add auth [--provider github|google|credentials] [--var KEY=value]');
     }
 
     if (command === 'remove') {
@@ -128,7 +128,7 @@ async function main(argv: string[]): Promise<void> {
       throw new Error('Missing capability. Usage: kiln add <env|auth>');
     }
 
-    const envVariables = capabilityId === 'env' ? parseEnvVariables(argv) : {};
+    const envVariables = parseEnvVariables(argv);
     const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
     await runAdd(capabilityId, cliOptions, envVariables, providers);
     return;
