@@ -33,12 +33,14 @@ export async function runAdd(
   const result =
     capability === 'env'
       ? await runtime.addEnv(variables, { cwd: rootPath, dryRun: options.dryRun })
-      : await runtime.addAuth({
-          cwd: rootPath,
-          dryRun: options.dryRun,
-          providers,
-          extraEnvVars: envVariables,
-        });
+      : capability === 'db'
+        ? await runtime.addDb({ cwd: rootPath, dryRun: options.dryRun })
+        : await runtime.addAuth({
+            cwd: rootPath,
+            dryRun: options.dryRun,
+            providers,
+            extraEnvVars: envVariables,
+          });
 
   console.log(
     formatCapabilityResult(

@@ -1,0 +1,11 @@
+{
+  "id": "db",
+  "name": "Database (Prisma)",
+  "version": "1.0.0",
+  "dependencies": ["env"],
+  "adapters": ["node-adapter"],
+  "ownership": {
+    "files": [],
+    "dependencies": ["@prisma/client", "prisma"]
+  }
+}

@@ -6,12 +6,16 @@ import {
 } from '../src/capability-registry.js';
 
 describe('capability registry', () => {
-  test('lists env and auth as supported', () => {
-    expect(SUPPORTED_CAPABILITY_IDS.sort()).toEqual(['auth', 'env']);
+  test('lists env, auth, and db as supported', () => {
+    expect(SUPPORTED_CAPABILITY_IDS.sort()).toEqual(['auth', 'db', 'env']);
   });
 
   test('auth declares env as a dependency', () => {
     expect(CAPABILITY_REGISTRY.auth.dependencies).toEqual(['env']);
+  });
+
+  test('db declares env as a dependency', () => {
+    expect(CAPABILITY_REGISTRY.db.dependencies).toEqual(['env']);
   });
 
   test('env has no dependencies', () => {
@@ -21,6 +25,7 @@ describe('capability registry', () => {
   test('isSupportedCapabilityId recognizes known ids and rejects unknown ones', () => {
     expect(isSupportedCapabilityId('env')).toBe(true);
     expect(isSupportedCapabilityId('auth')).toBe(true);
-    expect(isSupportedCapabilityId('db')).toBe(false);
+    expect(isSupportedCapabilityId('db')).toBe(true);
+    expect(isSupportedCapabilityId('payments')).toBe(false);
   });
 });

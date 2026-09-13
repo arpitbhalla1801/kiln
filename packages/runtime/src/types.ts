@@ -32,4 +32,4 @@ export interface KilnRuntimeContext extends LifecycleContext {
   dependenciesToInstall?: InstallDependencies;
 }
 
-export type SupportedCapabilityId = 'env' | 'auth';
+export type SupportedCapabilityId = 'env' | 'auth' | 'db';

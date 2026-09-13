@@ -22,8 +22,8 @@ type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor';
 
 const commands: Record<CommandName, string> = {
   create: 'Scaffold a new kiln project.',
-  add: 'Add a capability to a kiln project (env, auth).',
-  remove: 'Remove a capability from a kiln project (env, auth).',
+  add: 'Add a capability to a kiln project (env, auth, db).',
+  remove: 'Remove a capability from a kiln project (env, auth, db).',
   inspect: 'Inspect the current kiln project.',
   doctor: 'Run environment checks for kiln.',
 };
@@ -43,14 +43,15 @@ function printHelp(topic?: string): void {
 
     if (command === 'add') {
       console.log('Usage: kiln add <capability>');
-      console.log('Capabilities: env, auth');
+      console.log('Capabilities: env, auth, db');
       console.log('  kiln add env [--var KEY=value]');
       console.log('  kiln add auth [--provider github|google|credentials] [--var KEY=value]');
+      console.log('  kiln add db');
     }
 
     if (command === 'remove') {
       console.log('Usage: kiln remove <capability>');
-      console.log('Capabilities: env, auth');
+      console.log('Capabilities: env, auth, db');
       console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
     }
 
