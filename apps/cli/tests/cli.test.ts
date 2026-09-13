@@ -108,6 +108,20 @@ describe('kiln cli', () => {
     ).rejects.toThrow(/Unknown auth provider 'discord'/);
   });
 
+  test('add auth --var injects the custom variable, not just env', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await runAdd(
+      'auth',
+      { cwd: root, dryRun: false },
+      parseEnvVariables(['add', 'auth', '--var', 'CUSTOM_KEY=hello'])
+    );
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('CUSTOM_KEY=hello');
+  }, 30000);
+
   test('dry-run add env produces deterministic transform output', async () => {
     const root = await createTempDir();
     await runCreate(root, 'demo-app');

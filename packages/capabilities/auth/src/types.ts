@@ -1,6 +1,6 @@
 import type { Capability, OwnershipRegistration } from '@kiln/core';
 import type { TransformPipeline } from '@kiln/transform-engine';
-import type { EnvCapabilityPlan } from '@kiln/env-capability';
+import type { EnvCapabilityPlan, EnvVariableMap } from '@kiln/env-capability';
 
 export const AUTH_CAPABILITY_ID = 'auth';
 export const NEXT_AUTH_PACKAGE = 'next-auth';
@@ -26,6 +26,7 @@ export interface AuthCapabilityPlanOptions {
   providers?: string[];
   existingProviders?: string[];
   authFileContent?: string;
+  extraEnvVars?: EnvVariableMap;
 }
 
 export interface AuthCapabilityPlan {

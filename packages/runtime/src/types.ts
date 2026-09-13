@@ -1,4 +1,5 @@
 import type { LifecycleContext } from '@kiln/core';
+import type { EnvVariableMap } from '@kiln/env-capability';
 import type { ProjectInspection } from '@kiln/node-adapter';
 import type { CapabilityExecutionPlan } from '@kiln/planner';
 import type { TransformPlan } from '@kiln/transform-engine';
@@ -7,6 +8,7 @@ export interface RuntimeOptions {
   dryRun?: boolean;
   cwd?: string;
   providers?: string[];
+  extraEnvVars?: EnvVariableMap;
 }
 
 export interface RuntimeExecutionResult {

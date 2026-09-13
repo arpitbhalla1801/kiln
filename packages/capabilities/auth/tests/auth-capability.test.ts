@@ -92,6 +92,25 @@ describe('AuthCapability', () => {
     expect(content.indexOf('AUTH_SECRET')).toBeGreaterThan(content.indexOf('# --- auth ---'));
   });
 
+  test('merges extraEnvVars into the env composition alongside auth vars', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+    });
+    const auth = new AuthCapability();
+    const plan = await auth.planAdd(root, {
+      extraEnvVars: { CUSTOM_KEY: 'custom-value' },
+    });
+
+    const vfs = new VirtualFilesystem({
+      initialFiles: { 'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }) },
+    });
+    const applier = new TransformApplier();
+    applier.applyAll(vfs, plan.transforms);
+
+    expect(vfs.read('.env.example')).toContain('CUSTOM_KEY=custom-value');
+    expect(vfs.read('.env.example')).toMatch(/AUTH_SECRET=\S+/);
+  });
+
   test('does not scaffold a route handler when no providers are selected', async () => {
     const root = await createTempProject({
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),

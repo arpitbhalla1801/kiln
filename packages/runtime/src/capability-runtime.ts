@@ -74,6 +74,7 @@ export class CapabilityRuntime {
       tracker,
       providers: options.providers,
       existingProviders,
+      extraEnvVars: options.extraEnvVars,
     });
 
     return this.executeCapabilityPlan('auth', rootPath, capabilityPlan, options);
