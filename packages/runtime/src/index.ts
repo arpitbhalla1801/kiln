@@ -5,7 +5,7 @@ export {
   createCapabilityRuntime,
   type CapabilityRuntimeOptions,
 } from './capability-runtime.js';
-export { extractInstallDependencies } from './install.js';
+export { extractInstallDependencies, type InstallDependencies } from './install.js';
 export type {
   KilnRuntimeContext,
   RuntimeExecutionResult,
