@@ -9,6 +9,7 @@ import {
   ValidationRunner,
   withActiveAdapters,
 } from '@kiln/core';
+import { DbCapability } from '@kiln/db-capability';
 import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { NodeAdapter } from '@kiln/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
@@ -33,18 +34,21 @@ export interface CapabilityRuntimeOptions {
   adapter?: NodeAdapter;
   envCapability?: EnvCapability;
   authCapability?: AuthCapability;
+  dbCapability?: DbCapability;
 }
 
 export class CapabilityRuntime {
   private readonly adapter: NodeAdapter;
   private readonly envCapability: EnvCapability;
   private readonly authCapability: AuthCapability;
+  private readonly dbCapability: DbCapability;
   private readonly lifecycleHooks: LifecycleHooks<KilnRuntimeContext>;
 
   constructor(options: CapabilityRuntimeOptions = {}) {
     this.adapter = options.adapter ?? new NodeAdapter();
     this.envCapability = options.envCapability ?? new EnvCapability();
     this.authCapability = options.authCapability ?? new AuthCapability();
+    this.dbCapability = options.dbCapability ?? new DbCapability();
     this.lifecycleHooks = new LifecycleHooks<KilnRuntimeContext>();
     this.registerDefaultHooks();
   }
@@ -82,6 +86,14 @@ export class CapabilityRuntime {
     return this.executeCapabilityPlan('auth', rootPath, capabilityPlan, options);
   }
 
+  async addDb(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
+    const rootPath = options.cwd ?? process.cwd();
+    const tracker = await loadOwnershipTracker(rootPath);
+    const capabilityPlan = await this.dbCapability.planAdd(rootPath, { tracker });
+
+    return this.executeCapabilityPlan('db', rootPath, capabilityPlan, options);
+  }
+
   async executeCapability(
     capabilityId: SupportedCapabilityId,
     options: RuntimeOptions = {},
@@ -89,6 +101,10 @@ export class CapabilityRuntime {
   ): Promise<RuntimeExecutionResult> {
     if (capabilityId === 'env') {
       return this.addEnv(payload ?? {}, options);
+    }
+
+    if (capabilityId === 'db') {
+      return this.addDb(options);
     }
 
     return this.addAuth(options);
@@ -280,6 +296,7 @@ export class CapabilityRuntime {
     const accessors: Record<string, () => Promise<Capability>> = {
       env: () => this.envCapability.getCapability(),
       auth: () => this.authCapability.getCapability(),
+      db: () => this.dbCapability.getCapability(),
     };
 
     return accessors[capabilityId];
