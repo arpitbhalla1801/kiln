@@ -180,6 +180,8 @@ describe('AuthCapability', () => {
       middlewareFileExists: true,
       nextAuthInstalled: true,
       envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
     });
 
     expect(secondPlan.transforms).toHaveLength(0);

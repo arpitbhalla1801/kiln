@@ -152,7 +152,9 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
     }
 
     if (existing) {
-      existing.value = value ?? existing.value;
+      if (!transform.preserveExistingValues) {
+        existing.value = value ?? existing.value;
+      }
       continue;
     }
 

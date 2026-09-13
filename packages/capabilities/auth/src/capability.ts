@@ -140,6 +140,8 @@ export class AuthCapability {
         tracker,
         envExamplePath: options.envExamplePath,
         envExampleExists: options.envExampleExists,
+        envLocalExists: options.envLocalExists,
+        gitignoreContent: options.gitignoreContent,
         ownerCapabilityId: AUTH_CAPABILITY_ID,
       }
     );
