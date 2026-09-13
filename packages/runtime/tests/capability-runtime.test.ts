@@ -95,4 +95,66 @@ describe('CapabilityRuntime', () => {
 
     expect(installCalls).toEqual([{ 'next-auth': '^5.0.0-beta.32' }]);
   });
+
+  test('installs devDependencies with a separate --dev call, not merged into the prod install', async () => {
+    const root = await createTempProject();
+    const installCalls: Array<{ dependencies: Record<string, string>; dev: boolean }> = [];
+
+    const adapter: NodeAdapterRuntime = {
+      id: 'node-adapter',
+      version: '1.0.0',
+      provides: ['package-manager'],
+      inspect: async (rootPath) => ({
+        rootPath,
+        packageManager: { kind: 'bun', installed: true },
+        nextjs: { detected: false, typescript: false },
+        filesystem: { packageJson: true, nodeModules: false },
+        hasPackageJson: true,
+        hasTypeScript: false,
+        packageName: 'demo-app',
+        packageVersion: '1.0.0',
+      }),
+      getFilesystemExpectations: async () => ({
+        packageJson: true,
+        nodeModules: false,
+      }),
+      installDependencies: async (_rootPath, dependencies, options) => {
+        installCalls.push({ dependencies, dev: options?.dev ?? false });
+        return { exitCode: 0, stdout: 'installed', stderr: '' };
+      },
+      removeDependencies: async () => ({ exitCode: 0, stdout: '', stderr: '' }),
+      runScript: async () => ({ exitCode: 0, stdout: '', stderr: '' }),
+    };
+
+    const fakeAuthCapability = {
+      planAdd: async () => ({
+        transforms: [
+          {
+            id: 'install-prisma',
+            type: 'package-json-mutation',
+            dependencies: { '@prisma/client': '^5.0.0' },
+            devDependencies: { prisma: '^5.0.0' },
+          },
+        ],
+        capability: { id: 'auth', version: '1.0.0', dependencies: [] },
+        ownershipRegistrations: [],
+        envPlan: { transforms: [], capability: { id: 'env', version: '1.0.0', dependencies: [] }, ownershipRegistrations: [] },
+        paths: { authFile: 'auth.ts', middlewareFile: 'middleware.ts', routeHandlerFile: 'route.ts' },
+        providers: [],
+      }),
+      registerOwnership: () => {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    const runtime = new CapabilityRuntime({
+      adapter: adapter as import('@kiln/node-adapter').NodeAdapter,
+      authCapability: fakeAuthCapability,
+    });
+    await runtime.addAuth({ cwd: root, dryRun: false });
+
+    expect(installCalls).toEqual([
+      { dependencies: { '@prisma/client': '^5.0.0' }, dev: false },
+      { dependencies: { prisma: '^5.0.0' }, dev: true },
+    ]);
+  });
 });

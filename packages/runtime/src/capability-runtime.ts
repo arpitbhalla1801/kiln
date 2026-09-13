@@ -184,19 +184,28 @@ export class CapabilityRuntime {
         return;
       }
 
-      const dependencies = context.dependenciesToInstall;
-      if (Object.keys(dependencies).length === 0) {
-        return;
+      const { dependencies, devDependencies } = context.dependenciesToInstall;
+      const installResults = [];
+
+      if (Object.keys(dependencies).length > 0) {
+        installResults.push(await this.adapter.installDependencies(context.rootPath, dependencies));
       }
 
-      const result = await this.adapter.installDependencies(context.rootPath, dependencies);
-      if (result.exitCode !== 0) {
-        throw new Error(
-          `Dependency install failed: ${result.stderr || result.stdout || 'unknown error'}`
+      if (Object.keys(devDependencies).length > 0) {
+        installResults.push(
+          await this.adapter.installDependencies(context.rootPath, devDependencies, { dev: true })
         );
       }
 
-      context.state.installResult = result;
+      for (const result of installResults) {
+        if (result.exitCode !== 0) {
+          throw new Error(
+            `Dependency install failed: ${result.stderr || result.stdout || 'unknown error'}`
+          );
+        }
+      }
+
+      context.state.installResult = installResults[installResults.length - 1];
     });
 
     this.lifecycleHooks.register('finalize', async (context) => {

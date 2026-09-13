@@ -3,6 +3,7 @@ import type { EnvVariableMap } from '@kiln/env-capability';
 import type { ProjectInspection } from '@kiln/node-adapter';
 import type { CapabilityExecutionPlan } from '@kiln/planner';
 import type { TransformPlan } from '@kiln/transform-engine';
+import type { InstallDependencies } from './install.js';
 
 export interface RuntimeOptions {
   dryRun?: boolean;
@@ -28,7 +29,7 @@ export interface KilnRuntimeContext extends LifecycleContext {
   capabilityPlan?: CapabilityExecutionPlan;
   resolvedDependencies?: Map<string, string>;
   preview?: TransformPlan;
-  dependenciesToInstall?: Record<string, string>;
+  dependenciesToInstall?: InstallDependencies;
 }
 
 export type SupportedCapabilityId = 'env' | 'auth';
