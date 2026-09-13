@@ -5,18 +5,17 @@ import {
   OwnershipMetadataStore,
 } from '@kiln/project-model';
 import { DEFAULT_ENV_EXAMPLE_PATH } from '@kiln/env-capability';
+import { SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import { createTransformPipeline, TransformEngine } from '@kiln/transform-engine';
 import type { OwnershipSnapshot } from '@kiln/core';
 import { formatTransformPlan } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 
-const SUPPORTED_CAPABILITIES = ['env', 'auth'];
-
 export async function runRemove(capabilityId: string, options: CliOptions): Promise<void> {
-  if (!SUPPORTED_CAPABILITIES.includes(capabilityId)) {
+  if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {
     throw new Error(
-      `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITIES.join(', ')}`
+      `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITY_IDS.join(', ')}`
     );
   }
 

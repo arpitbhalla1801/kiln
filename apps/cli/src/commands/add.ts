@@ -1,11 +1,9 @@
-import { createCapabilityRuntime } from '@kiln/runtime';
+import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import type { EnvVariableMap } from '@kiln/env-capability';
 import type { SupportedCapabilityId } from '@kiln/runtime';
 import { formatCapabilityResult } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
-
-const SUPPORTED_CAPABILITIES: SupportedCapabilityId[] = ['env', 'auth'];
 
 const DEFAULT_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
@@ -17,9 +15,9 @@ export async function runAdd(
   envVariables: EnvVariableMap = {},
   providers: string[] = []
 ): Promise<void> {
-  if (!SUPPORTED_CAPABILITIES.includes(capabilityId as SupportedCapabilityId)) {
+  if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {
     throw new Error(
-      `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITIES.join(', ')}`
+      `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITY_IDS.join(', ')}`
     );
   }
 
