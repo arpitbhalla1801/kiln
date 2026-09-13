@@ -52,6 +52,7 @@ export class EnvCapability {
     options: EnvCapabilityPlanOptions = {}
   ): Promise<EnvCapabilityPlan> {
     const envExamplePath = options.envExamplePath ?? DEFAULT_ENV_EXAMPLE_PATH;
+    const ownerCapabilityId = options.ownerCapabilityId ?? ENV_CAPABILITY_ID;
     const variableInputs = toEnvVariableInputs(variables);
 
     validateEnvVariableNames(variableInputs);
@@ -69,7 +70,8 @@ export class EnvCapability {
       rootPath,
       envExamplePath,
       variables,
-      options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)))
+      options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath))),
+      ownerCapabilityId
     );
 
     const manifest = await this.getManifest();
@@ -106,7 +108,8 @@ export async function buildTransforms(
   rootPath: string,
   envExamplePath: string,
   variables: EnvVariableMap,
-  envExampleExists?: boolean
+  envExampleExists?: boolean,
+  ownerCapabilityId: string = ENV_CAPABILITY_ID
 ): Promise<TransformPipeline> {
   const exists =
     envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)));
@@ -126,7 +129,9 @@ export async function buildTransforms(
       `${ENV_CAPABILITY_ID}-inject-env-vars`,
       envExamplePath,
       variables,
-      'Inject environment variables'
+      'Inject environment variables',
+      undefined,
+      ownerCapabilityId
     );
   }
 

@@ -55,6 +55,7 @@ export interface EnvMutationTransform extends TransformBase {
   filePath: string;
   variables: Record<string, string | EnvVariableDefinition>;
   removeVariables?: string[];
+  section?: string;
 }
 
 /** Discriminated union of supported kiln transforms. */

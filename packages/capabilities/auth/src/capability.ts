@@ -140,6 +140,7 @@ export class AuthCapability {
         tracker,
         envExamplePath: options.envExamplePath,
         envExampleExists: options.envExampleExists,
+        ownerCapabilityId: AUTH_CAPABILITY_ID,
       }
     );
 

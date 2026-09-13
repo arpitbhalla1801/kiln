@@ -60,8 +60,36 @@ describe('AuthCapability', () => {
     expect(vfs.read('auth.ts')).toContain('NextAuth');
     expect(vfs.read('middleware.ts')).toContain('export default auth');
     expect(vfs.read('.env.example')).toMatch(/AUTH_SECRET=\S+/);
+    expect(vfs.read('.env.example')).toContain('# --- auth ---');
     expect(plan.capability.ownedDependencies).toContain('next-auth');
     expect(plan.capability.ownedEnvVars).toBeUndefined();
+  });
+
+  test('groups env and auth variables under separate section headers in .env.example', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+    });
+    const vfs = new VirtualFilesystem({
+      initialFiles: { 'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }) },
+    });
+    const applier = new TransformApplier();
+
+    const { EnvCapability } = await import('@kiln/env-capability');
+    const envCapability = new EnvCapability();
+    const envPlan = await envCapability.planAdd(root, {
+      DATABASE_URL: 'postgres://localhost:5432/app',
+    });
+    applier.applyAll(vfs, envPlan.transforms);
+
+    const auth = new AuthCapability(undefined, envCapability);
+    const authPlan = await auth.planAdd(root, { envExampleExists: true });
+    applier.applyAll(vfs, authPlan.transforms);
+
+    const content = vfs.read('.env.example') ?? '';
+    expect(content.indexOf('# --- env ---')).toBeGreaterThanOrEqual(0);
+    expect(content.indexOf('# --- auth ---')).toBeGreaterThan(content.indexOf('# --- env ---'));
+    expect(content.indexOf('DATABASE_URL')).toBeGreaterThan(content.indexOf('# --- env ---'));
+    expect(content.indexOf('AUTH_SECRET')).toBeGreaterThan(content.indexOf('# --- auth ---'));
   });
 
   test('does not scaffold a route handler when no providers are selected', async () => {
