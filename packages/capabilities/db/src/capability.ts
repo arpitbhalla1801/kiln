@@ -14,6 +14,7 @@ import { createTransformPipeline, type TransformPipeline } from '@kiln/transform
 import { createDbClientContent, createSchemaPrismaContent } from './templates.js';
 import {
   DB_CAPABILITY_ID,
+  DB_SCRIPTS,
   PRISMA_CLIENT_PACKAGE,
   PRISMA_CLI_PACKAGE,
   PRISMA_VERSION,
@@ -151,6 +152,12 @@ export function buildDbTransforms(
       'Create Prisma client singleton'
     );
   }
+
+  builder.packageJsonMutation(
+    `${DB_CAPABILITY_ID}-add-scripts`,
+    { scripts: DB_SCRIPTS },
+    'Add Prisma scripts'
+  );
 
   return builder.build();
 }

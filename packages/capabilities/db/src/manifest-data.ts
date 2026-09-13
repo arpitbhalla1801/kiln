@@ -15,5 +15,6 @@ export const DB_MANIFEST = {
   ownership: {
     files: [],
     dependencies: ['@prisma/client', 'prisma'],
+    scripts: ['db:generate', 'db:migrate', 'db:studio'],
   },
 };

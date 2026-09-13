@@ -217,6 +217,33 @@ describe('kiln cli', () => {
     expect(output).toContain('missing dependencies.next');
   });
 
+  test('add db then remove db strips the prisma scripts it owns', async () => {
+    const root = await createTempDir();
+    await runCreate(root, 'demo-app');
+
+    await runAdd('db', { cwd: root, dryRun: false });
+
+    const afterAdd = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+    expect(afterAdd.scripts['db:generate']).toBe('prisma generate');
+    expect(afterAdd.scripts['db:migrate']).toBe('prisma migrate dev');
+    expect(afterAdd.scripts['db:studio']).toBe('prisma studio');
+    expect(afterAdd.dependencies['@prisma/client']).toBeDefined();
+    expect(afterAdd.devDependencies.prisma).toBeDefined();
+
+    await runRemove('db', { cwd: root, dryRun: false });
+
+    const afterRemove = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+    expect(afterRemove.scripts['db:generate']).toBeUndefined();
+    expect(afterRemove.scripts['db:migrate']).toBeUndefined();
+    expect(afterRemove.scripts['db:studio']).toBeUndefined();
+    expect(afterRemove.scripts.build).toBe('next build');
+    expect(afterRemove.dependencies['@prisma/client']).toBeUndefined();
+    expect(afterRemove.devDependencies.prisma).toBeUndefined();
+
+    const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
+    expect(ownership.ownership.scripts).toEqual([]);
+  }, 30000);
+
   test('doctor warns when a required env var has no value', async () => {
     const root = await createTempDir();
     await runCreate(root, 'demo-app');
