@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.3
+
+### Fixes
+
+- Resolved dependency vulnerabilities, fixed a stale link-cli filter
+- Bumped a Windows CI timeout that was flaking on `cli.test.ts`
+
+### Added
+
+- `kiln remove <capability>` to uninstall a capability and its tracked files/deps/scripts/env vars
+- `.kiln/lock.json` generated on every capability apply
+- `--dry-run` now shows real content diffs instead of just file paths
+- Update notifier: `kiln` checks for a newer version and lets you know
+- `SECURITY.md` with private vulnerability reporting enabled
+- `CONTRIBUTING.md` and issue/PR templates
+
 ## 1.0.0
 
 First usable release for git-clone users.
