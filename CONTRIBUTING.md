@@ -36,13 +36,24 @@ packages/planner             # dependency graph + execution planning
 packages/transform-engine    # virtual filesystem, typed transforms, persistence, rollback
 packages/project-model        # .kiln/ state (ownership.json, lockfile)
 packages/adapters/node        # package-manager + Next.js detection
-packages/capabilities/         # env, auth capabilities
+packages/capabilities/         # env, auth, db capabilities
 packages/runtime               # wires lifecycle + planner + transform-engine together
 examples/nextjs-app             # reference app with env + auth already applied
 tests/post-deploy                # CLI smoke-test suite run against the built bin
+docs/                          # architecture references that outlive any single issue/PR
 ```
 
 See the root [README](README.md) for the CLI's own quick start.
+
+## Architecture references
+
+Some decisions are documented separately from the code because the *why*
+matters as much as the *what*, and shouldn't have to be reconstructed from
+git history:
+
+- [docs/plugin-architecture.md](docs/plugin-architecture.md) — the
+  third-party capability plugin system (milestone 2.0.0): what's decided,
+  what's rejected and why, and how it maps to GitHub issues.
 
 ## Making a change
 
