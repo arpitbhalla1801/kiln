@@ -43,7 +43,7 @@ describe('AuthCapability', () => {
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
     });
     const auth = new AuthCapability();
-    const plan = await auth.planAdd(root);
+    const plan = await auth.planAdd(root, {});
 
     expect(plan.paths.authFile).toBe('auth.ts');
     expect(plan.paths.middlewareFile).toBe('middleware.ts');
@@ -116,7 +116,7 @@ describe('AuthCapability', () => {
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
     });
     const auth = new AuthCapability();
-    const plan = await auth.planAdd(root);
+    const plan = await auth.planAdd(root, {});
 
     const routeHandlerTransform = plan.transforms.find(
       (transform) => transform.filePath === plan.paths.routeHandlerFile
@@ -152,7 +152,7 @@ describe('AuthCapability', () => {
       'src/app/page.tsx': 'export default function Page() { return null; }',
     });
     const auth = new AuthCapability();
-    const plan = await auth.planAdd(root);
+    const plan = await auth.planAdd(root, {});
 
     expect(plan.paths).toEqual({
       authFile: 'src/auth.ts',
@@ -173,7 +173,7 @@ describe('AuthCapability', () => {
     const tracker = new OwnershipTracker();
     const paths = buildAuthFilePaths();
 
-    const firstPlan = await auth.planAdd(root);
+    const firstPlan = await auth.planAdd(root, {});
     auth.registerOwnership(tracker, paths);
 
     const vfs = new VirtualFilesystem({

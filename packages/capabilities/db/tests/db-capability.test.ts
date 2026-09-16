@@ -42,7 +42,7 @@ describe('DbCapability', () => {
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
     });
     const db = new DbCapability();
-    const plan = await db.planAdd(root);
+    const plan = await db.planAdd(root, {});
 
     const vfs = new VirtualFilesystem({
       initialFiles: { 'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }) },
@@ -60,7 +60,7 @@ describe('DbCapability', () => {
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
     });
     const db = new DbCapability();
-    const plan = await db.planAdd(root);
+    const plan = await db.planAdd(root, {});
 
     const vfs = new VirtualFilesystem({
       initialFiles: { 'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }) },
@@ -170,7 +170,7 @@ describe('DbCapability', () => {
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
     });
     const db = new DbCapability();
-    const plan = await db.planAdd(root);
+    const plan = await db.planAdd(root, {});
 
     expect(plan.paths).toEqual({ schemaFile: 'prisma/schema.prisma', clientFile: 'lib/db.ts' });
 
@@ -192,7 +192,7 @@ describe('DbCapability', () => {
       'src/app/page.tsx': 'export default function Page() { return null; }',
     });
     const db = new DbCapability();
-    const plan = await db.planAdd(root);
+    const plan = await db.planAdd(root, {});
 
     expect(plan.paths).toEqual({ schemaFile: 'prisma/schema.prisma', clientFile: 'src/lib/db.ts' });
   });
@@ -227,7 +227,7 @@ describe('DbCapability', () => {
     });
     const db = new DbCapability();
 
-    await expect(db.planAdd(root)).rejects.toThrow(/already exists and was not created by kiln/);
+    await expect(db.planAdd(root, {})).rejects.toThrow(/already exists and was not created by kiln/);
   });
 
   test('rejects ownership conflicts', () => {

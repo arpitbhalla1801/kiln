@@ -1,13 +1,14 @@
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-  type Capability,
+  type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
   loadManifestFromFile,
   loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
+import type { Capability } from '@kiln/capability-sdk';
 import { DB_MANIFEST } from './manifest-data.js';
 import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { createTransformPipeline, type TransformPipeline } from '@kiln/transform-engine';
@@ -28,7 +29,8 @@ const DB_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
 };
 
-export class DbCapability {
+export class DbCapability implements Capability {
+  readonly id = DB_CAPABILITY_ID;
   readonly manifestPath?: string;
   private readonly envCapability: EnvCapability;
 
@@ -45,13 +47,13 @@ export class DbCapability {
     return loadManifestFromObject(DB_MANIFEST);
   }
 
-  async getCapability(): Promise<Capability> {
+  async getCapability(): Promise<ResolvedCapability> {
     return capabilityFromManifest(await this.getManifest());
   }
 
   async planAdd(
     rootPath: string,
-    options: DbCapabilityPlanOptions = {}
+    options: DbCapabilityPlanOptions
   ): Promise<DbCapabilityPlan> {
     const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath));
     const paths = buildDbFilePaths(sourceRoot);
@@ -191,7 +193,7 @@ async function detectSourceRoot(rootPath: string): Promise<string> {
   return '';
 }
 
-function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFilePaths): Capability {
+function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFilePaths): ResolvedCapability {
   const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
 
   return capabilityFromManifest({

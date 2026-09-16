@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@kiln/capability-sdk": "workspace:*",
     "@kiln/core": "workspace:*",
     "@kiln/env-capability": "workspace:*",
     "@kiln/transform-engine": "workspace:*"

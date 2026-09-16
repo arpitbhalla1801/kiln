@@ -1,13 +1,14 @@
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-  type Capability,
+  type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
   loadManifestFromFile,
   loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
+import type { Capability } from '@kiln/capability-sdk';
 import { ENV_MANIFEST } from './manifest-data.js';
 import {
   createTransformPipeline,
@@ -28,7 +29,8 @@ import {
   validateEnvVariableNames,
 } from './validation.js';
 
-export class EnvCapability {
+export class EnvCapability implements Capability {
+  readonly id = ENV_CAPABILITY_ID;
   readonly manifestPath?: string;
 
   constructor(manifestPath?: string) {
@@ -43,7 +45,7 @@ export class EnvCapability {
     return loadManifestFromObject(ENV_MANIFEST);
   }
 
-  async getCapability(): Promise<Capability> {
+  async getCapability(): Promise<ResolvedCapability> {
     return capabilityFromManifest(await this.getManifest());
   }
 
@@ -227,7 +229,7 @@ function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
   variables: import('./types.js').EnvVariableInput[],
   envExamplePath: string
-): Capability {
+): ResolvedCapability {
   const ownedEnvVars = mergeUnique(manifest.ownership?.envVars ?? [], variables.map((v) => v.name));
   const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], [envExamplePath]);
 
