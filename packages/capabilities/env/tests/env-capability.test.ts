@@ -43,8 +43,10 @@ describe('EnvCapability', () => {
     const root = await createTempProject();
     const env = new EnvCapability();
     const plan = await env.planAdd(root, {
-      DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
-      NODE_ENV: 'development',
+      variables: {
+        DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
+        NODE_ENV: 'development',
+      },
     });
 
     const vfs = new VirtualFilesystem();
@@ -64,7 +66,7 @@ describe('EnvCapability', () => {
     const tracker = new OwnershipTracker();
 
     const firstPlan = await env.planAdd(root, {
-      DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
+      variables: { DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true } },
     });
     env.registerOwnership(tracker, { DATABASE_URL: { example: 'postgres://localhost:5432/app' } });
 
@@ -73,8 +75,12 @@ describe('EnvCapability', () => {
     applier.applyAll(vfs, firstPlan.transforms);
 
     const secondPlan = await env.planAdd(root, {
-      DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
-    }, { tracker, envExampleExists: true, envLocalExists: true, gitignoreContent: null });
+      variables: { DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true } },
+      tracker,
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
+    });
 
     applier.applyAll(vfs, secondPlan.transforms);
 
@@ -91,7 +97,7 @@ describe('EnvCapability', () => {
     });
     const env = new EnvCapability();
     const plan = await env.planAdd(root, {
-      DATABASE_URL: 'postgres://localhost:5432/app',
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
     });
 
     // env-mutation for .env.example, plus fileCreate + envMutation seeding .env.local
@@ -116,8 +122,9 @@ describe('EnvCapability', () => {
 
     expect(() =>
       env.planAdd(root, {
-        DATABASE_URL: 'postgres://localhost:5432/app',
-      }, { tracker })
+        variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+        tracker,
+      })
     ).toThrow(/Ownership conflict detected/);
   });
 
@@ -129,11 +136,11 @@ describe('EnvCapability', () => {
     const root = await createTempProject();
 
     await expect(
-      env.planAdd(
-        root,
-        { DATABASE_URL: 'postgres://localhost:5432/app' },
-        { tracker, envExamplePath: '.env.staging' }
-      )
+      env.planAdd(root, {
+        variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+        tracker,
+        envExamplePath: '.env.staging',
+      })
     ).rejects.toThrow(/Ownership conflict detected/);
   });
 
@@ -144,11 +151,11 @@ describe('EnvCapability', () => {
     const env = new EnvCapability();
     const root = await createTempProject();
 
-    const plan = await env.planAdd(
-      root,
-      { DATABASE_URL: 'postgres://localhost:5432/app' },
-      { tracker, envExamplePath: '.env.staging' }
-    );
+    const plan = await env.planAdd(root, {
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+      tracker,
+      envExamplePath: '.env.staging',
+    });
 
     expect(plan.transforms.some((transform) => transform.filePath === '.env.staging')).toBe(true);
   });

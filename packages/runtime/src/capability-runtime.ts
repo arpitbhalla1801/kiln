@@ -63,7 +63,8 @@ export class CapabilityRuntime {
   ): Promise<RuntimeExecutionResult> {
     const rootPath = options.cwd ?? process.cwd();
     const tracker = await loadOwnershipTracker(rootPath);
-    const capabilityPlan = await this.envCapability.planAdd(rootPath, variables, {
+    const capabilityPlan = await this.envCapability.planAdd(rootPath, {
+      variables,
       tracker,
     });
 

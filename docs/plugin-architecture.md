@@ -89,7 +89,7 @@ reality, not the plan as originally written.
 | Phase | What | Issues | Status |
 |---|---|---|---|
 | 0 | Groundwork bugfixes — removed dead manifest `hooks`/`validations`; documented + tested the `file-modify` manifest-level alias | #97, #98 | done |
-| 1 | Formalize the `Capability` contract — new `@kiln/capability-sdk` package (skeleton done, no `@kiln/core` dependency — see decisions above), retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use, define the interface, migrate all three built-ins to implement it | #99 ✅, #100, #101, #102 | in progress |
+| 1 | Formalize the `Capability` contract — new `@kiln/capability-sdk` package (skeleton done, no `@kiln/core` dependency — see decisions above), retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use (done), define the interface, migrate all three built-ins to implement it | #99 ✅, #100 ✅, #101, #102 | in progress |
 | 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()`, open `SupportedCapabilityId`, collapse `CapabilityRuntime`'s three fields into one map, generic `addCapability()` | #103, #104, #105 | open |
 | 3 | Dynamic loading + trust model — the risky phase, gets extra scrutiny | #106, #107, #108, #109, #110, #111 | open |
 | 4 | Versioning/compatibility contract (docs + release process, no new runtime code) | #112 | open |

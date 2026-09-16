@@ -12,6 +12,7 @@ export interface EnvVariableInput {
 }
 
 export interface EnvCapabilityPlanOptions {
+  variables: EnvVariableMap;
   tracker?: import('@kiln/core').OwnershipTracker;
   envExamplePath?: string;
   envExampleExists?: boolean;

@@ -49,9 +49,9 @@ export class EnvCapability {
 
   async planAdd(
     rootPath: string,
-    variables: EnvVariableMap,
-    options: EnvCapabilityPlanOptions = {}
+    options: EnvCapabilityPlanOptions
   ): Promise<EnvCapabilityPlan> {
+    const { variables } = options;
     const envExamplePath = options.envExamplePath ?? DEFAULT_ENV_EXAMPLE_PATH;
     const ownerCapabilityId = options.ownerCapabilityId ?? ENV_CAPABILITY_ID;
     const variableInputs = toEnvVariableInputs(variables);

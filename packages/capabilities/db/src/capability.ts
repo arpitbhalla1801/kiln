@@ -71,7 +71,8 @@ export class DbCapability {
 
     const dbTransforms = buildDbTransforms(paths, prismaInstalled, schemaFileExists, clientFileExists);
 
-    const envPlan = await this.envCapability.planAdd(rootPath, DB_ENV_VARS, {
+    const envPlan = await this.envCapability.planAdd(rootPath, {
+      variables: DB_ENV_VARS,
       tracker,
       envExamplePath: options.envExamplePath,
       envExampleExists: options.envExampleExists,
