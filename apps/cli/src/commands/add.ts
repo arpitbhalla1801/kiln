@@ -1,6 +1,5 @@
 import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import type { EnvVariableMap } from '@kiln/env-capability';
-import type { SupportedCapabilityId } from '@kiln/runtime';
 import { formatCapabilityResult } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
@@ -23,24 +22,19 @@ export async function runAdd(
 
   const rootPath = await resolveProjectRoot(options.cwd);
   const runtime = createCapabilityRuntime();
-  const capability = capabilityId as SupportedCapabilityId;
 
   const variables =
-    capability === 'env' && Object.keys(envVariables).length === 0
+    capabilityId === 'env' && Object.keys(envVariables).length === 0
       ? DEFAULT_ENV_VARS
       : envVariables;
 
-  const result =
-    capability === 'env'
-      ? await runtime.addEnv(variables, { cwd: rootPath, dryRun: options.dryRun })
-      : capability === 'db'
-        ? await runtime.addDb({ cwd: rootPath, dryRun: options.dryRun })
-        : await runtime.addAuth({
-            cwd: rootPath,
-            dryRun: options.dryRun,
-            providers,
-            extraEnvVars: envVariables,
-          });
+  const result = await runtime.addCapability(capabilityId, {
+    cwd: rootPath,
+    dryRun: options.dryRun,
+    variables,
+    providers,
+    extraEnvVars: envVariables,
+  });
 
   console.log(
     formatCapabilityResult(
