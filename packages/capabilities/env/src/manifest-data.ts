@@ -22,19 +22,6 @@ export const ENV_MANIFEST = {
       },
     },
   ],
-  hooks: [
-    {
-      event: 'after:transform',
-      handler: './hooks/after-transform.ts',
-    },
-  ],
-  validations: [
-    {
-      id: 'env-no-duplicate-vars',
-      type: 'no-duplicate-env',
-      message: 'Environment variables must not be owned by multiple capabilities',
-    },
-  ],
   ownership: {
     files: ['.env.example'],
     envVars: [],

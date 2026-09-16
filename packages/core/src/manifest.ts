@@ -1,28 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import { LIFECYCLE_PHASES } from './lifecycle/types.js';
 import {
   CapabilityManifest,
-  ManifestHook,
-  ManifestValidation,
   OwnershipDeclaration,
   TRANSFORM_TYPES,
   Transform,
   TransformType,
 } from './models.js';
-
-const MANIFEST_HOOK_EVENTS = new Set<string>([
-  ...LIFECYCLE_PHASES,
-  ...LIFECYCLE_PHASES.map((phase) => `before:${phase}`),
-  ...LIFECYCLE_PHASES.map((phase) => `after:${phase}`),
-]);
-
-const MANIFEST_VALIDATION_TYPES = new Set<string>([
-  'required-adapter',
-  'required-dependency',
-  'no-duplicate-env',
-  'ownership-conflict',
-  'custom',
-]);
 
 export class ManifestValidationError extends Error {
   readonly field: string;
@@ -41,8 +24,6 @@ export function validateManifest(manifest: CapabilityManifest): void {
   validateOptionalStringArray(manifest.adapters, 'adapters');
   validateTransformRefs(manifest.transforms, 'transforms');
   validateTransformDefinitions(manifest.transformDefinitions);
-  validateHooks(manifest.hooks);
-  validateValidations(manifest.validations);
   validateOwnership(manifest.ownership);
   validateOptionalStringArray(manifest.files, 'files');
 
@@ -64,8 +45,6 @@ export function loadManifestFromObject(raw: unknown): CapabilityManifest {
     adapters: readOptionalStringArray(raw, 'adapters'),
     transforms: readOptionalStringArray(raw, 'transforms'),
     transformDefinitions: readTransformDefinitions(raw),
-    hooks: readHooks(raw),
-    validations: readValidations(raw),
     ownership: readOwnership(raw),
     files: readOptionalStringArray(raw, 'files'),
   };
@@ -178,76 +157,6 @@ function validateTransformType(value: unknown, field: string): void {
   }
 }
 
-function validateHooks(hooks: unknown): void {
-  if (hooks === undefined) {
-    return;
-  }
-
-  if (!Array.isArray(hooks)) {
-    throw new ManifestValidationError('hooks', 'must be an array');
-  }
-
-  for (const hook of hooks) {
-    validateHook(hook);
-  }
-}
-
-function validateHook(hook: unknown): void {
-  if (!isRecord(hook)) {
-    throw new ManifestValidationError('hooks', 'each entry must be an object');
-  }
-
-  validateRequiredString(hook.event, 'hooks.event');
-  validateRequiredString(hook.handler, 'hooks.handler');
-
-  const event = hook.event as string;
-  if (!MANIFEST_HOOK_EVENTS.has(event)) {
-    throw new ManifestValidationError(
-      'hooks.event',
-      `must be a lifecycle phase or before:/after: prefix (${Array.from(MANIFEST_HOOK_EVENTS).join(', ')})`
-    );
-  }
-}
-
-function validateValidations(validations: unknown): void {
-  if (validations === undefined) {
-    return;
-  }
-
-  if (!Array.isArray(validations)) {
-    throw new ManifestValidationError('validations', 'must be an array');
-  }
-
-  for (const validation of validations) {
-    validateValidation(validation);
-  }
-}
-
-function validateValidation(validation: unknown): void {
-  if (!isRecord(validation)) {
-    throw new ManifestValidationError('validations', 'each entry must be an object');
-  }
-
-  validateRequiredString(validation.id, 'validations.id');
-  validateRequiredString(validation.type, 'validations.type');
-
-  const validationType = validation.type as string;
-  if (!MANIFEST_VALIDATION_TYPES.has(validationType)) {
-    throw new ManifestValidationError(
-      'validations.type',
-      `must be one of: ${Array.from(MANIFEST_VALIDATION_TYPES).join(', ')}`
-    );
-  }
-
-  if (validation.message !== undefined) {
-    validateRequiredString(validation.message, 'validations.message');
-  }
-
-  if (validation.config !== undefined && !isRecord(validation.config)) {
-    throw new ManifestValidationError('validations.config', 'must be an object');
-  }
-}
-
 function validateOwnership(ownership: unknown): void {
   if (ownership === undefined) {
     return;
@@ -341,59 +250,6 @@ function readTransformDefinitions(record: Record<string, unknown>): Transform[] 
     validateTransformDefinition(transform);
     return transform;
   });
-}
-
-function readHooks(record: Record<string, unknown>): ManifestHook[] | undefined {
-  const value = record.hooks;
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Array.isArray(value)) {
-    throw new ManifestValidationError('hooks', 'must be an array');
-  }
-
-  const hooks = value.map((entry) => {
-    if (!isRecord(entry)) {
-      throw new ManifestValidationError('hooks', 'each entry must be an object');
-    }
-
-    return {
-      event: readRequiredString(entry, 'event'),
-      handler: readRequiredString(entry, 'handler'),
-    };
-  });
-
-  validateHooks(hooks);
-  return hooks;
-}
-
-function readValidations(record: Record<string, unknown>): ManifestValidation[] | undefined {
-  const value = record.validations;
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Array.isArray(value)) {
-    throw new ManifestValidationError('validations', 'must be an array');
-  }
-
-  const validations = value.map((entry) => {
-    if (!isRecord(entry)) {
-      throw new ManifestValidationError('validations', 'each entry must be an object');
-    }
-
-    return {
-      id: readRequiredString(entry, 'id'),
-      type: readRequiredString(entry, 'type'),
-      message: readOptionalString(entry, 'message'),
-      config:
-        entry.config === undefined ? undefined : (entry.config as Record<string, unknown>),
-    };
-  });
-
-  validateValidations(validations);
-  return validations;
 }
 
 function readOwnership(record: Record<string, unknown>): OwnershipDeclaration | undefined {

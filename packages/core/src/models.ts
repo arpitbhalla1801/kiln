@@ -54,20 +54,6 @@ export interface Capability {
   ownedMetadata?: string[];
 }
 
-/** Lifecycle hook binding declared in a capability manifest. */
-export interface ManifestHook {
-  event: string;
-  handler: string;
-}
-
-/** Validation rule declared in a capability manifest. */
-export interface ManifestValidation {
-  id: string;
-  type: string;
-  message?: string;
-  config?: Record<string, unknown>;
-}
-
 /** Resources a capability claims ownership over. */
 export interface OwnershipDeclaration {
   files?: string[];
@@ -89,8 +75,6 @@ export interface CapabilityManifest {
   adapters?: AdapterId[];
   transforms?: TransformId[];
   transformDefinitions?: Transform[];
-  hooks?: ManifestHook[];
-  validations?: ManifestValidation[];
   ownership?: OwnershipDeclaration;
   files?: string[];
 }
