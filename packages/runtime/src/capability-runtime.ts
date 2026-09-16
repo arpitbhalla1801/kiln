@@ -42,6 +42,7 @@ export class CapabilityRuntime {
   private readonly envCapability: EnvCapability;
   private readonly authCapability: AuthCapability;
   private readonly dbCapability: DbCapability;
+  private readonly capabilities: Map<string, { getCapability(): Promise<Capability> }>;
   private readonly lifecycleHooks: LifecycleHooks<KilnRuntimeContext>;
 
   constructor(options: CapabilityRuntimeOptions = {}) {
@@ -49,6 +50,11 @@ export class CapabilityRuntime {
     this.envCapability = options.envCapability ?? new EnvCapability();
     this.authCapability = options.authCapability ?? new AuthCapability();
     this.dbCapability = options.dbCapability ?? new DbCapability();
+    this.capabilities = new Map<string, { getCapability(): Promise<Capability> }>([
+      ['env', this.envCapability],
+      ['auth', this.authCapability],
+      ['db', this.dbCapability],
+    ]);
     this.lifecycleHooks = new LifecycleHooks<KilnRuntimeContext>();
     this.registerDefaultHooks();
   }
@@ -294,13 +300,8 @@ export class CapabilityRuntime {
   }
 
   private getCapabilityAccessor(capabilityId: string): (() => Promise<Capability>) | undefined {
-    const accessors: Record<string, () => Promise<Capability>> = {
-      env: () => this.envCapability.getCapability(),
-      auth: () => this.authCapability.getCapability(),
-      db: () => this.dbCapability.getCapability(),
-    };
-
-    return accessors[capabilityId];
+    const capability = this.capabilities.get(capabilityId);
+    return capability ? () => capability.getCapability() : undefined;
   }
 
   private async buildValidationCapabilities(

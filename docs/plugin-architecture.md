@@ -92,7 +92,7 @@ reality, not the plan as originally written.
 |---|---|---|---|
 | 0 | Groundwork bugfixes — removed dead manifest `hooks`/`validations`; documented + tested the `file-modify` manifest-level alias | #97, #98 | done |
 | 1 | Formalize the `Capability` contract — new `@kiln/capability-sdk` package (skeleton done, no `@kiln/core`/`@kiln/transform-engine` dependency — see decisions above), retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use (done), define the interface (done — no `registerOwnership`, see decisions above), migrate all three built-ins to implement it (done) | #99 ✅, #100 ✅, #101 ✅, #102 ✅ | done |
-| 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()` (done), open `SupportedCapabilityId`, collapse `CapabilityRuntime`'s three fields into one map, generic `addCapability()` | #103 ✅, #104, #105 | in progress |
+| 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()` (done), open `SupportedCapabilityId` (done), collapse `CapabilityRuntime`'s validation-accessor lookup into one map (done), generic `addCapability()` | #103 ✅, #104 ✅, #105 | in progress |
 | 3 | Dynamic loading + trust model — the risky phase, gets extra scrutiny | #106, #107, #108, #109, #110, #111 | open |
 | 4 | Versioning/compatibility contract (docs + release process, no new runtime code) | #112 | open |
 | 5 | DX/ecosystem surface — scaffolding generator, reference docs, `kiln plugins list`/`verify` | #113, #114, #115 | open |
