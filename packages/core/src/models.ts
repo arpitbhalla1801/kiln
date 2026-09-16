@@ -7,7 +7,16 @@ export type TransformId = string;
 /** Unique identifier for a platform/runtime adapter. */
 export type AdapterId = string;
 
-/** Supported transform operation kinds (expanded in transform API work). */
+/**
+ * Supported transform operation kinds for manifest-declared
+ * `transformDefinitions`. This is the manifest-level vocabulary, not the
+ * execution-level one -- `file-modify` has no `TypedTransform` variant of
+ * its own; `resolveTypedTransform` (in @kiln/transform-engine) resolves it
+ * into a `file-create`-tagged typed transform (an unconditional write,
+ * matching "modify" semantics). It exists as a distinct manifest-level name
+ * for readability in a manifest's `transformDefinitions`, not because it
+ * executes differently.
+ */
 export type TransformType =
   | 'file-create'
   | 'file-modify'

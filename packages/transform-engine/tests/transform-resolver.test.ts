@@ -43,4 +43,33 @@ describe('resolveTypedTransform', () => {
       expect(typed.dependencies).toEqual({ 'next-auth': '^5.0.0' });
     }
   });
+
+  test('resolves manifest-style file-modify as a file-create write', () => {
+    const transform: Transform = {
+      id: 'update-config',
+      type: 'file-modify',
+      target: 'src/config.ts',
+      payload: {
+        content: 'export const config = {};\n',
+      },
+    };
+
+    const typed = resolveTypedTransform(transform);
+
+    expect(typed.type).toBe('file-create');
+    if (typed.type === 'file-create') {
+      expect(typed.filePath).toBe('src/config.ts');
+      expect(typed.content).toBe('export const config = {};\n');
+    }
+  });
+
+  test('throws for file-delete, which the resolver does not support yet', () => {
+    const transform: Transform = {
+      id: 'remove-file',
+      type: 'file-delete',
+      target: 'src/old.ts',
+    };
+
+    expect(() => resolveTypedTransform(transform)).toThrow(/file-delete/);
+  });
 });

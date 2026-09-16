@@ -40,7 +40,11 @@ line is a real constraint found by reading the code, not an assumption.
   `TypedTransform` variants (`file-create`, `file-patch`, `file-delete`,
   `json-mutation`, `package-json-mutation`, `env-mutation`).
   `TransformApplier.apply()` is a `switch` with a `default: throw`. This
-  stays closed — see "Rejected alternatives" below.
+  stays closed — see "Rejected alternatives" below. (The manifest-level
+  `TransformType` enum has a 7th value, `file-modify`, but it's a documented
+  alias resolved into `file-create` by `resolveTypedTransform` — not a
+  missing variant, just a different name at the manifest-declaration layer.
+  See #98.)
 - **Runtime dispatch is fully hardcoded.** `CAPABILITY_REGISTRY` was a
   literal object, `SupportedCapabilityId` a closed TS union,
   `CapabilityRuntime` had three named fields built from statically-imported
@@ -83,7 +87,7 @@ reality, not the plan as originally written.
 
 | Phase | What | Issues | Status |
 |---|---|---|---|
-| 0 | Groundwork bugfixes — mark/remove dead manifest `hooks`/`validations`; fix the `file-modify` `TransformType` with no `TypedTransform` counterpart | #97, #98 | open |
+| 0 | Groundwork bugfixes — removed dead manifest `hooks`/`validations`; documented + tested the `file-modify` manifest-level alias | #97, #98 | done |
 | 1 | Formalize the `Capability` contract — new `@kiln/capability-sdk` package, retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use, define the interface, migrate all three built-ins to implement it | #99, #100, #101, #102 | open |
 | 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()`, open `SupportedCapabilityId`, collapse `CapabilityRuntime`'s three fields into one map, generic `addCapability()` | #103, #104, #105 | open |
 | 3 | Dynamic loading + trust model — the risky phase, gets extra scrutiny | #106, #107, #108, #109, #110, #111 | open |
