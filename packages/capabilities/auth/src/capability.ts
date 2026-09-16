@@ -3,13 +3,14 @@ import { readFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import {
-  type Capability,
+  type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
   loadManifestFromFile,
   loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
+import type { Capability } from '@kiln/capability-sdk';
 import { AUTH_MANIFEST } from './manifest-data.js';
 import {
   EnvCapability,
@@ -55,7 +56,8 @@ export function buildAuthEnvVars(providers: string[], generateSecret = true): En
   return envVars;
 }
 
-export class AuthCapability {
+export class AuthCapability implements Capability {
+  readonly id = AUTH_CAPABILITY_ID;
   readonly manifestPath?: string;
   private readonly envCapability: EnvCapability;
 
@@ -72,13 +74,13 @@ export class AuthCapability {
     return loadManifestFromObject(AUTH_MANIFEST);
   }
 
-  async getCapability(): Promise<Capability> {
+  async getCapability(): Promise<ResolvedCapability> {
     return capabilityFromManifest(await this.getManifest());
   }
 
   async planAdd(
     rootPath: string,
-    options: AuthCapabilityPlanOptions = {}
+    options: AuthCapabilityPlanOptions
   ): Promise<AuthCapabilityPlan> {
     const requestedProviders = options.providers ?? [];
     const existingProviders = options.existingProviders ?? [];
@@ -323,7 +325,7 @@ function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
   paths: AuthFilePaths,
   providers: string[] = []
-): Capability {
+): ResolvedCapability {
   const activePaths: Record<string, string> = { ...paths };
   if (providers.length === 0) {
     delete activePaths.routeHandlerFile;

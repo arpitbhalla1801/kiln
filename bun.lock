@@ -66,6 +66,7 @@
       "name": "@kiln/auth-capability",
       "version": "1.0.0",
       "dependencies": {
+        "@kiln/capability-sdk": "workspace:*",
         "@kiln/core": "workspace:*",
         "@kiln/env-capability": "workspace:*",
         "@kiln/transform-engine": "workspace:*",
@@ -78,6 +79,7 @@
       "name": "@kiln/db-capability",
       "version": "1.0.0",
       "dependencies": {
+        "@kiln/capability-sdk": "workspace:*",
         "@kiln/core": "workspace:*",
         "@kiln/env-capability": "workspace:*",
         "@kiln/transform-engine": "workspace:*",
@@ -90,6 +92,7 @@
       "name": "@kiln/env-capability",
       "version": "1.0.0",
       "dependencies": {
+        "@kiln/capability-sdk": "workspace:*",
         "@kiln/core": "workspace:*",
         "@kiln/transform-engine": "workspace:*",
       },
