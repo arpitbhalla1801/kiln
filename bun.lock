@@ -147,6 +147,8 @@
       "name": "@kiln/capability-sdk",
       "version": "0.1.0",
       "devDependencies": {
+        "@kiln/core": "workspace:*",
+        "@kiln/transform-engine": "workspace:*",
         "@types/node": "^25.9.1",
       },
     },
