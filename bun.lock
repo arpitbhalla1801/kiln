@@ -143,6 +143,13 @@
         "@types/node": "^25.9.1",
       },
     },
+    "packages/sdk": {
+      "name": "@kiln/capability-sdk",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
+    },
     "packages/transform-engine": {
       "name": "@kiln/transform-engine",
       "version": "1.0.0",
@@ -301,6 +308,8 @@
     "@kiln-cli/kiln": ["@kiln-cli/kiln@workspace:apps/cli"],
 
     "@kiln/auth-capability": ["@kiln/auth-capability@workspace:packages/capabilities/auth"],
+
+    "@kiln/capability-sdk": ["@kiln/capability-sdk@workspace:packages/sdk"],
 
     "@kiln/core": ["@kiln/core@workspace:packages/core"],
 

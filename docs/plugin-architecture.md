@@ -77,6 +77,7 @@ line is a real constraint found by reading the code, not an assumption.
 | Sandboxing | None in 2.0.0 | A real sandbox (not Node's `vm`, which is trivially escapable) is a multi-month effort for a single maintainer and still wouldn't stop a plugin from requesting arbitrary installs. Shipping "no sandbox, documented loudly" beats shipping a sandbox that implies safety it doesn't provide. |
 | New transform kinds via plugins | Not allowed — the six `TypedTransform` variants stay closed | They're the auditable choke point every capability's filesystem/package.json mutations pass through. A genuinely new primitive ships as a first-party 7th variant in `@kiln/transform-engine`, never something a plugin registers at runtime. |
 | SDK compatibility check | Exact-major-number gate only, no semver-range solver | One maintainer, one SDK. A range solver is solving a problem that doesn't exist yet at this project's scale. |
+| SDK's dependency on `@kiln/core` | None — structural interfaces, not imports | `@kiln/core` is `private: true`, never published. A published `@kiln/capability-sdk` can't depend on an unpublished workspace package. A plugin only ever *receives* an `OwnershipTracker` instance kiln constructs — it never imports or constructs one itself — so the SDK declares the same method surface as a structural interface. Kiln's real class satisfies it automatically (TypeScript structural typing), with zero runtime coupling. |
 | Lockfile provenance | Reuse the *existing* optional `resolved`/`integrity` fields on `CapabilityVersion` | No schema change needed. Built-ins keep `resolved: "capability:${id}@${version}"`; plugins get `resolved: "npm:<package>@<version>"`. |
 
 ## Phases
@@ -88,7 +89,7 @@ reality, not the plan as originally written.
 | Phase | What | Issues | Status |
 |---|---|---|---|
 | 0 | Groundwork bugfixes — removed dead manifest `hooks`/`validations`; documented + tested the `file-modify` manifest-level alias | #97, #98 | done |
-| 1 | Formalize the `Capability` contract — new `@kiln/capability-sdk` package, retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use, define the interface, migrate all three built-ins to implement it | #99, #100, #101, #102 | open |
+| 1 | Formalize the `Capability` contract — new `@kiln/capability-sdk` package (skeleton done, no `@kiln/core` dependency — see decisions above), retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use, define the interface, migrate all three built-ins to implement it | #99 ✅, #100, #101, #102 | in progress |
 | 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()`, open `SupportedCapabilityId`, collapse `CapabilityRuntime`'s three fields into one map, generic `addCapability()` | #103, #104, #105 | open |
 | 3 | Dynamic loading + trust model — the risky phase, gets extra scrutiny | #106, #107, #108, #109, #110, #111 | open |
 | 4 | Versioning/compatibility contract (docs + release process, no new runtime code) | #112 | open |
