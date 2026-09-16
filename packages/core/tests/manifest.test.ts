@@ -25,14 +25,6 @@ describe('capability manifest format', () => {
         dependencies: [],
         adapters: ['node-adapter'],
         transforms: ['env-example'],
-        hooks: [{ event: 'after:transform', handler: './hooks/after-transform.ts' }],
-        validations: [
-          {
-            id: 'env-no-duplicate-vars',
-            type: 'no-duplicate-env',
-            message: 'Environment variables must not be owned by multiple capabilities',
-          },
-        ],
         ownership: {
           files: ['.env.example'],
           envVars: ['DATABASE_URL'],
@@ -41,7 +33,6 @@ describe('capability manifest format', () => {
     );
 
     expect(manifest.id).toBe('env');
-    expect(manifest.hooks?.[0].event).toBe('after:transform');
     expect(manifest.ownership?.envVars).toEqual(['DATABASE_URL']);
   });
 
@@ -90,18 +81,9 @@ describe('capability manifest format', () => {
         id: 'env',
         version: '1.0.0',
         dependencies: [],
-        hooks: [{ event: 'invalid-event', handler: './hook.ts' }],
+        adapters: [123],
       })
-    ).toThrow(/hooks\.event/);
-
-    expect(() =>
-      loadManifestFromObject({
-        id: 'env',
-        version: '1.0.0',
-        dependencies: [],
-        validations: [{ id: 'check', type: 'unsupported' }],
-      })
-    ).toThrow(/validations\.type/);
+    ).toThrow(/adapters/);
   });
 
   test('validateManifest accepts minimal manifest', () => {
