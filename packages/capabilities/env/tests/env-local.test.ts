@@ -31,7 +31,7 @@ describe('.env.local scaffolding', () => {
     const root = await createTempProject();
     const env = new EnvCapability();
     const plan = await env.planAdd(root, {
-      DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
+      variables: { DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true } },
     });
 
     const vfs = new VirtualFilesystem();
@@ -51,8 +51,11 @@ describe('.env.local scaffolding', () => {
     const applier = new TransformApplier();
 
     const plan = await env.planAdd(root, {
-      DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
-    }, { envExampleExists: true, envLocalExists: true, gitignoreContent: null });
+      variables: { DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true } },
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
+    });
 
     applier.applyAll(vfs, plan.transforms);
 
@@ -69,9 +72,14 @@ describe('.env.local scaffolding', () => {
     const applier = new TransformApplier();
 
     const plan = await env.planAdd(root, {
-      DATABASE_URL: 'postgres://localhost:5432/app',
-      NEW_KEY: 'default-value',
-    }, { envExampleExists: true, envLocalExists: true, gitignoreContent: null });
+      variables: {
+        DATABASE_URL: 'postgres://localhost:5432/app',
+        NEW_KEY: 'default-value',
+      },
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
+    });
 
     applier.applyAll(vfs, plan.transforms);
 
@@ -84,7 +92,7 @@ describe('.env.local scaffolding', () => {
     const root = await createTempProject();
     const env = new EnvCapability();
     const plan = await env.planAdd(root, {
-      DATABASE_URL: 'postgres://localhost:5432/app',
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
     });
 
     const registeredFiles = plan.ownershipRegistrations
@@ -98,11 +106,12 @@ describe('.env.local scaffolding', () => {
   test('adds .env.local to an existing .gitignore that is missing it', async () => {
     const root = await createTempProject();
     const env = new EnvCapability();
-    const plan = await env.planAdd(
-      root,
-      { DATABASE_URL: 'postgres://localhost:5432/app' },
-      { envExampleExists: true, envLocalExists: true, gitignoreContent: 'node_modules\ndist\n' }
-    );
+    const plan = await env.planAdd(root, {
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: 'node_modules\ndist\n',
+    });
 
     const vfs = new VirtualFilesystem({
       initialFiles: { '.gitignore': 'node_modules\ndist\n' },
@@ -116,11 +125,12 @@ describe('.env.local scaffolding', () => {
   test('does not touch .gitignore when it already covers .env.local', async () => {
     const root = await createTempProject();
     const env = new EnvCapability();
-    const plan = await env.planAdd(
-      root,
-      { DATABASE_URL: 'postgres://localhost:5432/app' },
-      { envExampleExists: true, envLocalExists: true, gitignoreContent: 'node_modules\n.env.local\n' }
-    );
+    const plan = await env.planAdd(root, {
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: 'node_modules\n.env.local\n',
+    });
 
     const gitignoreTransform = plan.transforms.find((transform) => transform.filePath === '.gitignore');
     expect(gitignoreTransform).toBeUndefined();
@@ -129,11 +139,12 @@ describe('.env.local scaffolding', () => {
   test('does not create a .gitignore when the project has none', async () => {
     const root = await createTempProject();
     const env = new EnvCapability();
-    const plan = await env.planAdd(
-      root,
-      { DATABASE_URL: 'postgres://localhost:5432/app' },
-      { envExampleExists: true, envLocalExists: true, gitignoreContent: null }
-    );
+    const plan = await env.planAdd(root, {
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+      envExampleExists: true,
+      envLocalExists: true,
+      gitignoreContent: null,
+    });
 
     const gitignoreTransform = plan.transforms.find((transform) => transform.filePath === '.gitignore');
     expect(gitignoreTransform).toBeUndefined();

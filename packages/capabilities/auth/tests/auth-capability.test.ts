@@ -77,7 +77,7 @@ describe('AuthCapability', () => {
     const { EnvCapability } = await import('@kiln/env-capability');
     const envCapability = new EnvCapability();
     const envPlan = await envCapability.planAdd(root, {
-      DATABASE_URL: 'postgres://localhost:5432/app',
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
     });
     applier.applyAll(vfs, envPlan.transforms);
 
