@@ -1,4 +1,8 @@
 import { AuthCapability } from '@kiln/auth-capability';
+import type {
+  Capability as PluginCapability,
+  CapabilityPlanOptions,
+} from '@kiln/capability-sdk';
 import {
   type Capability,
   createEmptyProjectState,
@@ -35,6 +39,8 @@ export interface CapabilityRuntimeOptions {
   envCapability?: EnvCapability;
   authCapability?: AuthCapability;
   dbCapability?: DbCapability;
+  /** Additional capability instances to register alongside the built-ins, keyed by id. */
+  capabilities?: Record<string, PluginCapability>;
 }
 
 export class CapabilityRuntime {
@@ -42,7 +48,7 @@ export class CapabilityRuntime {
   private readonly envCapability: EnvCapability;
   private readonly authCapability: AuthCapability;
   private readonly dbCapability: DbCapability;
-  private readonly capabilities: Map<string, { getCapability(): Promise<Capability> }>;
+  private readonly capabilities: Map<string, PluginCapability>;
   private readonly lifecycleHooks: LifecycleHooks<KilnRuntimeContext>;
 
   constructor(options: CapabilityRuntimeOptions = {}) {
@@ -50,10 +56,11 @@ export class CapabilityRuntime {
     this.envCapability = options.envCapability ?? new EnvCapability();
     this.authCapability = options.authCapability ?? new AuthCapability();
     this.dbCapability = options.dbCapability ?? new DbCapability();
-    this.capabilities = new Map<string, { getCapability(): Promise<Capability> }>([
+    this.capabilities = new Map<string, PluginCapability>([
       ['env', this.envCapability],
       ['auth', this.authCapability],
       ['db', this.dbCapability],
+      ...Object.entries(options.capabilities ?? {}),
     ]);
     this.lifecycleHooks = new LifecycleHooks<KilnRuntimeContext>();
     this.registerDefaultHooks();
@@ -63,42 +70,47 @@ export class CapabilityRuntime {
     return this.lifecycleHooks;
   }
 
-  async addEnv(
-    variables: EnvVariableMap,
-    options: RuntimeOptions = {}
+  async addCapability(
+    id: string,
+    options: RuntimeOptions & Record<string, unknown> = {}
   ): Promise<RuntimeExecutionResult> {
-    const rootPath = options.cwd ?? process.cwd();
-    const tracker = await loadOwnershipTracker(rootPath);
-    const capabilityPlan = await this.envCapability.planAdd(rootPath, {
-      variables,
-      tracker,
-    });
+    const capability = this.capabilities.get(id);
+    if (!capability) {
+      throw new Error(`Unknown capability: '${id}'`);
+    }
 
-    return this.executeCapabilityPlan('env', rootPath, capabilityPlan, options);
-  }
-
-  async addAuth(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
     const rootPath = options.cwd ?? process.cwd();
     const tracker = await loadOwnershipTracker(rootPath);
     const lockfile = await LockfileStore.load(rootPath);
     const existingProviders =
-      lockfile?.snapshot.capabilities.find((entry) => entry.id === 'auth')?.providers ?? [];
-    const capabilityPlan = await this.authCapability.planAdd(rootPath, {
-      tracker,
-      providers: options.providers,
-      existingProviders,
-      extraEnvVars: options.extraEnvVars,
-    });
+      lockfile?.snapshot.capabilities.find((entry) => entry.id === id)?.providers ?? [];
 
-    return this.executeCapabilityPlan('auth', rootPath, capabilityPlan, options);
+    const planOptions: CapabilityPlanOptions & Record<string, unknown> = {
+      ...options,
+      tracker,
+      existingProviders,
+    };
+    const capabilityPlan = await capability.planAdd(rootPath, planOptions);
+
+    return this.executeCapabilityPlan(id, rootPath, capabilityPlan, options);
   }
 
-  async addDb(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
-    const rootPath = options.cwd ?? process.cwd();
-    const tracker = await loadOwnershipTracker(rootPath);
-    const capabilityPlan = await this.dbCapability.planAdd(rootPath, { tracker });
+  /** @deprecated use addCapability('env', { ...options, variables }) */
+  async addEnv(
+    variables: EnvVariableMap,
+    options: RuntimeOptions = {}
+  ): Promise<RuntimeExecutionResult> {
+    return this.addCapability('env', { ...options, variables });
+  }
 
-    return this.executeCapabilityPlan('db', rootPath, capabilityPlan, options);
+  /** @deprecated use addCapability('auth', options) */
+  async addAuth(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
+    return this.addCapability('auth', { ...options });
+  }
+
+  /** @deprecated use addCapability('db', options) */
+  async addDb(options: RuntimeOptions = {}): Promise<RuntimeExecutionResult> {
+    return this.addCapability('db', { ...options });
   }
 
   async executeCapability(
@@ -106,15 +118,10 @@ export class CapabilityRuntime {
     options: RuntimeOptions = {},
     payload?: EnvVariableMap
   ): Promise<RuntimeExecutionResult> {
-    if (capabilityId === 'env') {
-      return this.addEnv(payload ?? {}, options);
-    }
-
-    if (capabilityId === 'db') {
-      return this.addDb(options);
-    }
-
-    return this.addAuth(options);
+    return this.addCapability(capabilityId, {
+      ...options,
+      ...(payload ? { variables: payload } : {}),
+    });
   }
 
   private async executeCapabilityPlan(

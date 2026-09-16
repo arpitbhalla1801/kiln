@@ -24,6 +24,7 @@
         "kiln": "./dist/index.js",
       },
       "devDependencies": {
+        "@kiln/capability-sdk": "workspace:*",
         "@kiln/core": "workspace:*",
         "@kiln/env-capability": "workspace:*",
         "@kiln/node-adapter": "workspace:*",
@@ -134,6 +135,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@kiln/auth-capability": "workspace:*",
+        "@kiln/capability-sdk": "workspace:*",
         "@kiln/core": "workspace:*",
         "@kiln/db-capability": "workspace:*",
         "@kiln/env-capability": "workspace:*",
