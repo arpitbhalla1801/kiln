@@ -10,6 +10,7 @@ export {
   CAPABILITY_REGISTRY,
   SUPPORTED_CAPABILITY_IDS,
   isSupportedCapabilityId,
+  registerCapability,
   type CapabilityRegistryEntry,
 } from './capability-registry.js';
 export type {
