@@ -20,13 +20,20 @@ async function installFakePackage(
   root: string,
   packageName: string,
   version: string,
-  indexContent: string
+  indexContent: string,
+  sdkRange: string | null = '^0.1.0'
 ): Promise<void> {
   const packageDir = join(root, 'node_modules', packageName);
   await mkdir(packageDir, { recursive: true });
   await writeFile(
     join(packageDir, 'package.json'),
-    JSON.stringify({ name: packageName, version, type: 'module', main: 'index.mjs' })
+    JSON.stringify({
+      name: packageName,
+      version,
+      type: 'module',
+      main: 'index.mjs',
+      ...(sdkRange ? { dependencies: { '@kiln/capability-sdk': sdkRange } } : {}),
+    })
   );
   await writeFile(join(packageDir, 'index.mjs'), indexContent);
 }
@@ -120,5 +127,31 @@ describe('loadPlugin', () => {
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('threw while loading');
+  });
+
+  test('skips a plugin that does not declare a @kiln/capability-sdk dependency', async () => {
+    const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
+    await installFakePackage(
+      root,
+      'kiln-capability-fake',
+      '1.0.0',
+      VALID_CAPABILITY_MODULE,
+      null
+    );
+
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toContain("does not declare a '@kiln/capability-sdk' dependency");
+  });
+
+  test('skips a plugin that targets an incompatible @kiln/capability-sdk major version', async () => {
+    const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
+    await installFakePackage(root, 'kiln-capability-fake', '1.0.0', VALID_CAPABILITY_MODULE, '^99.0.0');
+
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toContain('targets @kiln/capability-sdk v99');
   });
 });

@@ -17,7 +17,13 @@ async function installFakePackage(
   await mkdir(packageDir, { recursive: true });
   await writeFile(
     join(packageDir, 'package.json'),
-    JSON.stringify({ name: packageName, version, type: 'module', main: 'index.mjs' })
+    JSON.stringify({
+      name: packageName,
+      version,
+      type: 'module',
+      main: 'index.mjs',
+      dependencies: { '@kiln/capability-sdk': '^0.1.0' },
+    })
   );
   await writeFile(join(packageDir, 'index.mjs'), indexContent);
 }
