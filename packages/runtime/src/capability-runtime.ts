@@ -298,11 +298,14 @@ export class CapabilityRuntime {
 
     const existing = await LockfileStore.load(context.rootPath);
     const capability = context.capabilityPlan.capability;
+    const pluginPackage = this.getPluginPackage(capability.id);
 
     const entry = {
       id: capability.id,
       version: capability.version,
-      resolved: `capability:${capability.id}@${capability.version}`,
+      resolved: pluginPackage
+        ? `npm:${pluginPackage}@${capability.version}`
+        : `capability:${capability.id}@${capability.version}`,
       dependencies: Object.fromEntries(context.resolvedDependencies),
       ...(context.capabilityPlan.providers ? { providers: context.capabilityPlan.providers } : {}),
     };
