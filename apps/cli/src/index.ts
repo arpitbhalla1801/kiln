@@ -5,6 +5,7 @@ import pkg from '../package.json';
 import { runAdd, parseEnvVariables, parseProviders } from './commands/add.js';
 import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
+import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
 import { runRemove } from './commands/remove.js';
 import { checkForUpdate } from './update-check.js';
@@ -18,7 +19,7 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor';
+type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor' | 'init-plugin';
 
 const commands: Record<CommandName, string> = {
   create: 'Scaffold a new kiln project.',
@@ -26,6 +27,7 @@ const commands: Record<CommandName, string> = {
   remove: 'Remove a capability from a kiln project (env, auth, db).',
   inspect: 'Inspect the current kiln project.',
   doctor: 'Run environment checks for kiln.',
+  'init-plugin': 'Scaffold a new third-party capability plugin package.',
 };
 
 function printHelp(topic?: string): void {
@@ -53,6 +55,13 @@ function printHelp(topic?: string): void {
       console.log('Usage: kiln remove <capability>');
       console.log('Capabilities: env, auth, db');
       console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
+    }
+
+    if (command === 'init-plugin') {
+      console.log('Usage: kiln init-plugin <name>');
+      console.log(
+        'Scaffolds a kiln-capability-<name> package wired against @kiln/capability-sdk.'
+      );
     }
 
     console.log();
@@ -152,6 +161,14 @@ async function main(argv: string[]): Promise<void> {
 
   if (firstArg === 'doctor') {
     await runDoctor(cliOptions);
+    return;
+  }
+
+  if (firstArg === 'init-plugin') {
+    if (secondArg === undefined) {
+      throw new Error('Plugin name is required. Usage: kiln init-plugin <name>');
+    }
+    await runInitPlugin(cliOptions.cwd, secondArg);
     return;
   }
 

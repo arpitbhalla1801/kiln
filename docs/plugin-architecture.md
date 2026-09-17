@@ -95,7 +95,7 @@ reality, not the plan as originally written.
 | 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()` (done), open `SupportedCapabilityId` (done), collapse `CapabilityRuntime`'s validation-accessor lookup into one map (done), generic `addCapability()` (done) | #103 ✅, #104 ✅, #105 ✅ | done |
 | 3 | Dynamic loading + trust model — the risky phase, gets extra scrutiny — `kiln.plugins.json` trust config schema/loader (done), `plugin-loader.ts` dynamic import from project node_modules + `CapabilityRuntime.loadPlugins()` (done), safe-failure isolation + adversarial tests (done), SDK-major-version compatibility gate (done), lockfile provenance (`npm:<package>@<version>`) for plugin-loaded capabilities (done), `SECURITY.md` plugin threat model + adversarial ownership-conflict test (done) | #106 ✅, #107 ✅, #108 ✅, #109 ✅, #110 ✅, #111 ✅ | done |
 | 4 | Versioning/compatibility contract (docs + release process, no new runtime code) — stable-vs-internal SDK surface documented, release-process rule added (done) | #112 ✅ | done |
-| 5 | DX/ecosystem surface — scaffolding generator, reference docs, `kiln plugins list`/`verify` | #113, #114, #115 | open |
+| 5 | DX/ecosystem surface — scaffolding generator (done), reference docs, `kiln plugins list`/`verify` | #113 ✅, #114, #115 | in progress |
 
 ### Phase 3 in more detail
 
