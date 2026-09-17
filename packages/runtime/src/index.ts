@@ -6,6 +6,7 @@ export {
   type CapabilityRuntimeOptions,
 } from './capability-runtime.js';
 export { extractInstallDependencies, type InstallDependencies } from './install.js';
+export { loadPlugin, loadPlugins, type PluginLoadResult } from './plugin-loader.js';
 export {
   CAPABILITY_REGISTRY,
   SUPPORTED_CAPABILITY_IDS,
