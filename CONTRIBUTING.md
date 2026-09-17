@@ -54,6 +54,9 @@ git history:
 - [docs/plugin-architecture.md](docs/plugin-architecture.md) — the
   third-party capability plugin system (milestone 2.0.0): what's decided,
   what's rejected and why, and how it maps to GitHub issues.
+- [docs/writing-a-plugin.md](docs/writing-a-plugin.md) — a copy-pasteable
+  "hello world" walkthrough for writing a third-party capability plugin,
+  file by file.
 
 ## Making a change
 
