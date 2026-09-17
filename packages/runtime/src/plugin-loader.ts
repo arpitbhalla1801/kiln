@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { Capability } from '@kiln/capability-sdk';
+import { SDK_VERSION, type Capability } from '@kiln/capability-sdk';
 import type { PluginConfigEntry } from '@kiln/project-model';
+
+const KILN_SDK_MAJOR = extractMajorVersion(SDK_VERSION);
 
 /** Outcome of attempting to load one plugin entry from kiln.plugins.json. */
 export interface PluginLoadResult {
@@ -48,6 +50,23 @@ export async function loadPlugin(
     return skip(
       entry,
       `'${entry.package}' installed version '${installedVersion}' does not match the version '${entry.version}' pinned in kiln.plugins.json`
+    );
+  }
+
+  const declaredSdkRange = await getDeclaredSdkRange(packageDir);
+  const declaredSdkMajor = declaredSdkRange ? extractMajorVersion(declaredSdkRange) : undefined;
+
+  if (declaredSdkMajor === undefined) {
+    return skip(
+      entry,
+      `'${entry.package}' does not declare a '@kiln/capability-sdk' dependency, so kiln can't verify it targets a compatible SDK major version`
+    );
+  }
+
+  if (declaredSdkMajor !== KILN_SDK_MAJOR) {
+    return skip(
+      entry,
+      `'${entry.package}' targets @kiln/capability-sdk v${declaredSdkMajor}, but this kiln build uses v${KILN_SDK_MAJOR}. Upgrade the plugin to target v${KILN_SDK_MAJOR}, or upgrade kiln if you need v${declaredSdkMajor} support.`
     );
   }
 
@@ -160,4 +179,28 @@ function isCapability(value: unknown): value is Capability {
 
 function skip(entry: PluginConfigEntry, reason: string): PluginLoadResult {
   return { entry, skipped: true, reason };
+}
+
+async function getDeclaredSdkRange(packageDir: string): Promise<string | undefined> {
+  try {
+    const packageJson = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+      peerDependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    return (
+      packageJson.peerDependencies?.['@kiln/capability-sdk'] ??
+      packageJson.dependencies?.['@kiln/capability-sdk'] ??
+      packageJson.devDependencies?.['@kiln/capability-sdk']
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+/** Extracts the leading major version number from a semver version or range (e.g. "^1.2.0" -> 1). */
+function extractMajorVersion(versionOrRange: string): number | undefined {
+  const match = versionOrRange.match(/\d+/);
+  return match ? Number(match[0]) : undefined;
 }
