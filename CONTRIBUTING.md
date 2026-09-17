@@ -62,6 +62,10 @@ git history:
 3. Run `bun run build`, `bun run test:unit`, and `bun run test:post-deploy` before opening a PR.
 4. Keep PRs focused — one fix or feature per PR is much easier to review than a bundle of unrelated changes.
 
+## Releasing `@kiln/capability-sdk`
+
+`@kiln/capability-sdk` is independently versioned from `@kiln-cli/kiln` — a plugin author pins against the SDK's own major version, not kiln's. Any change to a type re-exported from `packages/sdk/src/index.ts` (see [packages/sdk/README.md](packages/sdk/README.md) for exactly which types that covers) requires an `@kiln/capability-sdk` major version bump, regardless of what `@kiln-cli/kiln`'s own version is doing at the time. Kiln's own version can bump freely without touching the SDK's; the two are unrelated release trains that happen to ship from the same repo.
+
 ## Commit style
 
 This repo doesn't enforce a strict commit convention, but prefixing with a type (`fix:`, `feat:`, `docs:`, `ci:`) and referencing the issue it closes (`Fixes #123`) makes the history and release notes easier to follow.
