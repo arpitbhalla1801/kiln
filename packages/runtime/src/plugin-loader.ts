@@ -112,6 +112,69 @@ export async function loadPlugins(
   return Promise.all(entries.map((entry) => loadPlugin(projectRoot, entry)));
 }
 
+/** Outcome of checking one trust-config entry's version pin, without loading it. */
+export interface PluginPinCheck {
+  entry: PluginConfigEntry;
+  ok: boolean;
+  installedVersion?: string;
+  reason?: string;
+}
+
+/**
+ * Checks whether a trust-config entry is a direct dependency with an
+ * installed version matching its pin -- the same two checks `loadPlugin`
+ * makes before ever importing anything, exposed standalone so `kiln plugins
+ * verify` can report pin mismatches without loading (and therefore
+ * executing) any plugin code.
+ */
+export async function checkPluginPin(
+  projectRoot: string,
+  entry: PluginConfigEntry
+): Promise<PluginPinCheck> {
+  const isDirectDependency = await isDirectDependencyOf(projectRoot, entry.package);
+  if (!isDirectDependency) {
+    return {
+      entry,
+      ok: false,
+      reason: `'${entry.package}' must be a direct dependency in this project's package.json`,
+    };
+  }
+
+  const packageDir = join(projectRoot, 'node_modules', entry.package);
+  let installedVersion: string | undefined;
+  try {
+    const installedPackageJson = JSON.parse(
+      await readFile(join(packageDir, 'package.json'), 'utf8')
+    ) as { version?: string };
+    installedVersion = installedPackageJson.version;
+  } catch {
+    return {
+      entry,
+      ok: false,
+      reason: `'${entry.package}' is not installed in this project's node_modules`,
+    };
+  }
+
+  if (installedVersion !== entry.version) {
+    return {
+      entry,
+      ok: false,
+      installedVersion,
+      reason: `installed version '${installedVersion}' does not match the pinned version '${entry.version}'`,
+    };
+  }
+
+  return { entry, ok: true, installedVersion };
+}
+
+/** Check every entry in a trust config's version pin, without loading any of them. */
+export async function checkPluginPins(
+  projectRoot: string,
+  entries: PluginConfigEntry[]
+): Promise<PluginPinCheck[]> {
+  return Promise.all(entries.map((entry) => checkPluginPin(projectRoot, entry)));
+}
+
 async function isDirectDependencyOf(projectRoot: string, packageName: string): Promise<boolean> {
   let packageJson: { dependencies?: Record<string, unknown>; devDependencies?: Record<string, unknown> };
   try {

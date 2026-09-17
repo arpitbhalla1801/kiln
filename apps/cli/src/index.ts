@@ -7,6 +7,7 @@ import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
 import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
+import { runPluginsList, runPluginsVerify } from './commands/plugins.js';
 import { runRemove } from './commands/remove.js';
 import { checkForUpdate } from './update-check.js';
 
@@ -19,7 +20,7 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor' | 'init-plugin';
+type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
 
 const commands: Record<CommandName, string> = {
   create: 'Scaffold a new kiln project.',
@@ -28,6 +29,7 @@ const commands: Record<CommandName, string> = {
   inspect: 'Inspect the current kiln project.',
   doctor: 'Run environment checks for kiln.',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
+  plugins: 'List or verify third-party plugins from kiln.plugins.json.',
 };
 
 function printHelp(topic?: string): void {
@@ -61,6 +63,14 @@ function printHelp(topic?: string): void {
       console.log('Usage: kiln init-plugin <name>');
       console.log(
         'Scaffolds a kiln-capability-<name> package wired against @kiln/capability-sdk.'
+      );
+    }
+
+    if (command === 'plugins') {
+      console.log('Usage: kiln plugins <list|verify>');
+      console.log('  kiln plugins list    Show each kiln.plugins.json entry and whether it loads.');
+      console.log(
+        '  kiln plugins verify  Report version-pin mismatches without loading anything.'
       );
     }
 
@@ -170,6 +180,20 @@ async function main(argv: string[]): Promise<void> {
     }
     await runInitPlugin(cliOptions.cwd, secondArg);
     return;
+  }
+
+  if (firstArg === 'plugins') {
+    if (secondArg === 'verify') {
+      await runPluginsVerify(cliOptions);
+      return;
+    }
+
+    if (secondArg === 'list' || secondArg === undefined) {
+      await runPluginsList(cliOptions);
+      return;
+    }
+
+    throw new Error(`Unknown 'plugins' subcommand '${secondArg}'. Usage: kiln plugins <list|verify>`);
   }
 
   if (firstArg in commands) {
