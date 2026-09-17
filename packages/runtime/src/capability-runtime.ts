@@ -20,12 +20,14 @@ import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner'
 import {
   loadOwnershipTracker,
   LockfileStore,
+  PluginConfigStore,
   saveOwnershipTracker,
   type KilnLockfile,
 } from '@kiln/project-model';
 import { TransformEngine } from '@kiln/transform-engine';
-import { CAPABILITY_REGISTRY } from './capability-registry.js';
+import { CAPABILITY_REGISTRY, registerCapability } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
+import { loadPlugins as loadPluginModules, type PluginLoadResult } from './plugin-loader.js';
 import pkg from '../package.json' with { type: 'json' };
 import type {
   KilnRuntimeContext,
@@ -49,6 +51,7 @@ export class CapabilityRuntime {
   private readonly authCapability: AuthCapability;
   private readonly dbCapability: DbCapability;
   private readonly capabilities: Map<string, PluginCapability>;
+  private readonly pluginProvenance: Map<string, string> = new Map();
   private readonly lifecycleHooks: LifecycleHooks<KilnRuntimeContext>;
 
   constructor(options: CapabilityRuntimeOptions = {}) {
@@ -68,6 +71,39 @@ export class CapabilityRuntime {
 
   getLifecycleHooks(): LifecycleHooks<KilnRuntimeContext> {
     return this.lifecycleHooks;
+  }
+
+  /**
+   * Loads and registers every third-party capability listed in the target
+   * project's kiln.plugins.json (strict trust model: direct dependency,
+   * exact version pin, loaded only from the project's own node_modules).
+   * A broken or hostile plugin is skipped, never thrown -- it must not
+   * block a built-in capability, or any other plugin, from working.
+   */
+  async loadPlugins(rootPath: string): Promise<PluginLoadResult[]> {
+    const config = await PluginConfigStore.load(rootPath);
+    if (config.plugins.length === 0) {
+      return [];
+    }
+
+    const results = await loadPluginModules(rootPath, config.plugins);
+
+    for (const result of results) {
+      if (result.capability) {
+        registerCapability(result.capability.id);
+        this.capabilities.set(result.capability.id, result.capability);
+        this.pluginProvenance.set(result.capability.id, result.entry.package);
+      } else {
+        console.error(`kiln: skipping plugin '${result.entry.package}': ${result.reason}`);
+      }
+    }
+
+    return results;
+  }
+
+  /** The npm package a registered capability id was loaded from, if any. */
+  getPluginPackage(capabilityId: string): string | undefined {
+    return this.pluginProvenance.get(capabilityId);
   }
 
   async addCapability(
