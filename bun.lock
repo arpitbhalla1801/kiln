@@ -19,7 +19,7 @@
     },
     "apps/cli": {
       "name": "@kiln-cli/kiln",
-      "version": "1.0.2",
+      "version": "1.1.0",
       "bin": {
         "kiln": "./dist/index.js",
       },
