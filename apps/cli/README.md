@@ -1,6 +1,6 @@
 # kiln
 
-Capability-based scaffolding CLI for Node/Next.js projects. `kiln create` scaffolds a project; `kiln add <capability>` layers in features (`env`, `auth`) while tracking which capability owns which file, dependency, script, and env var so capabilities never silently clobber each other's changes.
+A CLI for scaffolding Next.js + TypeScript projects and adding auth (NextAuth / Auth.js, with GitHub, Google, and Credentials providers) and environment-variable management. `kiln create` scaffolds a project; `kiln add <capability>` layers in a feature (`env`, `auth`) with ownership-tracked, idempotent file generation, so capabilities never silently clobber each other's changes on repeat runs.
 
 ## Requirements
 
@@ -37,7 +37,7 @@ Project names must be npm-safe: lowercase letters, numbers, hyphens, or undersco
 |---------|-------------|
 | `kiln create <name>` | Scaffold a new Next.js + TypeScript project |
 | `kiln add env [--var KEY=value]` | Add environment variable capability |
-| `kiln add auth` | Add auth capability ([next-auth](https://authjs.dev)) |
+| `kiln add auth [--provider github\|google\|credentials] [--var KEY=value]` | Add auth capability ([NextAuth / Auth.js](https://authjs.dev)) with a real provider |
 | `kiln remove <env\|auth>` | Remove a capability: deletes its owned files, dependencies, scripts, and env vars |
 | `kiln inspect` | Inspect project metadata and ownership |
 | `kiln doctor` | Run environment and project health checks |
