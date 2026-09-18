@@ -1,7 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { exampleAppRoot, runCommand, runKiln } from './cli-runner.js';
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 describe('post-deploy upgrade compatibility', () => {
   test('PD-20 example inspect still detects Next.js and ownership', () => {
@@ -31,6 +40,17 @@ describe('post-deploy upgrade compatibility', () => {
     const packageJsonPath = join(exampleAppRoot, 'package.json');
     const envPath = join(exampleAppRoot, '.env.example');
     const ownershipPath = join(exampleAppRoot, '.kiln/ownership.json');
+    const envLocalPath = join(exampleAppRoot, '.env.local');
+
+    // .env.local is gitignored, so a fresh checkout never has it and the
+    // first `add auth` here would always create it. Prime it first so this
+    // test measures re-apply idempotency, not first-apply.
+    const envLocalExistedBefore = await fileExists(envLocalPath);
+    if (!envLocalExistedBefore) {
+      const primeResult = runKiln(['add', 'auth'], exampleAppRoot);
+      expect(primeResult.exitCode).toBe(0);
+    }
+
     const beforePackageJson = await readFile(packageJsonPath, 'utf8');
     const beforeEnv = await readFile(envPath, 'utf8');
     const beforeOwnership = await readFile(ownershipPath, 'utf8');
@@ -43,10 +63,13 @@ describe('post-deploy upgrade compatibility', () => {
       expect(await readFile(envPath, 'utf8')).toBe(beforeEnv);
       expect(await readFile(ownershipPath, 'utf8')).toBe(beforeOwnership);
     } finally {
-      const { writeFile } = await import('node:fs/promises');
+      const { writeFile, rm } = await import('node:fs/promises');
       await writeFile(packageJsonPath, beforePackageJson);
       await writeFile(envPath, beforeEnv);
       await writeFile(ownershipPath, beforeOwnership);
+      if (!envLocalExistedBefore) {
+        await rm(envLocalPath, { force: true });
+      }
     }
   });
 });
