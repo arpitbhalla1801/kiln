@@ -10,6 +10,19 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Capabilities", link: "/capabilities/overview" },
       { text: "Reference", link: "/reference/cli" },
+      {
+        // ponytail: version switcher links out to the v1.1.0 tag rather than
+        // hosting a duplicate doc tree; add a real /v1/ content tree once
+        // 2.0.0 ships and the two versions actually diverge in usage.
+        text: "v2.x (main)",
+        items: [
+          { text: "v2.x (current)", link: "/" },
+          {
+            text: "v1.x (stable)",
+            link: "https://github.com/arpitbhalla1801/kiln/tree/v1.1.0",
+          },
+        ],
+      },
     ],
     sidebar: {
       "/guide/": [
