@@ -68,7 +68,7 @@ describe('provider merge on re-run', () => {
       middlewareFileExists: true,
       nextAuthInstalled: true,
       envExampleExists: true,
-      providers: ['google'],
+      providers: ['github', 'google'],
       existingProviders: ['github'],
       authFileContent: priorContent,
     });
@@ -85,6 +85,40 @@ describe('provider merge on re-run', () => {
     applier.applyAll(vfs, plan.transforms);
 
     expect(vfs.read('auth.ts')).toBe(createAuthConfigContent(['github', 'google']));
+  });
+
+  test('reconciles providers, removing ones no longer requested', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+    });
+    const auth = new AuthCapability();
+    const tracker = new OwnershipTracker();
+    auth.registerOwnership(tracker, buildAuthFilePaths(), ['github', 'google']);
+    const priorContent = createAuthConfigContent(['github', 'google']);
+
+    const plan = await auth.planAdd(root, {
+      tracker,
+      authFileExists: true,
+      middlewareFileExists: true,
+      nextAuthInstalled: true,
+      envExampleExists: true,
+      providers: ['github'],
+      existingProviders: ['github', 'google'],
+      authFileContent: priorContent,
+    });
+
+    expect(plan.providers).toEqual(['github']);
+
+    const vfs = new VirtualFilesystem({
+      initialFiles: {
+        'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
+        'auth.ts': priorContent,
+      },
+    });
+    const applier = new TransformApplier();
+    applier.applyAll(vfs, plan.transforms);
+
+    expect(vfs.read('auth.ts')).toBe(createAuthConfigContent(['github']));
   });
 
   test('falls back to a file-patch merge when auth.ts was hand-edited', async () => {
@@ -111,7 +145,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       middlewareFileExists: true,
       nextAuthInstalled: true,
       envExampleExists: true,
-      providers: ['google'],
+      providers: ['github', 'google'],
       existingProviders: ['github'],
       authFileContent: handEditedContent,
     });
