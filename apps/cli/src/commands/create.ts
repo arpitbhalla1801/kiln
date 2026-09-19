@@ -3,9 +3,18 @@ import { join } from 'node:path';
 import { validateProjectName } from '../validation/project-name.js';
 import { ensureTargetAvailable } from '../project.js';
 
-export async function runCreate(targetDir: string, projectName: string): Promise<void> {
+export async function runCreate(
+  targetDir: string,
+  projectName: string,
+  dryRun = false
+): Promise<void> {
   const name = validateProjectName(projectName);
   await ensureTargetAvailable(targetDir, 'project');
+
+  if (dryRun) {
+    console.log(`Dry run: would create kiln project '${name}' at ${targetDir}`);
+    return;
+  }
 
   await mkdir(targetDir, { recursive: true });
   await mkdir(join(targetDir, 'src', 'app'), { recursive: true });

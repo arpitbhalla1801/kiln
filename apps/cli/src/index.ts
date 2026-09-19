@@ -138,7 +138,7 @@ async function main(argv: string[]): Promise<void> {
     }
     const projectName = secondArg;
     const targetDir = resolve(cliOptions.cwd, projectName);
-    await runCreate(targetDir, projectName);
+    await runCreate(targetDir, projectName, cliOptions.dryRun);
     return;
   }
 
@@ -178,7 +178,7 @@ async function main(argv: string[]): Promise<void> {
     if (secondArg === undefined) {
       throw new Error('Plugin name is required. Usage: kiln init-plugin <name>');
     }
-    await runInitPlugin(cliOptions.cwd, secondArg);
+    await runInitPlugin(cliOptions.cwd, secondArg, cliOptions.dryRun);
     return;
   }
 
