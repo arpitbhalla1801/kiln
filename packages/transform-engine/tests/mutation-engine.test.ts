@@ -77,7 +77,7 @@ describe('PackageJsonMerger', () => {
 
     expect(merger.mergeToString(once, {})).toBe(merger.mergeToString(twice, {}));
     expect(merger.mergeToString(twice, {})).toBe(merger.mergeToString(thrice, {}));
-    expect(merger.isIdempotent(once, input)).toBe(true);
+    expect(merger.merge(once, input)).toEqual(once);
   });
 
   test('remove operations are idempotent', () => {

@@ -52,11 +52,6 @@ export class OwnershipMetadataStore {
     const content = await fs.readFile(filePath, 'utf8');
     return parseOwnershipMetadata(content);
   }
-
-  /** Reload ownership metadata from disk (alias for load). */
-  static async reload(projectRoot: string): Promise<OwnershipMetadata> {
-    return OwnershipMetadataStore.load(projectRoot);
-  }
 }
 
 async function readIfExists(filePath: string): Promise<string | undefined> {

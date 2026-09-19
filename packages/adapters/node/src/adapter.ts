@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { AdapterContract } from '@kiln/core';
 import { detectNextJs } from './detection/nextjs.js';
 import { detectLockfile, detectPackageManager } from './detection/package-manager.js';
-import { bunAdd, bunRemove, runPackageManagerScript } from './package-manager/bun.js';
+import { bunAdd, runPackageManagerScript } from './package-manager/bun.js';
 import type {
   CommandResult,
   DependencyInstallOptions,
@@ -68,17 +68,6 @@ export class NodeAdapter implements AdapterContract, NodeAdapterRuntime {
     }
 
     return bunAdd(rootPath, dependencies, options ?? {});
-  }
-
-  async removeDependencies(rootPath: string, names: string[]): Promise<CommandResult> {
-    const packageManager = await detectPackageManager(rootPath);
-    if (packageManager.kind !== 'bun') {
-      throw new Error(
-        `Unsupported package manager '${packageManager.kind}'. Bun integration is required for removals.`
-      );
-    }
-
-    return bunRemove(rootPath, names);
   }
 
   async runScript(rootPath: string, script: string, args: string[] = []): Promise<CommandResult> {

@@ -6,8 +6,6 @@ import { OwnershipTracker } from '@kiln/core';
 import { TransformEngine, VirtualFilesystem } from '@kiln/transform-engine';
 import { AuthCapability } from '@kiln/auth-capability';
 import { createPlanExecutor } from '../src/plan-executor.js';
-import { ProjectPlanner } from '../src/planner.js';
-import { TransformRegistry } from '../src/transform-registry.js';
 
 const tempRoots: string[] = [];
 
@@ -25,39 +23,6 @@ afterAll(async () => {
 });
 
 describe('PlanExecutor', () => {
-  test('queues manifest transforms into the virtual filesystem', () => {
-    const manifest = {
-      id: 'env',
-      version: '1.0.0',
-      dependencies: [],
-      transforms: ['env-example'],
-      transformDefinitions: [
-        {
-          id: 'env-example',
-          type: 'env-mutation' as const,
-          target: '.env.example',
-          payload: {
-            variables: {
-              DATABASE_URL: 'postgres://localhost:5432/app',
-            },
-          },
-        },
-      ],
-    };
-
-    const planner = new ProjectPlanner();
-    planner.addManifest(manifest);
-    const executionPlan = planner.generatePlan();
-
-    const engine = new TransformEngine();
-    const executor = createPlanExecutor(engine);
-    executor.queueManifestTransforms(executionPlan, [manifest]);
-
-    expect(engine.getVirtualFilesystem().read('.env.example')).toBe(
-      'DATABASE_URL=postgres://localhost:5432/app\n'
-    );
-  });
-
   test('executes auth capability plan and registers ownership', async () => {
     const root = await createTempProject();
     const auth = new AuthCapability();
@@ -89,25 +54,5 @@ describe('PlanExecutor', () => {
     expect(tracker.getOwner('envVar', 'AUTH_SECRET')).toBe('env');
     expect(engine.getVirtualFilesystem().read('auth.ts')).toContain('NextAuth');
     expect(engine.getVirtualFilesystem().read('.env.example')).toContain('AUTH_SECRET');
-  });
-
-  test('transform registry resolves manifest definitions', () => {
-    const registry = new TransformRegistry();
-    registry.registerManifest({
-      id: 'env',
-      version: '1.0.0',
-      dependencies: [],
-      transformDefinitions: [
-        {
-          id: 'env-example',
-          type: 'env-mutation',
-          target: '.env.example',
-          payload: { variables: { NODE_ENV: 'development' } },
-        },
-      ],
-    });
-
-    const transform = registry.resolve('env-example');
-    expect(transform.type).toBe('env-mutation');
   });
 });

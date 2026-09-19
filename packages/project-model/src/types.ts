@@ -1,4 +1,4 @@
-import type { AdapterId, Capability, CapabilityId, FileOwnership } from '@kiln/core';
+import type { CapabilityId, FileOwnership } from '@kiln/core';
 
 /** Relative or absolute path to a project file. */
 export type ProjectFilePath = string;
@@ -79,30 +79,6 @@ export interface OwnershipMetadata {
   scripts: ScriptOwnership[];
   envVars: EnvVarOwnership[];
   metadata: MetadataOwnership[];
-}
-
-/**
- * Full kiln project model supporting MVP operations:
- * scaffold, add capabilities, inspect ownership, and dry-run transforms.
- */
-export interface KilnProjectModel {
-  name: string;
-  version: string;
-  rootPath: string;
-  adapterId?: AdapterId;
-  capabilities: Capability[];
-  files: ProjectFile[];
-  dependencies: ProjectDependency[];
-  scripts: ProjectScript[];
-  envVars: ProjectEnvVar[];
-  ownership: OwnershipMetadata;
-}
-
-/** Lightweight project metadata without full model state. */
-export interface ProjectMetadata {
-  name: string;
-  version: string;
-  capabilities: Record<string, string>;
 }
 
 /** Resolved capability version stored in the lockfile. */

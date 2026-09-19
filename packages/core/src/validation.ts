@@ -45,8 +45,4 @@ export class ValidationRunner {
       ownershipTracker.registerCapabilityOwnership(capability);
     }
   }
-
-  getOwnershipTracker(): OwnershipTracker {
-    return OwnershipTracker.fromFileOwnershipMap(this.state.fileOwnership);
-  }
 }

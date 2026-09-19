@@ -3,7 +3,7 @@
 export { NodeAdapter } from './adapter.js';
 export { detectNextJs } from './detection/nextjs.js';
 export { detectLockfile, detectPackageManager } from './detection/package-manager.js';
-export { bunAdd, bunRemove, runPackageManagerScript } from './package-manager/bun.js';
+export { bunAdd, runPackageManagerScript } from './package-manager/bun.js';
 export { spawnSafely } from './spawn-safe.js';
 export type {
   CommandResult,

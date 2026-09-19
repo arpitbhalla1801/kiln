@@ -81,7 +81,7 @@ describe('AuthCapability', () => {
     });
     applier.applyAll(vfs, envPlan.transforms);
 
-    const auth = new AuthCapability(undefined, envCapability);
+    const auth = new AuthCapability(envCapability);
     const authPlan = await auth.planAdd(root, { envExampleExists: true });
     applier.applyAll(vfs, authPlan.transforms);
 

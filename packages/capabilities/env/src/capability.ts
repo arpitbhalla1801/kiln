@@ -4,7 +4,6 @@ import {
   type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
-  loadManifestFromFile,
   loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
@@ -31,17 +30,8 @@ import {
 
 export class EnvCapability implements Capability {
   readonly id = ENV_CAPABILITY_ID;
-  readonly manifestPath?: string;
-
-  constructor(manifestPath?: string) {
-    this.manifestPath = manifestPath;
-  }
 
   async getManifest(): Promise<CapabilityManifest> {
-    if (this.manifestPath) {
-      return loadManifestFromFile(this.manifestPath);
-    }
-
     return loadManifestFromObject(ENV_MANIFEST);
   }
 

@@ -19,10 +19,6 @@ export async function bunAdd(
   return runPackageManager('bun', args, rootPath);
 }
 
-export async function bunRemove(rootPath: string, names: string[]): Promise<CommandResult> {
-  return runPackageManager('bun', ['remove', ...names], rootPath);
-}
-
 export async function runPackageManagerScript(
   rootPath: string,
   kind: PackageManagerKind,
@@ -41,10 +37,8 @@ async function runPackageManager(
   args: string[],
   cwd: string
 ): Promise<CommandResult> {
-  const command = resolveCommand(kind);
-
   return new Promise((resolve, reject) => {
-    const child = spawnSafely(command, args, {
+    const child = spawnSafely(kind, args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -74,6 +68,3 @@ async function runPackageManager(
   });
 }
 
-function resolveCommand(kind: PackageManagerKind): string {
-  return kind;
-}

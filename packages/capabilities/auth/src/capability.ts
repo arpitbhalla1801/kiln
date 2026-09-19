@@ -6,7 +6,6 @@ import {
   type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
-  loadManifestFromFile,
   loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
@@ -58,19 +57,13 @@ export function buildAuthEnvVars(providers: string[], generateSecret = true): En
 
 export class AuthCapability implements Capability {
   readonly id = AUTH_CAPABILITY_ID;
-  readonly manifestPath?: string;
   private readonly envCapability: EnvCapability;
 
-  constructor(manifestPath?: string, envCapability?: EnvCapability) {
-    this.manifestPath = manifestPath;
+  constructor(envCapability?: EnvCapability) {
     this.envCapability = envCapability ?? new EnvCapability();
   }
 
   async getManifest(): Promise<CapabilityManifest> {
-    if (this.manifestPath) {
-      return loadManifestFromFile(this.manifestPath);
-    }
-
     return loadManifestFromObject(AUTH_MANIFEST);
   }
 

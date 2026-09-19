@@ -21,12 +21,6 @@ export class DependencyVersionRegistry {
     this.claimsByName.set(claim.name, claims);
   }
 
-  addClaims(claims: DependencyVersionClaim[]): void {
-    for (const claim of claims) {
-      this.addClaim(claim);
-    }
-  }
-
   detectConflicts(): DependencyVersionConflict[] {
     const conflicts: DependencyVersionConflict[] = [];
 
@@ -59,9 +53,6 @@ export class DependencyVersionRegistry {
     return resolved;
   }
 
-  getClaims(name: string): DependencyVersionClaim[] {
-    return [...(this.claimsByName.get(name) ?? [])];
-  }
 }
 
 export function reconcileVersionClaims(claims: DependencyVersionClaim[]): string {

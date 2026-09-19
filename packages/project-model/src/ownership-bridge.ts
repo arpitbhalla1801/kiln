@@ -64,11 +64,6 @@ export async function loadOwnershipTracker(projectRoot: string): Promise<Ownersh
   return ownershipTrackerFromMetadata(metadata);
 }
 
-/** Reload ownership metadata from disk into a tracker. */
-export async function reloadOwnershipTracker(projectRoot: string): Promise<OwnershipTracker> {
-  const metadata = await OwnershipMetadataStore.reload(projectRoot);
-  return ownershipTrackerFromMetadata(metadata);
-}
 
 /** Persist an ownership tracker to `.kiln/ownership.json`. */
 export async function saveOwnershipTracker(

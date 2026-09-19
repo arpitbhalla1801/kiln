@@ -4,7 +4,6 @@ import {
   mergeStringRecords,
   sortJsonKeys,
   StructuredMutationEngine,
-  valuesEqual,
 } from './mutation-engine.js';
 
 const mutationEngine = new StructuredMutationEngine();
@@ -55,10 +54,6 @@ export class PackageJsonMerger {
     return mutationEngine.serialize(merged);
   }
 
-  isIdempotent(current: Record<string, unknown>, input: PackageJsonMergeInput): boolean {
-    const merged = this.merge(current, input);
-    return valuesEqual(sortJsonKeys(current), sortJsonKeys(merged));
-  }
 }
 
 function removeRecordKey(

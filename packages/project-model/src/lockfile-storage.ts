@@ -19,15 +19,6 @@ export class LockfileStore {
     return getLockfilePath(projectRoot);
   }
 
-  static async exists(projectRoot: string): Promise<boolean> {
-    try {
-      await fs.access(LockfileStore.getFilePath(projectRoot));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   static async load(projectRoot: string): Promise<KilnLockfile | undefined> {
     try {
       const content = await fs.readFile(LockfileStore.getFilePath(projectRoot), 'utf8');
