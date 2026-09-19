@@ -5,7 +5,11 @@ import { ensureTargetAvailable } from '../project.js';
 
 const SDK_VERSION_RANGE = '^0.1.0';
 
-export async function runInitPlugin(targetParentDir: string, rawName: string): Promise<void> {
+export async function runInitPlugin(
+  targetParentDir: string,
+  rawName: string,
+  dryRun = false
+): Promise<void> {
   const capabilityId = validateProjectName(rawName);
   const packageName = `kiln-capability-${capabilityId}`;
   const pascalName = toPascalCase(capabilityId);
@@ -13,6 +17,12 @@ export async function runInitPlugin(targetParentDir: string, rawName: string): P
   const targetDir = join(targetParentDir, packageName);
 
   await ensureTargetAvailable(targetDir, 'plugin');
+
+  if (dryRun) {
+    console.log(`Dry run: would create kiln capability plugin '${packageName}' at ${targetDir}`);
+    return;
+  }
+
   await mkdir(join(targetDir, 'src'), { recursive: true });
   await mkdir(join(targetDir, 'tests'), { recursive: true });
 
