@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { connect } from 'node:net';
 import { join } from 'node:path';
 import { NodeAdapter, spawnSafely } from '@kiln/node-adapter';
 import { OwnershipMetadataStore } from '@kiln/project-model';
@@ -54,6 +55,7 @@ export async function runDoctor(options: CliOptions): Promise<void> {
     }
 
     checks.push(await checkRequiredEnvVars(rootPath));
+    checks.push(await checkDatabaseConnectivity(rootPath));
 
     if (await OwnershipMetadataStore.exists(rootPath)) {
       checks.push({
@@ -146,6 +148,69 @@ async function checkRequiredEnvVars(rootPath: string): Promise<DoctorCheck> {
     status: 'warn',
     detail: `missing a value in .env.example: ${emptyRequired.join(', ')}`,
   };
+}
+
+// ponytail: TCP reachability only. Credential validity, migration status, and
+// required-table checks would need a real DB driver dependency -- add one if
+// reachability proves insufficient in practice.
+async function checkDatabaseConnectivity(rootPath: string): Promise<DoctorCheck> {
+  let content: string;
+
+  try {
+    content = await readFile(join(rootPath, '.env.local'), 'utf8');
+  } catch {
+    return { name: 'database-connectivity', status: 'pass', detail: 'no .env.local found' };
+  }
+
+  const match = /^DATABASE_URL=(.+)$/m.exec(content);
+  const rawUrl = match?.[1]?.trim();
+
+  if (!rawUrl) {
+    return { name: 'database-connectivity', status: 'pass', detail: 'DATABASE_URL not set' };
+  }
+
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return { name: 'database-connectivity', status: 'warn', detail: 'DATABASE_URL is not a valid URL' };
+  }
+
+  const port = url.port ? Number(url.port) : defaultDbPort(url.protocol);
+  const reachable = await isHostReachable(url.hostname, port);
+
+  return reachable
+    ? { name: 'database-connectivity', status: 'pass', detail: `${url.hostname}:${port} reachable` }
+    : {
+        name: 'database-connectivity',
+        status: 'warn',
+        detail: `cannot reach database at ${url.hostname}:${port}`,
+      };
+}
+
+function defaultDbPort(protocol: string): number {
+  if (protocol.startsWith('mysql')) {
+    return 3306;
+  }
+  if (protocol.startsWith('mongodb')) {
+    return 27017;
+  }
+  return 5432;
+}
+
+function isHostReachable(host: string, port: number, timeoutMs = 2000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = connect({ host, port, timeout: timeoutMs });
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once('error', () => resolve(false));
+  });
 }
 
 async function checkBunInstalled(): Promise<DoctorCheck> {
