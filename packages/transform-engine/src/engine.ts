@@ -1,4 +1,4 @@
-import { FileOperation, OperationSummary, TransformPlan, TransformOptions } from './types.js';
+import { FileOperation, TransformPlan, TransformOptions } from './types.js';
 import { FilesystemPersistence } from './persistence.js';
 import { RollbackManager } from './rollback.js';
 import { VirtualFilesystem } from './vfs.js';
@@ -91,7 +91,7 @@ export class TransformEngine {
 
     return {
       operations,
-      summary: diff.summary as OperationSummary,
+      summary: diff.summary,
     };
   }
 

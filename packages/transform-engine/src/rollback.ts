@@ -1,11 +1,26 @@
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import type { VfsDiff } from './vfs-types.js';
+import { atomicWriteFile, isNodeError, resolveTargetPath } from './fs-helpers.js';
+import type { VfsDiff, VfsSnapshot } from './vfs.js';
 import type { VirtualFilesystem } from './vfs.js';
-import type { DiskFileSnapshot, RollbackResult, RollbackSnapshot } from './rollback-types.js';
 
-const TEMP_SUFFIX = '.kiln.tmp';
+export interface DiskFileSnapshot {
+  path: string;
+  existed: boolean;
+  content?: string;
+}
+
+export interface RollbackSnapshot {
+  id: string;
+  createdAt: string;
+  vfs: VfsSnapshot;
+  disk: DiskFileSnapshot[];
+}
+
+export interface RollbackResult {
+  restoredFiles: string[];
+  removedFiles: string[];
+}
 
 /** Snapshot and rollback primitives for transform execution recovery. */
 export class RollbackManager {
@@ -108,31 +123,3 @@ export class RollbackManager {
   }
 }
 
-async function atomicWriteFile(targetPath: string, content: string): Promise<void> {
-  const directory = path.dirname(targetPath);
-  await fs.mkdir(directory, { recursive: true });
-
-  const tempPath = `${targetPath}${TEMP_SUFFIX}.${crypto.randomBytes(8).toString('hex')}`;
-
-  try {
-    await fs.writeFile(tempPath, content, 'utf8');
-    await fs.rename(tempPath, targetPath);
-  } catch (error) {
-    await fs.rm(tempPath, { force: true }).catch(() => undefined);
-    throw error;
-  }
-}
-
-function resolveTargetPath(rootDir: string, filePath: string): string {
-  const normalized = filePath.replace(/\\/g, '/');
-
-  if (path.isAbsolute(normalized)) {
-    return path.normalize(normalized);
-  }
-
-  return path.normalize(path.join(rootDir, normalized));
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return typeof error === 'object' && error !== null && 'code' in error;
-}

@@ -46,60 +46,47 @@ export async function runAdd(
   );
 }
 
-export function parseEnvVariables(argv: string[]): EnvVariableMap {
-  const variables: EnvVariableMap = {};
+function parseFlagValues(argv: string[], flagName: string): string[] {
+  const values: string[] = [];
+  const flag = `--${flagName}`;
+  const flagWithEquals = `${flag}=`;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--var' && argv[index + 1]) {
-      const pair = argv[index + 1];
-      const separator = pair.indexOf('=');
-      if (separator === -1) {
-        throw new Error(`Invalid --var format '${pair}'. Use --var KEY=value`);
-      }
-
-      const key = pair.slice(0, separator);
-      const value = pair.slice(separator + 1);
-      assertSingleLine(key, value);
-      variables[key] = value;
+    if (arg === flag && argv[index + 1]) {
+      values.push(argv[index + 1]);
       index += 1;
       continue;
     }
 
-    if (arg.startsWith('--var=')) {
-      const pair = arg.slice('--var='.length);
-      const separator = pair.indexOf('=');
-      if (separator === -1) {
-        throw new Error(`Invalid --var format '${arg}'. Use --var=KEY=value`);
-      }
-
-      const key = pair.slice(0, separator);
-      const value = pair.slice(separator + 1);
-      assertSingleLine(key, value);
-      variables[key] = value;
+    if (arg.startsWith(flagWithEquals)) {
+      values.push(arg.slice(flagWithEquals.length));
     }
+  }
+
+  return values;
+}
+
+export function parseEnvVariables(argv: string[]): EnvVariableMap {
+  const variables: EnvVariableMap = {};
+
+  for (const pair of parseFlagValues(argv, 'var')) {
+    const separator = pair.indexOf('=');
+    if (separator === -1) {
+      throw new Error(`Invalid --var format '${pair}'. Use --var KEY=value`);
+    }
+
+    const key = pair.slice(0, separator);
+    const value = pair.slice(separator + 1);
+    assertSingleLine(key, value);
+    variables[key] = value;
   }
 
   return variables;
 }
 
 export function parseProviders(argv: string[]): string[] {
-  const providers: string[] = [];
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--provider' && argv[index + 1]) {
-      providers.push(argv[index + 1]);
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--provider=')) {
-      providers.push(arg.slice('--provider='.length));
-    }
-  }
-
-  return providers;
+  return parseFlagValues(argv, 'provider');
 }
 
 function assertSingleLine(key: string, value: string): void {

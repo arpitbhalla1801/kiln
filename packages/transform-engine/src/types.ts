@@ -1,3 +1,5 @@
+import type { VfsDiffSummary } from './vfs.js';
+
 export interface FileOperation {
   type: 'create' | 'modify' | 'delete';
   filePath: string;
@@ -6,12 +8,8 @@ export interface FileOperation {
   diffPreview?: string;
 }
 
-export interface OperationSummary {
-  created: number;
-  modified: number;
-  deleted: number;
-  total: number;
-}
+/** Structurally identical to VfsDiffSummary (aliased to avoid duplication). */
+export type OperationSummary = VfsDiffSummary;
 
 export interface TransformPlan {
   operations: FileOperation[];

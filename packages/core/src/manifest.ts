@@ -18,17 +18,19 @@ export class ManifestValidationError extends Error {
 }
 
 export function validateManifest(manifest: CapabilityManifest): void {
-  validateRequiredString(manifest.id, 'id');
-  validateRequiredString(manifest.version, 'version');
-  validateDependencies(manifest.dependencies);
-  validateOptionalStringArray(manifest.adapters, 'adapters');
-  validateTransformRefs(manifest.transforms, 'transforms');
+  const record = manifest as unknown as Record<string, unknown>;
+
+  readRequiredString(record, 'id');
+  readRequiredString(record, 'version');
+  readStringArray(record, 'dependencies', true);
+  readOptionalStringArray(record, 'adapters');
+  readOptionalStringArray(record, 'transforms');
   validateTransformDefinitions(manifest.transformDefinitions);
   validateOwnership(manifest.ownership);
-  validateOptionalStringArray(manifest.files, 'files');
+  readOptionalStringArray(record, 'files');
 
   if (manifest.name !== undefined) {
-    validateRequiredString(manifest.name, 'name');
+    readRequiredString(record, 'name');
   }
 }
 
@@ -84,38 +86,6 @@ function validateRequiredString(value: unknown, field: string): void {
   }
 }
 
-function validateDependencies(dependencies: unknown): void {
-  if (!Array.isArray(dependencies)) {
-    throw new ManifestValidationError('dependencies', 'must be an array');
-  }
-
-  for (const dependency of dependencies) {
-    if (typeof dependency !== 'string' || dependency.trim().length === 0) {
-      throw new ManifestValidationError('dependencies', 'must contain only non-empty strings');
-    }
-  }
-}
-
-function validateOptionalStringArray(value: unknown, field: string): void {
-  if (value === undefined) {
-    return;
-  }
-
-  if (!Array.isArray(value)) {
-    throw new ManifestValidationError(field, 'must be an array');
-  }
-
-  for (const entry of value) {
-    if (typeof entry !== 'string' || entry.trim().length === 0) {
-      throw new ManifestValidationError(field, 'must contain only non-empty strings');
-    }
-  }
-}
-
-function validateTransformRefs(value: unknown, field: string): void {
-  validateOptionalStringArray(value, field);
-}
-
 function validateTransformDefinitions(definitions: unknown): void {
   if (definitions === undefined) {
     return;
@@ -135,15 +105,15 @@ function validateTransformDefinition(definition: unknown): void {
     throw new ManifestValidationError('transformDefinitions', 'each entry must be an object');
   }
 
-  validateRequiredString(definition.id, 'transformDefinitions.id');
+  readRequiredString(definition, 'id');
   validateTransformType(definition.type, 'transformDefinitions.type');
 
   if (definition.name !== undefined) {
-    validateRequiredString(definition.name, 'transformDefinitions.name');
+    readRequiredString(definition, 'name');
   }
 
   if (definition.target !== undefined) {
-    validateRequiredString(definition.target, 'transformDefinitions.target');
+    readRequiredString(definition, 'target');
   }
 
   if (definition.payload !== undefined && !isRecord(definition.payload)) {
@@ -166,11 +136,11 @@ function validateOwnership(ownership: unknown): void {
     throw new ManifestValidationError('ownership', 'must be an object');
   }
 
-  validateOptionalStringArray(ownership.files, 'ownership.files');
-  validateOptionalStringArray(ownership.dependencies, 'ownership.dependencies');
-  validateOptionalStringArray(ownership.scripts, 'ownership.scripts');
-  validateOptionalStringArray(ownership.envVars, 'ownership.envVars');
-  validateOptionalStringArray(ownership.metadata, 'ownership.metadata');
+  readOptionalStringArray(ownership, 'files');
+  readOptionalStringArray(ownership, 'dependencies');
+  readOptionalStringArray(ownership, 'scripts');
+  readOptionalStringArray(ownership, 'envVars');
+  readOptionalStringArray(ownership, 'metadata');
 }
 
 function readRequiredString(record: Record<string, unknown>, field: string): string {

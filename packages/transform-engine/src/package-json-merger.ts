@@ -1,10 +1,18 @@
-import type { PackageJsonMergeInput } from './mutation-types.js';
 import {
   cloneJson,
   mergeStringRecords,
   sortJsonKeys,
   StructuredMutationEngine,
 } from './mutation-engine.js';
+
+export interface PackageJsonMergeInput {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  scripts?: Record<string, string>;
+  removeDependencies?: string[];
+  removeDevDependencies?: string[];
+  removeScripts?: string[];
+}
 
 const mutationEngine = new StructuredMutationEngine();
 

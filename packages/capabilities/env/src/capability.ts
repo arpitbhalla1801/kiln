@@ -1,10 +1,12 @@
-import { access, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
+  fileExists,
   loadManifestFromObject,
+  mergeUnique,
   OwnershipTracker,
 } from '@kiln/core';
 import type { Capability } from '@kiln/capability-sdk';
@@ -65,16 +67,17 @@ export class EnvCapability implements Capability {
       options.gitignoreContent !== undefined
         ? options.gitignoreContent
         : await readGitignore(rootPath);
+    const envExampleExists =
+      options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)));
 
-    const transforms = await buildTransforms(
-      rootPath,
+    const transforms = buildTransforms({
       envExamplePath,
       variables,
-      options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath))),
+      envExampleExists,
       ownerCapabilityId,
       envLocalExists,
-      gitignoreContent
-    );
+      gitignoreContent,
+    });
 
     const manifest = await this.getManifest();
     const capability = buildCapabilityWithOwnership(manifest, variableInputs, envExamplePath);
@@ -106,20 +109,28 @@ export class EnvCapability implements Capability {
   }
 }
 
-export async function buildTransforms(
-  rootPath: string,
-  envExamplePath: string,
-  variables: EnvVariableMap,
-  envExampleExists?: boolean,
-  ownerCapabilityId: string = ENV_CAPABILITY_ID,
-  envLocalExists?: boolean,
-  gitignoreContent?: string | null
-): Promise<TransformPipeline> {
-  const exists =
-    envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)));
+export interface BuildTransformsOptions {
+  envExamplePath: string;
+  variables: EnvVariableMap;
+  envExampleExists: boolean;
+  ownerCapabilityId?: string;
+  envLocalExists: boolean;
+  gitignoreContent: string | null;
+}
+
+export function buildTransforms(options: BuildTransformsOptions): TransformPipeline {
+  const {
+    envExamplePath,
+    variables,
+    envExampleExists,
+    ownerCapabilityId = ENV_CAPABILITY_ID,
+    envLocalExists,
+    gitignoreContent,
+  } = options;
+
   const builder = createTransformPipeline();
 
-  if (!exists) {
+  if (!envExampleExists) {
     builder.fileCreate(
       `${ENV_CAPABILITY_ID}-create-env-example`,
       envExamplePath,
@@ -139,10 +150,7 @@ export async function buildTransforms(
     );
   }
 
-  const resolvedEnvLocalExists =
-    envLocalExists ?? (await fileExists(join(rootPath, DEFAULT_ENV_LOCAL_PATH)));
-
-  if (!resolvedEnvLocalExists) {
+  if (!envLocalExists) {
     builder.fileCreate(
       `${ENV_CAPABILITY_ID}-create-env-local`,
       DEFAULT_ENV_LOCAL_PATH,
@@ -163,9 +171,7 @@ export async function buildTransforms(
     );
   }
 
-  const resolvedGitignoreContent =
-    gitignoreContent !== undefined ? gitignoreContent : await readGitignore(rootPath);
-  const updatedGitignore = ensureGitignoreCoversEnvLocal(resolvedGitignoreContent);
+  const updatedGitignore = ensureGitignoreCoversEnvLocal(gitignoreContent);
 
   if (updatedGitignore !== undefined) {
     builder.fileCreate(
@@ -233,20 +239,3 @@ function buildCapabilityWithOwnership(
   });
 }
 
-function mergeUnique(existing: string[], additions: string[]): string[] {
-  const merged = new Set(existing);
-  for (const entry of additions) {
-    merged.add(entry);
-  }
-
-  return Array.from(merged).sort((left, right) => left.localeCompare(right));
-}
-
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}

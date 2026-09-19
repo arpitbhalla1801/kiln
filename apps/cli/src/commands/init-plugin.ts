@@ -1,6 +1,7 @@
-import { access, mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { validateProjectName } from '../validation/project-name.js';
+import { ensureTargetAvailable } from '../project.js';
 
 const SDK_VERSION_RANGE = '^0.1.0';
 
@@ -11,7 +12,7 @@ export async function runInitPlugin(targetParentDir: string, rawName: string): P
   const constPrefix = capabilityId.toUpperCase().replace(/-/g, '_');
   const targetDir = join(targetParentDir, packageName);
 
-  await ensureTargetAvailable(targetDir);
+  await ensureTargetAvailable(targetDir, 'plugin');
   await mkdir(join(targetDir, 'src'), { recursive: true });
   await mkdir(join(targetDir, 'tests'), { recursive: true });
 
@@ -255,25 +256,3 @@ function toPascalCase(value: string): string {
     .join('');
 }
 
-async function ensureTargetAvailable(targetDir: string): Promise<void> {
-  try {
-    await access(targetDir);
-  } catch {
-    return;
-  }
-
-  let entries: string[] = [];
-  try {
-    entries = await readdir(targetDir);
-  } catch {
-    throw new Error(
-      `Cannot create plugin at '${targetDir}' because a file with that name already exists.`
-    );
-  }
-
-  if (entries.length > 0) {
-    throw new Error(
-      `Target directory '${targetDir}' already exists and is not empty. Choose a new name or remove the directory.`
-    );
-  }
-}

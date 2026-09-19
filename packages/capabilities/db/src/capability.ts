@@ -1,10 +1,13 @@
-import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
+  detectSourceRoot,
+  fileExists,
+  hasDependency,
   loadManifestFromObject,
+  mergeUnique,
   OwnershipTracker,
 } from '@kiln/core';
 import type { Capability } from '@kiln/capability-sdk';
@@ -23,6 +26,8 @@ import {
   type DbFilePaths,
 } from './types.js';
 import { buildDbOwnershipRegistrations, validateDbOwnership } from './validation.js';
+
+const DB_SOURCE_ROOT_MARKERS = ['app', 'pages'];
 
 const DB_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
@@ -48,7 +53,7 @@ export class DbCapability implements Capability {
     rootPath: string,
     options: DbCapabilityPlanOptions
   ): Promise<DbCapabilityPlan> {
-    const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath));
+    const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath, DB_SOURCE_ROOT_MARKERS));
     const paths = buildDbFilePaths(sourceRoot);
 
     const tracker = options.tracker ?? new OwnershipTracker();
@@ -107,6 +112,8 @@ export function buildDbFilePaths(sourceRoot = ''): DbFilePaths {
   const prefix = sourceRoot ? `${sourceRoot.replace(/\\/g, '/')}/` : '';
 
   return {
+    // Prisma always looks for the schema at the repo root, regardless of
+    // where application source lives, so sourceRoot never applies here.
     schemaFile: 'prisma/schema.prisma',
     clientFile: `${prefix}lib/db.ts`,
   };
@@ -174,18 +181,6 @@ function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileEx
   );
 }
 
-async function detectSourceRoot(rootPath: string): Promise<string> {
-  if (await fileExists(join(rootPath, 'src', 'app'))) {
-    return 'src';
-  }
-
-  if (await fileExists(join(rootPath, 'src', 'pages'))) {
-    return 'src';
-  }
-
-  return '';
-}
-
 function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFilePaths): ResolvedCapability {
   const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
 
@@ -198,48 +193,3 @@ function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFil
   });
 }
 
-function mergeUnique(existing: string[], additions: string[]): string[] {
-  const merged = new Set(existing);
-  for (const entry of additions) {
-    merged.add(entry);
-  }
-
-  return Array.from(merged).sort((left, right) => left.localeCompare(right));
-}
-
-async function hasDependency(rootPath: string, dependencyName: string): Promise<boolean> {
-  const packageJson = await readPackageJson(rootPath);
-  if (!packageJson) {
-    return false;
-  }
-
-  const dependencies = isRecord(packageJson.dependencies) ? packageJson.dependencies : {};
-  const devDependencies = isRecord(packageJson.devDependencies)
-    ? packageJson.devDependencies
-    : {};
-
-  return dependencyName in dependencies || dependencyName in devDependencies;
-}
-
-async function readPackageJson(rootPath: string): Promise<Record<string, unknown> | null> {
-  const packageJsonPath = join(rootPath, 'package.json');
-  if (!(await fileExists(packageJsonPath))) {
-    return null;
-  }
-
-  const content = await readFile(packageJsonPath, 'utf8');
-  return JSON.parse(content) as Record<string, unknown>;
-}
-
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
