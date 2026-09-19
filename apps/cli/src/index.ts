@@ -5,6 +5,7 @@ import pkg from '../package.json';
 import { runAdd, parseEnvVariables, parseProviders } from './commands/add.js';
 import { runCreate } from './commands/create.js';
 import { runDoctor } from './commands/doctor.js';
+import { runEnvRemove } from './commands/env-remove.js';
 import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
 import { runPluginsList, runPluginsVerify } from './commands/plugins.js';
@@ -20,12 +21,13 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'create' | 'add' | 'remove' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
+type CommandName = 'create' | 'add' | 'remove' | 'env' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
 
 const commands: Record<CommandName, string> = {
   create: 'Scaffold a new kiln project.',
   add: 'Add a capability to a kiln project (env, auth, db).',
   remove: 'Remove a capability from a kiln project (env, auth, db).',
+  env: 'Manage individual environment variables.',
   inspect: 'Inspect the current kiln project.',
   doctor: 'Run environment checks for kiln.',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
@@ -57,6 +59,11 @@ function printHelp(topic?: string): void {
       console.log('Usage: kiln remove <capability>');
       console.log('Capabilities: env, auth, db');
       console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
+    }
+
+    if (command === 'env') {
+      console.log('Usage: kiln env remove <NAME> [<NAME>...]');
+      console.log('Removes the given variables from .env.local and .env.example.');
     }
 
     if (command === 'init-plugin') {
@@ -151,6 +158,14 @@ async function main(argv: string[]): Promise<void> {
     const envVariables = parseEnvVariables(argv);
     const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
     await runAdd(capabilityId, cliOptions, envVariables, providers);
+    return;
+  }
+
+  if (firstArg === 'env') {
+    if (secondArg !== 'remove') {
+      throw new Error(`Unknown 'env' subcommand '${secondArg}'. Usage: kiln env remove <NAME> [<NAME>...]`);
+    }
+    await runEnvRemove(args.slice(2), cliOptions);
     return;
   }
 

@@ -6,7 +6,7 @@ import {
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
 } from '@kiln/project-model';
-import { DEFAULT_ENV_EXAMPLE_PATH } from '@kiln/env-capability';
+import { buildEnvRemovalTransforms } from '@kiln/env-capability';
 import { SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import { createTransformPipeline, TransformEngine } from '@kiln/transform-engine';
 import type { OwnershipSnapshot } from '@kiln/core';
@@ -69,17 +69,12 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
     });
   }
 
-  if (ownedEnvVars.length > 0) {
-    builder.envMutation(
-      `${capabilityId}-remove-env-vars`,
-      DEFAULT_ENV_EXAMPLE_PATH,
-      {},
-      'Remove environment variables',
-      ownedEnvVars.map((entry) => entry.name)
-    );
-  }
-
-  const transforms = builder.build();
+  const transforms = [
+    ...builder.build(),
+    ...(ownedEnvVars.length > 0
+      ? buildEnvRemovalTransforms(ownedEnvVars.map((entry) => entry.name))
+      : []),
+  ];
   const engine = new TransformEngine();
   await engine.seedFromDisk(rootPath, transforms);
   engine.queueTransforms(transforms);

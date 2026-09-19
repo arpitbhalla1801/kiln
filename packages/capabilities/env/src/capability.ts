@@ -185,6 +185,16 @@ export function buildTransforms(options: BuildTransformsOptions): TransformPipel
   return builder.build();
 }
 
+export function buildEnvRemovalTransforms(
+  names: string[],
+  envExamplePath: string = DEFAULT_ENV_EXAMPLE_PATH
+): TransformPipeline {
+  return createTransformPipeline()
+    .envMutation(`${ENV_CAPABILITY_ID}-remove-vars-example`, envExamplePath, {}, 'Remove environment variables', names)
+    .envMutation(`${ENV_CAPABILITY_ID}-remove-vars-local`, DEFAULT_ENV_LOCAL_PATH, {}, 'Remove environment variables', names)
+    .build();
+}
+
 function toFlatEnvLocalVariables(variables: EnvVariableMap): EnvVariableMap {
   const flat: EnvVariableMap = {};
 
