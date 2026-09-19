@@ -143,7 +143,7 @@ export function buildTransforms(options: BuildTransformsOptions): TransformPipel
     builder.envMutation(
       `${ENV_CAPABILITY_ID}-inject-env-vars`,
       envExamplePath,
-      variables,
+      toExampleOnlyVariables(variables),
       'Inject environment variables',
       undefined,
       ownerCapabilityId
@@ -193,6 +193,23 @@ export function buildEnvRemovalTransforms(
     .envMutation(`${ENV_CAPABILITY_ID}-remove-vars-example`, envExamplePath, {}, 'Remove environment variables', names)
     .envMutation(`${ENV_CAPABILITY_ID}-remove-vars-local`, DEFAULT_ENV_LOCAL_PATH, {}, 'Remove environment variables', names)
     .build();
+}
+
+const DEFAULT_EXAMPLE_PLACEHOLDER = 'replace-me';
+
+// .env.example must never contain a real secret value, even if the variable
+// definition carries one (e.g. an auth capability's generated AUTH_SECRET).
+function toExampleOnlyVariables(variables: EnvVariableMap): EnvVariableMap {
+  const exampleOnly: EnvVariableMap = {};
+
+  for (const [key, definition] of Object.entries(variables)) {
+    const example =
+      typeof definition === 'string' ? undefined : (definition.example ?? DEFAULT_EXAMPLE_PLACEHOLDER);
+    const required = typeof definition === 'string' ? undefined : definition.required;
+    exampleOnly[key] = { example: example ?? DEFAULT_EXAMPLE_PLACEHOLDER, required };
+  }
+
+  return exampleOnly;
 }
 
 function toFlatEnvLocalVariables(variables: EnvVariableMap): EnvVariableMap {

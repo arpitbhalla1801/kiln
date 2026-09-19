@@ -107,8 +107,8 @@ describe('AuthCapability', () => {
     const applier = new TransformApplier();
     applier.applyAll(vfs, plan.transforms);
 
-    expect(vfs.read('.env.example')).toContain('CUSTOM_KEY=custom-value');
-    expect(vfs.read('.env.example')).toMatch(/AUTH_SECRET=\S+/);
+    expect(vfs.read('.env.example')).toContain('CUSTOM_KEY=replace-me');
+    expect(vfs.read('.env.example')).toContain('AUTH_SECRET=replace-me');
   });
 
   test('does not scaffold a route handler when no providers are selected', async () => {
@@ -190,8 +190,11 @@ describe('AuthCapability', () => {
     applier.applyAll(vfs, firstPlan.transforms);
 
     const generatedSecret = vfs.read('.env.example');
-    expect(generatedSecret).toMatch(/AUTH_SECRET=\S+/);
-    expect(generatedSecret).not.toContain('AUTH_SECRET=replace-me');
+    expect(generatedSecret).toContain('AUTH_SECRET=replace-me');
+
+    const generatedLocalSecret = vfs.read('.env.local');
+    expect(generatedLocalSecret).toMatch(/AUTH_SECRET=\S+/);
+    expect(generatedLocalSecret).not.toContain('AUTH_SECRET=replace-me');
 
     const secondPlan = await auth.planAdd(root, {
       tracker,

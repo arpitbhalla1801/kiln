@@ -54,8 +54,9 @@ describe('EnvCapability', () => {
     applier.applyAll(vfs, plan.transforms);
 
     expect(vfs.read('.env.example')).toBe(
-      '# Environment variables\n# --- env ---\n# required\nDATABASE_URL=postgres://localhost:5432/app\nNODE_ENV=development\n'
+      '# Environment variables\n# --- env ---\n# required\nDATABASE_URL=postgres://localhost:5432/app\nNODE_ENV=replace-me\n'
     );
+    expect(vfs.read('.env.local')).toBe('DATABASE_URL=postgres://localhost:5432/app\nNODE_ENV=development\n');
     expect(plan.capability.ownedEnvVars).toEqual(['DATABASE_URL', 'NODE_ENV']);
     expect(plan.capability.files).toContain('.env.example');
   });
@@ -109,8 +110,9 @@ describe('EnvCapability', () => {
     applier.applyAll(vfs, plan.transforms);
 
     expect(vfs.read('.env.example')).toBe(
-      'EXISTING=value\n# --- env ---\nDATABASE_URL=postgres://localhost:5432/app\n'
+      'EXISTING=value\n# --- env ---\nDATABASE_URL=replace-me\n'
     );
+    expect(vfs.read('.env.local')).toContain('DATABASE_URL=postgres://localhost:5432/app');
   });
 
   test('registers ownership and rejects conflicts', async () => {
