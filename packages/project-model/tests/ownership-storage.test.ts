@@ -7,11 +7,7 @@ import {
   KILN_DIRECTORY,
   OWNERSHIP_METADATA_FILE,
 } from '../src/ownership-storage.js';
-import {
-  loadOwnershipTracker,
-  reloadOwnershipTracker,
-  saveOwnershipTracker,
-} from '../src/ownership-bridge.js';
+import { loadOwnershipTracker, saveOwnershipTracker } from '../src/ownership-bridge.js';
 import { OwnershipTracker } from '@kiln/core';
 import type { OwnershipMetadata } from '../src/types.js';
 
@@ -48,7 +44,7 @@ describe('OwnershipMetadataStore', () => {
     expect(parsed.ownership.metadata[0].key).toBe('next.config.ts');
   });
 
-  test('reloads ownership metadata from disk', async () => {
+  test('loads ownership metadata from disk', async () => {
     const metadata: OwnershipMetadata = {
       files: [{ filePath: 'src/auth.ts', ownerCapabilityId: 'auth' }],
       dependencies: [{ name: 'zod', ownerCapabilityId: 'auth' }],
@@ -58,12 +54,12 @@ describe('OwnershipMetadataStore', () => {
     };
 
     await OwnershipMetadataStore.save(metadata, projectRoot);
-    const reloaded = await OwnershipMetadataStore.reload(projectRoot);
+    const loaded = await OwnershipMetadataStore.load(projectRoot);
 
-    expect(reloaded).toEqual(metadata);
+    expect(loaded).toEqual(metadata);
   });
 
-  test('ownership survives reload through OwnershipTracker', async () => {
+  test('ownership survives load through OwnershipTracker', async () => {
     const tracker = new OwnershipTracker();
     tracker.registerFile('middleware.ts', 'auth');
     tracker.registerDependency('next-auth', 'auth');
@@ -73,11 +69,11 @@ describe('OwnershipMetadataStore', () => {
 
     await saveOwnershipTracker(tracker, projectRoot);
 
-    const reloadedTracker = await reloadOwnershipTracker(projectRoot);
+    const loadedTracker = await loadOwnershipTracker(projectRoot);
 
-    expect(reloadedTracker.toSnapshot()).toEqual(tracker.toSnapshot());
-    expect(reloadedTracker.getOwner('dependency', 'next-auth')).toBe('auth');
-    expect(reloadedTracker.getOwner('metadata', 'next.config.ts')).toBe('core');
+    expect(loadedTracker.toSnapshot()).toEqual(tracker.toSnapshot());
+    expect(loadedTracker.getOwner('dependency', 'next-auth')).toBe('auth');
+    expect(loadedTracker.getOwner('metadata', 'next.config.ts')).toBe('core');
   });
 
   test('loadOwnershipTracker reads persisted ownership state', async () => {

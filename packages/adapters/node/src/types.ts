@@ -50,6 +50,5 @@ export interface NodeAdapterRuntime {
     dependencies: Record<string, string>,
     options?: DependencyInstallOptions
   ): Promise<CommandResult>;
-  removeDependencies(rootPath: string, names: string[]): Promise<CommandResult>;
   runScript(rootPath: string, script: string, args?: string[]): Promise<CommandResult>;
 }

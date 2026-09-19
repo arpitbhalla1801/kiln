@@ -163,19 +163,6 @@ export class VirtualFilesystem {
     this.baseline.set(normalizePath(path), content);
   }
 
-  /** Export a copy of the current baseline file map. */
-  exportBaseline(): Record<string, string> {
-    const files: Record<string, string> = {};
-    for (const [filePath, content] of this.baseline.entries()) {
-      files[filePath] = content;
-    }
-    return files;
-  }
-
-  /** Access staged mutation map size for diagnostics. */
-  getStagedMutationCount(): number {
-    return this.staging.size;
-  }
 }
 
 function summarizeDiff(entries: VfsDiffEntry[]): VfsDiffSummary {

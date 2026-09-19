@@ -4,7 +4,6 @@ import {
   type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
-  loadManifestFromFile,
   loadManifestFromObject,
   OwnershipTracker,
 } from '@kiln/core';
@@ -31,19 +30,13 @@ const DB_ENV_VARS: EnvVariableMap = {
 
 export class DbCapability implements Capability {
   readonly id = DB_CAPABILITY_ID;
-  readonly manifestPath?: string;
   private readonly envCapability: EnvCapability;
 
-  constructor(manifestPath?: string, envCapability?: EnvCapability) {
-    this.manifestPath = manifestPath;
+  constructor(envCapability?: EnvCapability) {
     this.envCapability = envCapability ?? new EnvCapability();
   }
 
   async getManifest(): Promise<CapabilityManifest> {
-    if (this.manifestPath) {
-      return loadManifestFromFile(this.manifestPath);
-    }
-
     return loadManifestFromObject(DB_MANIFEST);
   }
 
