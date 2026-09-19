@@ -27,6 +27,7 @@ export interface AuthCapabilityPlanOptions {
   existingProviders?: string[];
   authFileContent?: string;
   extraEnvVars?: EnvVariableMap;
+  authSecretExists?: boolean;
 }
 
 export interface AuthCapabilityPlan {

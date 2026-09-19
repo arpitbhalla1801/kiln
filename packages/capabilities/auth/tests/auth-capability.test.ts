@@ -203,10 +203,26 @@ describe('AuthCapability', () => {
       nextAuthInstalled: true,
       envExampleExists: true,
       envLocalExists: true,
+      authSecretExists: true,
       gitignoreContent: null,
     });
 
     expect(secondPlan.transforms).toHaveLength(0);
+
+    const repairPlan = await auth.planAdd(root, {
+      tracker,
+      authFileExists: true,
+      middlewareFileExists: true,
+      nextAuthInstalled: true,
+      envExampleExists: true,
+      envLocalExists: true,
+      authSecretExists: false,
+      gitignoreContent: null,
+    });
+
+    expect(repairPlan.transforms.length).toBeGreaterThan(0);
+    applier.applyAll(vfs, repairPlan.transforms);
+    expect(vfs.read('.env.local')).toMatch(/AUTH_SECRET=\S+/);
 
     applier.applyAll(vfs, secondPlan.transforms);
     expect(vfs.read('.env.example')).toBe(generatedSecret);

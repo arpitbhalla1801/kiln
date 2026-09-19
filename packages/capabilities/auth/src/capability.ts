@@ -15,6 +15,7 @@ import {
 import type { Capability } from '@kiln/capability-sdk';
 import { AUTH_MANIFEST } from './manifest-data.js';
 import {
+  DEFAULT_ENV_LOCAL_PATH,
   EnvCapability,
   type EnvVariableMap,
 } from '@kiln/env-capability';
@@ -108,6 +109,8 @@ export class AuthCapability implements Capability {
       (await fileExists(join(rootPath, paths.routeHandlerFile)));
     const nextAuthInstalled =
       options.nextAuthInstalled ?? (await hasDependency(rootPath, NEXT_AUTH_PACKAGE));
+    const authSecretExists =
+      options.authSecretExists ?? (await envLocalHasNonEmptyValue(rootPath, 'AUTH_SECRET'));
 
     assertNoUnownedFile(tracker, paths.authFile, authFileExists);
     assertNoUnownedFile(tracker, paths.middlewareFile, middlewareFileExists);
@@ -135,7 +138,7 @@ export class AuthCapability implements Capability {
       rootPath,
       {
         variables: {
-          ...buildAuthEnvVars(allProviders, !authFileExists),
+          ...buildAuthEnvVars(allProviders, !authSecretExists),
           ...(options.extraEnvVars ?? {}),
         },
         tracker,
@@ -279,6 +282,16 @@ function buildProviderMergeTransforms(
       'Add new providers to auth config providers array'
     )
     .build();
+}
+
+async function envLocalHasNonEmptyValue(rootPath: string, key: string): Promise<boolean> {
+  const content = await readFile(join(rootPath, DEFAULT_ENV_LOCAL_PATH), 'utf8').catch(() => undefined);
+  if (content === undefined) {
+    return false;
+  }
+
+  const match = new RegExp(`^${key}=(.*)$`, 'm').exec(content);
+  return match !== null && match[1].trim() !== '';
 }
 
 function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileExists: boolean): void {
