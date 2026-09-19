@@ -1,10 +1,11 @@
-import { access, mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { validateProjectName } from '../validation/project-name.js';
+import { ensureTargetAvailable } from '../project.js';
 
 export async function runCreate(targetDir: string, projectName: string): Promise<void> {
   const name = validateProjectName(projectName);
-  await ensureTargetAvailable(targetDir);
+  await ensureTargetAvailable(targetDir, 'project');
 
   await mkdir(targetDir, { recursive: true });
   await mkdir(join(targetDir, 'src', 'app'), { recursive: true });
@@ -96,27 +97,4 @@ export default nextConfig;
   console.log('  bun install');
   console.log('  kiln add env');
   console.log('  kiln add auth');
-}
-
-async function ensureTargetAvailable(targetDir: string): Promise<void> {
-  try {
-    await access(targetDir);
-  } catch {
-    return;
-  }
-
-  let entries: string[] = [];
-  try {
-    entries = await readdir(targetDir);
-  } catch {
-    throw new Error(
-      `Cannot create project at '${targetDir}' because a file with that name already exists.`
-    );
-  }
-
-  if (entries.length > 0) {
-    throw new Error(
-      `Target directory '${targetDir}' already exists and is not empty. Choose a new name or remove the directory.`
-    );
-  }
 }

@@ -1,15 +1,24 @@
-import * as crypto from 'node:crypto';
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import type { VfsDiff } from './vfs-types.js';
+import { atomicWriteFile, isNodeError, resolveTargetPath } from './fs-helpers.js';
+import type { VfsDiff } from './vfs.js';
 import type { VirtualFilesystem } from './vfs.js';
-import type {
-  PersistableFileOperation,
-  PersistenceOptions,
-  PersistenceResult,
-} from './persistence-types.js';
 
-const TEMP_SUFFIX = '.kiln.tmp';
+export interface PersistenceOptions {
+  /** Base directory for relative file paths. */
+  rootDir?: string;
+  encoding?: BufferEncoding;
+}
+
+export interface PersistenceResult {
+  written: string[];
+  deleted: string[];
+}
+
+export interface PersistableFileOperation {
+  type: 'create' | 'modify' | 'delete';
+  filePath: string;
+  content?: string;
+}
 
 /** Commits virtual filesystem mutations to disk with atomic per-file writes. */
 export class FilesystemPersistence {
@@ -75,32 +84,6 @@ export class FilesystemPersistence {
   }
 }
 
-async function atomicWriteFile(
-  targetPath: string,
-  content: string,
-  encoding: BufferEncoding,
-  pendingTempFiles: string[]
-): Promise<void> {
-  const directory = path.dirname(targetPath);
-  await fs.mkdir(directory, { recursive: true });
-
-  const tempPath = `${targetPath}${TEMP_SUFFIX}.${crypto.randomBytes(8).toString('hex')}`;
-  pendingTempFiles.push(tempPath);
-
-  try {
-    await fs.writeFile(tempPath, content, encoding);
-    await fs.rename(tempPath, targetPath);
-    pendingTempFiles.pop();
-  } catch (error) {
-    await cleanupTempFiles([tempPath]);
-    const index = pendingTempFiles.indexOf(tempPath);
-    if (index >= 0) {
-      pendingTempFiles.splice(index, 1);
-    }
-    throw error;
-  }
-}
-
 async function safeDelete(targetPath: string): Promise<void> {
   try {
     await fs.unlink(targetPath);
@@ -121,16 +104,3 @@ async function cleanupTempFiles(tempPaths: string[]): Promise<void> {
   }
 }
 
-function resolveTargetPath(rootDir: string, filePath: string): string {
-  const normalized = filePath.replace(/\\/g, '/');
-
-  if (path.isAbsolute(normalized)) {
-    return path.normalize(normalized);
-  }
-
-  return path.normalize(path.join(rootDir, normalized));
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return typeof error === 'object' && error !== null && 'code' in error;
-}

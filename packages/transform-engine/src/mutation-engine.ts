@@ -1,4 +1,23 @@
-import type { JsonAstMutation } from './mutation-types.js';
+export type JsonMutationOperationType = 'set' | 'delete' | 'merge';
+
+export interface JsonSetMutation {
+  type: 'set';
+  path: string;
+  value: unknown;
+}
+
+export interface JsonDeleteMutation {
+  type: 'delete';
+  path: string;
+}
+
+export interface JsonMergeMutation {
+  type: 'merge';
+  path: string;
+  value: Record<string, unknown>;
+}
+
+export type JsonAstMutation = JsonSetMutation | JsonDeleteMutation | JsonMergeMutation;
 
 /** Structured JSON mutation engine with idempotent AST operations. */
 export class StructuredMutationEngine {
@@ -81,7 +100,7 @@ export class StructuredMutationEngine {
 }
 
 export function cloneJson<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  return structuredClone(value);
 }
 
 export function cloneJsonValue(value: unknown): unknown {

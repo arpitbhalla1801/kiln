@@ -1,4 +1,3 @@
-import { access } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
@@ -6,7 +5,11 @@ import {
   type Capability as ResolvedCapability,
   type CapabilityManifest,
   capabilityFromManifest,
+  detectSourceRoot,
+  fileExists,
+  hasDependency,
   loadManifestFromObject,
+  mergeUnique,
   OwnershipTracker,
 } from '@kiln/core';
 import type { Capability } from '@kiln/capability-sdk';
@@ -39,6 +42,8 @@ import {
   validateAuthOwnership,
 } from './validation.js';
 import { resolveProvider } from './providers.js';
+
+const AUTH_SOURCE_ROOT_MARKERS = ['app', 'pages', 'auth.ts'];
 
 export function buildAuthEnvVars(providers: string[], generateSecret = true): EnvVariableMap {
   const envVars: EnvVariableMap = generateSecret
@@ -84,7 +89,7 @@ export class AuthCapability implements Capability {
     const newProviders = requestedProviders.filter((id) => !existingProviders.includes(id));
     const allProviders = [...existingProviders, ...newProviders];
 
-    const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath));
+    const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath, AUTH_SOURCE_ROOT_MARKERS));
     const paths = buildAuthFilePaths(sourceRoot);
 
     const tracker = options.tracker ?? new OwnershipTracker();
@@ -101,14 +106,9 @@ export class AuthCapability implements Capability {
     const nextAuthInstalled =
       options.nextAuthInstalled ?? (await hasDependency(rootPath, NEXT_AUTH_PACKAGE));
 
-    assertNoUnownedFile(tracker, paths.authFile, authFileExists, AUTH_CAPABILITY_ID);
-    assertNoUnownedFile(tracker, paths.middlewareFile, middlewareFileExists, AUTH_CAPABILITY_ID);
-    assertNoUnownedFile(
-      tracker,
-      paths.routeHandlerFile,
-      routeHandlerFileExists,
-      AUTH_CAPABILITY_ID
-    );
+    assertNoUnownedFile(tracker, paths.authFile, authFileExists);
+    assertNoUnownedFile(tracker, paths.middlewareFile, middlewareFileExists);
+    assertNoUnownedFile(tracker, paths.routeHandlerFile, routeHandlerFileExists);
 
     const authTransforms = buildAuthTransforms(
       paths,
@@ -271,47 +271,18 @@ function buildProviderMergeTransforms(
     .build();
 }
 
-function assertNoUnownedFile(
-  tracker: OwnershipTracker,
-  filePath: string,
-  fileExists: boolean,
-  ownerCapabilityId: string
-): void {
+function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileExists: boolean): void {
   if (!fileExists) {
     return;
   }
 
   const currentOwner = tracker.getOwner('file', filePath);
-  if (currentOwner === ownerCapabilityId) {
-    return;
+  if (currentOwner === undefined) {
+    throw new Error(
+      `Refusing to add auth: '${filePath}' already exists and was not created by kiln. ` +
+        'Remove or rename the file, or run kiln in a project without a pre-existing auth setup.'
+    );
   }
-
-  if (currentOwner !== undefined) {
-    // A different capability already owns this file; let the ownership
-    // conflict check surface a consistent error for that case.
-    return;
-  }
-
-  throw new Error(
-    `Refusing to add auth: '${filePath}' already exists and was not created by kiln. ` +
-      'Remove or rename the file, or run kiln in a project without a pre-existing auth setup.'
-  );
-}
-
-async function detectSourceRoot(rootPath: string): Promise<string> {
-  if (await fileExists(join(rootPath, 'src', 'app'))) {
-    return 'src';
-  }
-
-  if (await fileExists(join(rootPath, 'src', 'pages'))) {
-    return 'src';
-  }
-
-  if (await fileExists(join(rootPath, 'src', 'auth.ts'))) {
-    return 'src';
-  }
-
-  return '';
 }
 
 function buildCapabilityWithOwnership(
@@ -336,48 +307,3 @@ function buildCapabilityWithOwnership(
   });
 }
 
-function mergeUnique(existing: string[], additions: string[]): string[] {
-  const merged = new Set(existing);
-  for (const entry of additions) {
-    merged.add(entry);
-  }
-
-  return Array.from(merged).sort((left, right) => left.localeCompare(right));
-}
-
-async function hasDependency(rootPath: string, dependencyName: string): Promise<boolean> {
-  const packageJson = await readPackageJson(rootPath);
-  if (!packageJson) {
-    return false;
-  }
-
-  const dependencies = isRecord(packageJson.dependencies) ? packageJson.dependencies : {};
-  const devDependencies = isRecord(packageJson.devDependencies)
-    ? packageJson.devDependencies
-    : {};
-
-  return dependencyName in dependencies || dependencyName in devDependencies;
-}
-
-async function readPackageJson(rootPath: string): Promise<Record<string, unknown> | null> {
-  const packageJsonPath = join(rootPath, 'package.json');
-  if (!(await fileExists(packageJsonPath))) {
-    return null;
-  }
-
-  const content = await readFile(packageJsonPath, 'utf8');
-  return JSON.parse(content) as Record<string, unknown>;
-}
-
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}

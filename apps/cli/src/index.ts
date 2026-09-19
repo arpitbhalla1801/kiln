@@ -112,7 +112,7 @@ async function main(argv: string[]): Promise<void> {
     cwd: process.cwd(),
   };
 
-  if ((!firstArg && isHelpFlag) || (firstArg && isHelpFlag)) {
+  if (isHelpFlag) {
     printHelp(firstArg in commands ? firstArg : undefined);
     return;
   }

@@ -34,10 +34,8 @@ describe('dependency version reconciliation', () => {
 
   test('reconcile returns deterministic version map', () => {
     const registry = new DependencyVersionRegistry();
-    registry.addClaims([
-      { name: 'next-auth', version: '^5.0.0', ownerCapabilityId: 'auth' },
-      { name: 'zod', version: '^3.22.0', ownerCapabilityId: 'auth' },
-    ]);
+    registry.addClaim({ name: 'next-auth', version: '^5.0.0', ownerCapabilityId: 'auth' });
+    registry.addClaim({ name: 'zod', version: '^3.22.0', ownerCapabilityId: 'auth' });
 
     const resolved = registry.reconcile();
     expect(resolved.get('next-auth')).toBe('^5.0.0');
