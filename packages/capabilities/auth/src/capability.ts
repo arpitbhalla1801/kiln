@@ -86,8 +86,11 @@ export class AuthCapability implements Capability {
       resolveProvider(providerId);
     }
 
-    const newProviders = requestedProviders.filter((id) => !existingProviders.includes(id));
-    const allProviders = [...existingProviders, ...newProviders];
+    // Passing --provider at all means "this is the full desired provider set" --
+    // reconcile additions and removals. No --provider flags means "leave providers alone".
+    const allProviders = requestedProviders.length > 0 ? requestedProviders : existingProviders;
+    const newProviders = allProviders.filter((id) => !existingProviders.includes(id));
+    const removedProviders = existingProviders.filter((id) => !allProviders.includes(id));
 
     const sourceRoot = options.sourceRoot ?? (await detectSourceRoot(rootPath, AUTH_SOURCE_ROOT_MARKERS));
     const paths = buildAuthFilePaths(sourceRoot);
@@ -119,12 +122,12 @@ export class AuthCapability implements Capability {
       allProviders
     );
 
-    if (authFileExists && newProviders.length > 0) {
+    if (authFileExists && (newProviders.length > 0 || removedProviders.length > 0)) {
       const currentAuthFileContent =
         options.authFileContent ??
         (await readFile(join(rootPath, paths.authFile), 'utf8').catch(() => undefined));
       authTransforms.push(
-        ...buildProviderMergeTransforms(paths, currentAuthFileContent, existingProviders, newProviders)
+        ...buildProviderMergeTransforms(paths, currentAuthFileContent, existingProviders, allProviders)
       );
     }
 
@@ -132,7 +135,7 @@ export class AuthCapability implements Capability {
       rootPath,
       {
         variables: {
-          ...buildAuthEnvVars(requestedProviders, !authFileExists),
+          ...buildAuthEnvVars(allProviders, !authFileExists),
           ...(options.extraEnvVars ?? {}),
         },
         tracker,
@@ -237,7 +240,7 @@ function buildProviderMergeTransforms(
   paths: AuthFilePaths,
   currentAuthFileContent: string | undefined,
   existingProviders: string[],
-  newProviders: string[]
+  desiredProviders: string[]
 ): TransformPipeline {
   const expectedPriorContent = createAuthConfigContent(existingProviders);
 
@@ -246,10 +249,17 @@ function buildProviderMergeTransforms(
       .fileCreate(
         `${AUTH_CAPABILITY_ID}-merge-providers`,
         paths.authFile,
-        createAuthConfigContent([...existingProviders, ...newProviders]),
-        'Merge new providers into auth config'
+        createAuthConfigContent(desiredProviders),
+        'Reconcile providers in auth config'
       )
       .build();
+  }
+
+  // File was hand-edited: we can only safely append new providers via patch,
+  // not remove ones we can't locate reliably in arbitrary edited content.
+  const newProviders = desiredProviders.filter((id) => !existingProviders.includes(id));
+  if (newProviders.length === 0) {
+    return createTransformPipeline().build();
   }
 
   const patch = buildProviderMergePatch(newProviders);
