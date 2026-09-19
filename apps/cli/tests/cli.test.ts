@@ -119,7 +119,10 @@ describe('kiln cli', () => {
     );
 
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
-    expect(envExample).toContain('CUSTOM_KEY=hello');
+    expect(envExample).toContain('CUSTOM_KEY=replace-me');
+
+    const envLocal = await readFile(join(root, '.env.local'), 'utf8');
+    expect(envLocal).toContain('CUSTOM_KEY=hello');
   }, 30000);
 
   test('dry-run add env produces deterministic transform output', async () => {
@@ -190,7 +193,10 @@ describe('kiln cli', () => {
 
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
     expect(envExample).toContain('DATABASE_URL=');
-    expect(envExample).toContain('API_URL=https://api.example.com');
+    expect(envExample).toContain('API_URL=replace-me');
+
+    const envLocal = await readFile(join(root, '.env.local'), 'utf8');
+    expect(envLocal).toContain('API_URL=https://api.example.com');
   });
 
   test('doctor fails when package.json is corrupted in a Next.js project', async () => {

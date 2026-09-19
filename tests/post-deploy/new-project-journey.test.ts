@@ -49,9 +49,11 @@ describe('post-deploy new project journey', () => {
     const addCustom = runKiln(['add', 'env', '--var', 'API_URL=https://api.example.com'], projectDir);
     expect(addCustom.exitCode).toBe(0);
     const envAfterCustom = await readFile(join(projectDir, '.env.example'), 'utf8');
-    // PD-13 add env --var merges custom keys
+    // PD-13 add env --var merges custom keys (real value only goes to .env.local)
     expect(envAfterCustom).toContain('DATABASE_URL=');
-    expect(envAfterCustom).toContain('API_URL=https://api.example.com');
+    expect(envAfterCustom).toContain('API_URL=replace-me');
+    const localAfterCustom = await readFile(join(projectDir, '.env.local'), 'utf8');
+    expect(localAfterCustom).toContain('API_URL=https://api.example.com');
 
     const addAuth = runKiln(['add', 'auth'], projectDir);
     expect(addAuth.exitCode).toBe(0);
@@ -70,9 +72,13 @@ describe('post-deploy new project journey', () => {
 
     const envAfterAuth = await readFile(join(projectDir, '.env.example'), 'utf8');
     expect(envAfterAuth).toContain('DATABASE_URL=');
-    expect(envAfterAuth).toMatch(/AUTH_SECRET=\S+/);
-    expect(envAfterAuth).not.toContain('AUTH_SECRET=replace-me');
-    expect(envAfterAuth).toContain('API_URL=https://api.example.com');
+    expect(envAfterAuth).toContain('AUTH_SECRET=replace-me');
+    expect(envAfterAuth).toContain('API_URL=replace-me');
+
+    const localAfterAuth = await readFile(join(projectDir, '.env.local'), 'utf8');
+    expect(localAfterAuth).toMatch(/AUTH_SECRET=\S+/);
+    expect(localAfterAuth).not.toContain('AUTH_SECRET=replace-me');
+    expect(localAfterAuth).toContain('API_URL=https://api.example.com');
 
     expect(await readFile(join(projectDir, 'src/auth.ts'), 'utf8')).toContain('NextAuth');
     expect(await readFile(join(projectDir, 'src/middleware.ts'), 'utf8')).toContain('from "./auth"');
