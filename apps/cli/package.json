@@ -16,7 +16,7 @@
     "node": ">=20"
   },
   "bin": {
-    "kiln": "./dist/index.js"
+    "kiln": "dist/index.js"
   },
   "files": [
     "dist/index.js",
