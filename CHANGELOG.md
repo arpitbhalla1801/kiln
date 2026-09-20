@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0
+
+### Fixes
+
+- `kiln add auth` reconciles the provider set on re-add instead of only adding new providers
+- `kiln add env` gains `kiln env remove` and stops leaking removed vars back into `.env.local`
+- `.env.example` never receives real secret values, only placeholders
+- `kiln add auth` repairs a missing `AUTH_SECRET` on re-add instead of no-op
+
 ## 1.0.0
 
 First usable release for git-clone users.
