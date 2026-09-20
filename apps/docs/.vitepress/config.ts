@@ -26,7 +26,7 @@ export default defineConfig({
           { text: "v2.x (current)", link: "/" },
           {
             text: "v1.x (stable)",
-            link: "https://github.com/arpitbhalla1801/kiln/tree/v1.1.0",
+            link: "https://github.com/arpitbhalla1801/kiln/blob/v1.1.0/README.md",
           },
         ],
       },
