@@ -60,6 +60,42 @@ describe('NodeAdapter inspection', () => {
     expect(inspection.filesystem.packageJson).toBe(true);
   });
 
+  test('detects npm lockfile', async () => {
+    const root = await createTempProject({
+      'package.json': { name: 'demo-app', version: '0.1.0' },
+      'package-lock.json': '{}',
+    });
+
+    const packageManager = await detectPackageManager(root);
+
+    expect(packageManager.kind).toBe('npm');
+    expect(packageManager.lockfile).toBe('package-lock.json');
+  });
+
+  test('detects pnpm lockfile', async () => {
+    const root = await createTempProject({
+      'package.json': { name: 'demo-app', version: '0.1.0' },
+      'pnpm-lock.yaml': '',
+    });
+
+    const packageManager = await detectPackageManager(root);
+
+    expect(packageManager.kind).toBe('pnpm');
+    expect(packageManager.lockfile).toBe('pnpm-lock.yaml');
+  });
+
+  test('detects yarn lockfile', async () => {
+    const root = await createTempProject({
+      'package.json': { name: 'demo-app', version: '0.1.0' },
+      'yarn.lock': '',
+    });
+
+    const packageManager = await detectPackageManager(root);
+
+    expect(packageManager.kind).toBe('yarn');
+    expect(packageManager.lockfile).toBe('yarn.lock');
+  });
+
   test('detects Next.js app router and TypeScript usage', async () => {
     const root = await createTempProject({
       'package.json': {

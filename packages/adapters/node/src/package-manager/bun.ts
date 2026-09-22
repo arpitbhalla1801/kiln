@@ -2,21 +2,45 @@ import { spawnSafely } from '../spawn-safe.js';
 import type { CommandResult, DependencyInstallOptions } from '../types.js';
 import type { PackageManagerKind } from '../types.js';
 
+const DEV_FLAG: Record<PackageManagerKind, string> = {
+  bun: '--dev',
+  npm: '--save-dev',
+  pnpm: '--save-dev',
+  yarn: '--dev',
+};
+
 export async function bunAdd(
   rootPath: string,
   dependencies: Record<string, string>,
   options: DependencyInstallOptions = {}
 ): Promise<CommandResult> {
-  const args = ['add'];
+  return packageManagerAdd(rootPath, 'bun', dependencies, options);
+}
+
+export function buildAddArgs(
+  kind: PackageManagerKind,
+  dependencies: Record<string, string>,
+  options: DependencyInstallOptions = {}
+): string[] {
+  const args = [kind === 'npm' ? 'install' : 'add'];
   if (options.dev) {
-    args.push('--dev');
+    args.push(DEV_FLAG[kind]);
   }
 
   for (const [name, version] of Object.entries(dependencies)) {
     args.push(version ? `${name}@${version}` : name);
   }
 
-  return runPackageManager('bun', args, rootPath);
+  return args;
+}
+
+export async function packageManagerAdd(
+  rootPath: string,
+  kind: PackageManagerKind,
+  dependencies: Record<string, string>,
+  options: DependencyInstallOptions = {}
+): Promise<CommandResult> {
+  return runPackageManager(kind, buildAddArgs(kind, dependencies, options), rootPath);
 }
 
 export async function runPackageManagerScript(
