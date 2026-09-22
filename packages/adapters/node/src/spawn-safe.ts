@@ -8,13 +8,20 @@ import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process'
  * with an args array is unsafe (Node's DEP0190: args are concatenated, not
  * escaped). We use the shell on Windows but quote every argument ourselves
  * so shell metacharacters in a version string or path can't be interpreted.
+ *
+ * `bun` ships a real `bun.exe`, not a shim, so it never needs the shell.
+ * Going through `cmd.exe` anyway adds an extra process in the tree; if the
+ * caller times out and kills only the direct child, cmd.exe dies but the
+ * bun.exe grandchild it spawned is orphaned and keeps running, still
+ * holding files/locks in the very temp dir the next test reuses. Spawning
+ * bun directly avoids that process-tree-kill hazard entirely.
  */
 export function spawnSafely(
   command: string,
   args: string[],
   options: SpawnOptions = {}
 ): ChildProcess {
-  if (process.platform !== 'win32') {
+  if (process.platform !== 'win32' || command === 'bun') {
     return spawn(command, args, options);
   }
 
