@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { AdapterContract } from '@kiln/core';
 import { detectNextJs } from './detection/nextjs.js';
 import { detectLockfile, detectPackageManager } from './detection/package-manager.js';
-import { bunAdd, runPackageManagerScript } from './package-manager/bun.js';
+import { packageManagerAdd, runPackageManagerScript } from './package-manager/bun.js';
 import type {
   CommandResult,
   DependencyInstallOptions,
@@ -61,13 +61,7 @@ export class NodeAdapter implements AdapterContract, NodeAdapterRuntime {
     options?: DependencyInstallOptions
   ): Promise<CommandResult> {
     const packageManager = await detectPackageManager(rootPath);
-    if (packageManager.kind !== 'bun') {
-      throw new Error(
-        `Unsupported package manager '${packageManager.kind}'. Bun integration is required for installs.`
-      );
-    }
-
-    return bunAdd(rootPath, dependencies, options ?? {});
+    return packageManagerAdd(rootPath, packageManager.kind, dependencies, options ?? {});
   }
 
   async runScript(rootPath: string, script: string, args: string[] = []): Promise<CommandResult> {
