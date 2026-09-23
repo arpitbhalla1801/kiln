@@ -84,17 +84,26 @@ async function isPackageManagerInstalled(kind: PackageManagerKind): Promise<bool
   }
 }
 
+const VERSION_CHECK_TIMEOUT_MS = 3000;
+
 async function runCommand(command: string, args: string[]): Promise<{ exitCode: number }> {
   return new Promise((resolve, reject) => {
     const child = spawnSafely(command, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error(`${command} ${args.join(' ')} timed out after ${VERSION_CHECK_TIMEOUT_MS}ms`));
+    }, VERSION_CHECK_TIMEOUT_MS);
+
     child.on('error', (error) => {
+      clearTimeout(timer);
       reject(error);
     });
 
     child.on('close', (exitCode) => {
+      clearTimeout(timer);
       resolve({ exitCode: exitCode ?? 1 });
     });
   });
