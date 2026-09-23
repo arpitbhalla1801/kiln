@@ -11,7 +11,7 @@ of every generated file.
 ## Create a new project
 
 ```bash
-kiln create my-app
+kiln init my-app
 cd my-app
 bun install
 kiln add env

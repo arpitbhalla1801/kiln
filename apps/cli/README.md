@@ -1,6 +1,6 @@
 # kiln
 
-Capability-based scaffolding CLI for Node/Next.js projects. `kiln create` scaffolds a project; `kiln add <capability>` layers in features (`env`, `auth`) while tracking which capability owns which file, dependency, script, and env var so capabilities never silently clobber each other's changes.
+Capability-based scaffolding CLI for Node/Next.js projects. `kiln init` scaffolds a project; `kiln add <capability>` layers in features (`env`, `auth`) while tracking which capability owns which file, dependency, script, and env var so capabilities never silently clobber each other's changes.
 
 ## Requirements
 
@@ -15,13 +15,13 @@ npm install -g @kiln-cli/kiln
 Or run it without installing:
 
 ```bash
-npx @kiln-cli/kiln create my-app
+npx @kiln-cli/kiln init my-app
 ```
 
 ## Quick start
 
 ```bash
-kiln create my-app
+kiln init my-app
 cd my-app
 bun install
 kiln add env
@@ -35,7 +35,7 @@ Project names must be npm-safe: lowercase letters, numbers, hyphens, or undersco
 
 | Command | Description |
 |---------|-------------|
-| `kiln create <name>` | Scaffold a new Next.js + TypeScript project |
+| `kiln init <name>` | Scaffold a new Next.js + TypeScript project |
 | `kiln add env [--var KEY=value]` | Add environment variable capability |
 | `kiln add auth` | Add auth capability ([next-auth](https://authjs.dev)) |
 | `kiln remove <env\|auth>` | Remove a capability: deletes its owned files, dependencies, scripts, and env vars |
@@ -46,7 +46,7 @@ Global flags: `--dry-run`, `--help`, `--version`
 
 ## Troubleshooting
 
-**`Target directory already exists`** — choose a new project name; `kiln create` will not overwrite non-empty directories.
+**`Target directory already exists`** — choose a new project name; `kiln init` will not overwrite non-empty directories.
 
 **Doctor reports `package-json-health` failures** — your `package.json` may be missing required scripts or dependencies for a Next.js project.
 

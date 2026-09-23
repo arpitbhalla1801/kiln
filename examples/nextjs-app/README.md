@@ -7,7 +7,7 @@ Reference app showing the kiln MVP flow on a Bun-compatible Next.js project.
 This example mirrors the output of:
 
 ```bash
-kiln create kiln-nextjs-example
+kiln init kiln-nextjs-example
 bun install
 kiln add env
 kiln add auth

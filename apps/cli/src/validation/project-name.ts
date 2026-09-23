@@ -5,7 +5,7 @@ export function validateProjectName(projectName: string): string {
   const name = projectName.trim();
 
   if (!name) {
-    throw new Error('Project name is required. Usage: kiln create <name>');
+    throw new Error('Project name is required. Usage: kiln init <name>');
   }
 
   if (name.length > MAX_PROJECT_NAME_LENGTH) {

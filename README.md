@@ -24,7 +24,7 @@ bun run link-cli
 ### Create a new project
 
 ```bash
-kiln create my-app
+kiln init my-app
 cd my-app
 bun install
 kiln add env
@@ -33,6 +33,19 @@ bun run build
 ```
 
 Project names must be npm-safe: lowercase letters, numbers, hyphens, or underscores (e.g. `my-app`).
+
+### Adopt an existing Next.js project
+
+```bash
+cd my-existing-app
+kiln init --existing
+kiln add env
+kiln add auth
+```
+
+`kiln init --existing` detects the project's router and language, then seeds
+`.kiln/ownership.json` marking every file already on disk as external, so a
+later `kiln add` refuses to overwrite it instead of clobbering it.
 
 ### Try the example app
 
@@ -49,7 +62,8 @@ Open http://localhost:3000
 
 | Command | Description |
 |---------|-------------|
-| `kiln create <name>` | Scaffold a new Next.js + TypeScript project |
+| `kiln init <name>` | Scaffold a new Next.js + TypeScript project |
+| `kiln init --existing` | Adopt an existing Next.js project by seeding ownership metadata |
 | `kiln add env [--var KEY=value]` | Add environment variable capability |
 | `kiln add auth` | Add auth capability (next-auth) |
 | `kiln inspect` | Inspect project metadata and ownership |
@@ -97,6 +111,6 @@ tests/post-deploy          # Upgrade smoke suite
 
 **`kiln: command not found`** — run `bun run link-cli` from the repo root.
 
-**`Target directory already exists`** — choose a new project name; `kiln create` will not overwrite non-empty directories.
+**`Target directory already exists`** — choose a new project name; `kiln init` will not overwrite non-empty directories.
 
 **Doctor reports package-json-health failures** — your `package.json` may be missing required scripts or dependencies for a Next.js project.

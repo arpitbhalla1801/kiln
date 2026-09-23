@@ -3,7 +3,7 @@
 import { resolve } from 'node:path';
 import pkg from '../package.json';
 import { runAdd, parseEnvVariables, parseProviders } from './commands/add.js';
-import { runCreate } from './commands/create.js';
+import { runInit, runInitExisting } from './commands/init.js';
 import { runDbMigrate } from './commands/db-migrate.js';
 import { runDoctor } from './commands/doctor.js';
 import { runEnvRemove } from './commands/env-remove.js';
@@ -22,10 +22,10 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'create' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
+type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
 
 const commands: Record<CommandName, string> = {
-  create: 'Scaffold a new kiln project.',
+  init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
   add: 'Add a capability to a kiln project (env, auth, db).',
   remove: 'Remove a capability from a kiln project (env, auth, db).',
   env: 'Manage individual environment variables.',
@@ -44,9 +44,18 @@ function printHelp(topic?: string): void {
     console.log(commands[command]);
     console.log();
 
-    if (command === 'create') {
-      console.log('Usage: kiln create <name>');
+    if (command === 'init') {
+      console.log('Usage: kiln init <name>');
       console.log('Name must be npm-safe: lowercase letters, numbers, hyphens, underscores.');
+      console.log();
+      console.log('Usage: kiln init --existing');
+      console.log(
+        'Adopts an existing Next.js project in place: detects its shape and seeds'
+      );
+      console.log(
+        '.kiln/ownership.json marking every file already on disk as external, so a'
+      );
+      console.log('later `kiln add` refuses to overwrite it instead of clobbering it.');
     }
 
     if (command === 'add') {
@@ -146,13 +155,18 @@ async function main(argv: string[]): Promise<void> {
     return;
   }
 
-  if (firstArg === 'create') {
+  if (firstArg === 'init') {
+    if (flags.includes('--existing')) {
+      await runInitExisting(cliOptions.cwd, cliOptions.dryRun);
+      return;
+    }
+
     if (secondArg === undefined) {
-      throw new Error('Project name is required. Usage: kiln create <name>');
+      throw new Error('Project name is required. Usage: kiln init <name>');
     }
     const projectName = secondArg;
     const targetDir = resolve(cliOptions.cwd, projectName);
-    await runCreate(targetDir, projectName, cliOptions.dryRun);
+    await runInit(targetDir, projectName, cliOptions.dryRun);
     return;
   }
 
