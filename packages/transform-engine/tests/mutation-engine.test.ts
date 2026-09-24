@@ -64,6 +64,30 @@ describe('PackageJsonMerger', () => {
     expect(merged.scripts).toEqual({ dev: 'next dev' });
   });
 
+  test('keeps the user key order and indentation when applying a package.json mutation', () => {
+    const original = JSON.stringify(
+      { version: '1.0.0', name: 'app', private: true, scripts: { dev: 'next dev' } },
+      null,
+      4
+    );
+    const vfs = new VirtualFilesystem({ initialFiles: { 'package.json': `${original}\n` } });
+
+    new TransformApplier().apply(
+      vfs,
+      packageJsonMutation('add-dep', { dependencies: { zod: '^3.0.0' } })
+    );
+
+    const written = vfs.read('package.json') ?? '';
+    expect(Object.keys(JSON.parse(written))).toEqual([
+      'version',
+      'name',
+      'private',
+      'scripts',
+      'dependencies',
+    ]);
+    expect(written).toContain('\n    "version"');
+  });
+
   test('repeated merge produces same output', () => {
     const current = { name: 'app', version: '1.0.0' };
     const input = {
