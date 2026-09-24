@@ -180,7 +180,7 @@ describe('DbCapability', () => {
 
     const packageJson = JSON.parse(vfs.read('package.json') ?? '{}');
     expect(packageJson.dependencies['@prisma/client']).toBe('^4.16.0');
-    expect(packageJson.devDependencies.prisma).toBe('^5.0.0');
+    expect(packageJson.devDependencies.prisma).toBe('^4.16.0');
     expect(packageJson.scripts['db:migrate']).toBe('prisma migrate deploy');
     expect(packageJson.scripts['db:generate']).toBe('prisma generate');
     expect(packageJson.scripts['db:studio']).toBe('prisma studio');
