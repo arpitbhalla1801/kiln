@@ -9,6 +9,7 @@ import {
   loadManifestFromObject,
   mergeUnique,
   OwnershipTracker,
+  readPackageJson,
 } from '@kiln/core';
 import type { Capability } from '@kiln/capability-sdk';
 import { DB_MANIFEST } from './manifest-data.js';
@@ -69,7 +70,20 @@ export class DbCapability implements Capability {
     assertNoUnownedFile(tracker, paths.schemaFile, schemaFileExists);
     assertNoUnownedFile(tracker, paths.clientFile, clientFileExists);
 
-    const dbTransforms = buildDbTransforms(paths, prismaInstalled, schemaFileExists, clientFileExists);
+    const clientInstalled =
+      options.clientInstalled ??
+      options.prismaInstalled ??
+      (await hasDependency(rootPath, PRISMA_CLIENT_PACKAGE));
+    const existingScripts = options.existingScripts ?? (await readExistingScripts(rootPath));
+
+    const dbTransforms = buildDbTransforms(
+      paths,
+      prismaInstalled,
+      schemaFileExists,
+      clientFileExists,
+      clientInstalled,
+      existingScripts
+    );
 
     const envPlan = await this.envCapability.planAdd(rootPath, {
       variables: DB_ENV_VARS,
@@ -123,16 +137,18 @@ export function buildDbTransforms(
   paths: DbFilePaths,
   prismaInstalled: boolean,
   schemaFileExists: boolean,
-  clientFileExists: boolean
+  clientFileExists: boolean,
+  clientInstalled = prismaInstalled,
+  existingScripts: Record<string, string> = {}
 ): TransformPipeline {
   const builder = createTransformPipeline();
 
-  if (!prismaInstalled) {
+  if (!clientInstalled || !prismaInstalled) {
     builder.packageJsonMutation(
       `${DB_CAPABILITY_ID}-install-prisma`,
       {
-        dependencies: { [PRISMA_CLIENT_PACKAGE]: PRISMA_VERSION },
-        devDependencies: { [PRISMA_CLI_PACKAGE]: PRISMA_VERSION },
+        ...(clientInstalled ? {} : { dependencies: { [PRISMA_CLIENT_PACKAGE]: PRISMA_VERSION } }),
+        ...(prismaInstalled ? {} : { devDependencies: { [PRISMA_CLI_PACKAGE]: PRISMA_VERSION } }),
       },
       'Install Prisma'
     );
@@ -156,13 +172,23 @@ export function buildDbTransforms(
     );
   }
 
-  builder.packageJsonMutation(
-    `${DB_CAPABILITY_ID}-add-scripts`,
-    { scripts: DB_SCRIPTS },
-    'Add Prisma scripts'
+  const missingScripts = Object.fromEntries(
+    Object.entries(DB_SCRIPTS).filter(([name]) => !(name in existingScripts))
   );
+  if (Object.keys(missingScripts).length > 0) {
+    builder.packageJsonMutation(
+      `${DB_CAPABILITY_ID}-add-scripts`,
+      { scripts: missingScripts },
+      'Add Prisma scripts'
+    );
+  }
 
   return builder.build();
+}
+
+async function readExistingScripts(rootPath: string): Promise<Record<string, string>> {
+  const scripts = (await readPackageJson(rootPath))?.scripts;
+  return typeof scripts === 'object' && scripts !== null ? (scripts as Record<string, string>) : {};
 }
 
 function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileExists: boolean): void {
