@@ -75,6 +75,7 @@ export class DbCapability implements Capability {
       options.prismaInstalled ??
       (await hasDependency(rootPath, PRISMA_CLIENT_PACKAGE));
     const existingScripts = options.existingScripts ?? (await readExistingScripts(rootPath));
+    const clientVersion = options.clientVersion ?? (await readClientVersion(rootPath));
 
     const dbTransforms = buildDbTransforms(
       paths,
@@ -82,7 +83,8 @@ export class DbCapability implements Capability {
       schemaFileExists,
       clientFileExists,
       clientInstalled,
-      existingScripts
+      existingScripts,
+      clientVersion
     );
 
     const envPlan = await this.envCapability.planAdd(rootPath, {
@@ -149,16 +151,19 @@ export function buildDbTransforms(
   schemaFileExists: boolean,
   clientFileExists: boolean,
   clientInstalled = prismaInstalled,
-  existingScripts: Record<string, string> = {}
+  existingScripts: Record<string, string> = {},
+  clientVersion?: string
 ): TransformPipeline {
   const builder = createTransformPipeline();
+  // The CLI must match an already-installed client's version, or the two disagree.
+  const cliVersion = clientInstalled && clientVersion ? clientVersion : PRISMA_VERSION;
 
   if (!clientInstalled || !prismaInstalled) {
     builder.packageJsonMutation(
       `${DB_CAPABILITY_ID}-install-prisma`,
       {
         ...(clientInstalled ? {} : { dependencies: { [PRISMA_CLIENT_PACKAGE]: PRISMA_VERSION } }),
-        ...(prismaInstalled ? {} : { devDependencies: { [PRISMA_CLI_PACKAGE]: PRISMA_VERSION } }),
+        ...(prismaInstalled ? {} : { devDependencies: { [PRISMA_CLI_PACKAGE]: cliVersion } }),
       },
       'Install Prisma'
     );
@@ -196,6 +201,16 @@ export function buildDbTransforms(
 
 function missingDbScripts(existingScripts: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(DB_SCRIPTS).filter(([name]) => !(name in existingScripts)));
+}
+
+async function readClientVersion(rootPath: string): Promise<string | undefined> {
+  const packageJson = await readPackageJson(rootPath);
+  const range = [packageJson?.dependencies, packageJson?.devDependencies]
+    .map((deps) => (deps as Record<string, unknown> | undefined)?.[PRISMA_CLIENT_PACKAGE])
+    .find((value): value is string => typeof value === 'string');
+
+  // Only reuse a real semver range; "latest" or "workspace:*" would not be a valid CLI pin.
+  return range && /^[\^~]?\d/.test(range) ? range : undefined;
 }
 
 async function readExistingScripts(rootPath: string): Promise<Record<string, string>> {
