@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { runAdd } from '../src/commands/add.js';
 import { runInitExisting } from '../src/commands/init.js';
+import { runRemove } from '../src/commands/remove.js';
 
 const tempRoots: string[] = [];
 
@@ -120,6 +121,46 @@ describe('kiln init --existing', () => {
       'DATABASE_URL=mysql://team-default/app\nOTHER=1\n'
     );
     expect(await readFile(join(root, '.env.local'), 'utf8')).toBe('DATABASE_URL=postgres://real/db\n');
+  });
+
+  test('remove env leaves a pre-existing .env.example and .env.local values alone', async () => {
+    const root = await createTempDir();
+    await writeCreateNextAppFixture(root);
+    await writeFile(join(root, '.env.example'), '# team\nOTHER=1\nDATABASE_URL=mysql://team\n');
+    await writeFile(join(root, '.env.local'), 'DATABASE_URL=postgres://real/db\n');
+    await runInitExisting(root);
+    await runAdd('env', { dryRun: false, cwd: root });
+
+    await runRemove('env', { dryRun: false, cwd: root });
+
+    expect(await readFile(join(root, '.env.example'), 'utf8')).toBe(
+      '# team\nOTHER=1\nDATABASE_URL=mysql://team\n'
+    );
+    expect(await readFile(join(root, '.env.local'), 'utf8')).toBe('DATABASE_URL=postgres://real/db\n');
+  });
+
+  test('remove env deletes the .env.example that add env created', async () => {
+    const root = await createTempDir();
+    await writeCreateNextAppFixture(root);
+    await runInitExisting(root);
+    await runAdd('env', { dryRun: false, cwd: root });
+    expect(await fileExists(join(root, '.env.example'))).toBe(true);
+
+    await runRemove('env', { dryRun: false, cwd: root });
+
+    expect(await fileExists(join(root, '.env.example'))).toBe(false);
+  });
+
+  test('add auth and add db refuse a project with no TypeScript setup', async () => {
+    const root = await createTempDir();
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ name: 'js-app', version: '0.1.0', dependencies: { next: '^15.0.0', react: '^19.0.0' } })
+    );
+
+    await expect(runAdd('auth', { dryRun: true, cwd: root })).rejects.toThrow('no TypeScript setup');
+    await expect(runAdd('db', { dryRun: true, cwd: root })).rejects.toThrow('no TypeScript setup');
+    await runAdd('env', { dryRun: true, cwd: root });
   });
 
   test('add auth refuses to overwrite an existing middleware.ts and says why', async () => {

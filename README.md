@@ -45,7 +45,10 @@ kiln add auth
 
 `kiln init --existing` detects the project's router and language, then seeds
 `.kiln/ownership.json` marking every file already on disk as external, so a
-later `kiln add` refuses to overwrite it instead of clobbering it.
+later `kiln add` refuses to overwrite it instead of clobbering it. `kiln remove` only
+removes what kiln itself added, never a file, dependency, script, or env var you already had.
+`kiln add auth` and `kiln add db` write TypeScript files, so they refuse a project with no
+`tsconfig.json` and no `typescript` dependency.
 
 ### Try the example app
 
