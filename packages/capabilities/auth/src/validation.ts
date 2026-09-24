@@ -12,7 +12,8 @@ import {
 export function buildAuthOwnershipRegistrations(
   paths: AuthFilePaths,
   ownerCapabilityId = AUTH_CAPABILITY_ID,
-  providers: string[] = []
+  providers: string[] = [],
+  claimDependency = true
 ): OwnershipRegistration[] {
   const activePaths: Record<string, string> = { ...paths };
   if (providers.length === 0) {
@@ -27,11 +28,15 @@ export function buildAuthOwnershipRegistrations(
 
   return [
     ...fileRegistrations,
-    {
-      resourceType: 'dependency',
-      resourceKey: NEXT_AUTH_PACKAGE,
-      ownerCapabilityId,
-    },
+    ...(claimDependency
+      ? [
+          {
+            resourceType: 'dependency' as const,
+            resourceKey: NEXT_AUTH_PACKAGE,
+            ownerCapabilityId,
+          },
+        ]
+      : []),
   ];
 }
 
