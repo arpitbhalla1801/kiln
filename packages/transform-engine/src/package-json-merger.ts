@@ -1,9 +1,4 @@
-import {
-  cloneJson,
-  mergeStringRecords,
-  sortJsonKeys,
-  StructuredMutationEngine,
-} from './mutation-engine.js';
+import { cloneJson, mergeStringRecords, StructuredMutationEngine } from './mutation-engine.js';
 
 export interface PackageJsonMergeInput {
   dependencies?: Record<string, string>;
@@ -54,12 +49,13 @@ export class PackageJsonMerger {
       removeRecordKey(packageJson, 'scripts', script);
     }
 
-    return sortJsonKeys(packageJson) as Record<string, unknown>;
+    // Keep the user's own top-level key order; only the dependency and script maps are sorted.
+    return packageJson;
   }
 
   mergeToString(current: Record<string, unknown>, input: PackageJsonMergeInput): string {
     const merged = this.merge(current, input);
-    return mutationEngine.serialize(merged);
+    return mutationEngine.serialize(merged, { preserveKeyOrder: true });
   }
 
 }

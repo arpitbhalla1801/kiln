@@ -9,7 +9,7 @@ import type {
   TypedTransform,
 } from './transform-types.js';
 import type { VirtualFilesystem } from './vfs.js';
-import { StructuredMutationEngine } from './mutation-engine.js';
+import { detectJsonIndent, StructuredMutationEngine } from './mutation-engine.js';
 import { PackageJsonMerger } from './package-json-merger.js';
 import { normalizePath } from './path-utils.js';
 
@@ -120,7 +120,10 @@ function applyPackageJsonMutation(vfs: VirtualFilesystem, transform: PackageJson
   const current = vfs.read(filePath);
   const packageJson = current ? mutationEngine.parse(current, filePath) : {};
   const merged = packageJsonMerger.merge(packageJson, transform);
-  const serialized = mutationEngine.serialize(merged);
+  const serialized = mutationEngine.serialize(merged, {
+    preserveKeyOrder: true,
+    indent: detectJsonIndent(current),
+  });
 
   if (serialized !== (current ?? '')) {
     vfs.write(filePath, serialized);
