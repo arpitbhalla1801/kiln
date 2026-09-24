@@ -26,7 +26,7 @@ import {
   type DbCapabilityPlanOptions,
   type DbFilePaths,
 } from './types.js';
-import { buildDbOwnershipRegistrations, validateDbOwnership } from './validation.js';
+import { buildDbOwnershipRegistrations, type DbClaims, validateDbOwnership } from './validation.js';
 
 const DB_SOURCE_ROOT_MARKERS = ['app', 'pages'];
 
@@ -95,10 +95,20 @@ export class DbCapability implements Capability {
       ownerCapabilityId: DB_CAPABILITY_ID,
     });
 
+    // Claim only the dependencies and scripts this add actually writes, so `kiln remove db`
+    // never deletes ones the user already had.
+    const claims: DbClaims = {
+      dependencies: [
+        ...(clientInstalled ? [] : [PRISMA_CLIENT_PACKAGE]),
+        ...(prismaInstalled ? [] : [PRISMA_CLI_PACKAGE]),
+      ],
+      scripts: Object.keys(missingDbScripts(existingScripts)),
+    };
+
     const manifest = await this.getManifest();
-    const capability = buildCapabilityWithOwnership(manifest, paths);
+    const capability = buildCapabilityWithOwnership(manifest, paths, claims);
     const ownershipRegistrations = [
-      ...buildDbOwnershipRegistrations(paths, DB_CAPABILITY_ID),
+      ...buildDbOwnershipRegistrations(paths, DB_CAPABILITY_ID, claims),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -172,9 +182,7 @@ export function buildDbTransforms(
     );
   }
 
-  const missingScripts = Object.fromEntries(
-    Object.entries(DB_SCRIPTS).filter(([name]) => !(name in existingScripts))
-  );
+  const missingScripts = missingDbScripts(existingScripts);
   if (Object.keys(missingScripts).length > 0) {
     builder.packageJsonMutation(
       `${DB_CAPABILITY_ID}-add-scripts`,
@@ -184,6 +192,10 @@ export function buildDbTransforms(
   }
 
   return builder.build();
+}
+
+function missingDbScripts(existingScripts: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(DB_SCRIPTS).filter(([name]) => !(name in existingScripts)));
 }
 
 async function readExistingScripts(rootPath: string): Promise<Record<string, string>> {
@@ -207,7 +219,11 @@ function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileEx
   );
 }
 
-function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFilePaths): ResolvedCapability {
+function buildCapabilityWithOwnership(
+  manifest: CapabilityManifest,
+  paths: DbFilePaths,
+  claims: DbClaims
+): ResolvedCapability {
   const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
 
   return capabilityFromManifest({
@@ -215,6 +231,8 @@ function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFil
     ownership: {
       ...manifest.ownership,
       files: ownedFiles,
+      dependencies: claims.dependencies,
+      scripts: claims.scripts,
     },
   });
 }

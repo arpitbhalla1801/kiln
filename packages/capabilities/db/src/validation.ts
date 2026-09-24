@@ -11,9 +11,20 @@ import {
   type DbFilePaths,
 } from './types.js';
 
+export interface DbClaims {
+  dependencies: string[];
+  scripts: string[];
+}
+
+const ALL_DB_CLAIMS: DbClaims = {
+  dependencies: [PRISMA_CLIENT_PACKAGE, PRISMA_CLI_PACKAGE],
+  scripts: Object.keys(DB_SCRIPTS),
+};
+
 export function buildDbOwnershipRegistrations(
   paths: DbFilePaths,
-  ownerCapabilityId = DB_CAPABILITY_ID
+  ownerCapabilityId = DB_CAPABILITY_ID,
+  claims: DbClaims = ALL_DB_CLAIMS
 ): OwnershipRegistration[] {
   const fileRegistrations: OwnershipRegistration[] = Object.values(paths).map((filePath) => ({
     resourceType: 'file',
@@ -21,19 +32,22 @@ export function buildDbOwnershipRegistrations(
     ownerCapabilityId,
   }));
 
-  const scriptRegistrations: OwnershipRegistration[] = Object.keys(DB_SCRIPTS).map(
-    (scriptName) => ({
-      resourceType: 'script',
-      resourceKey: scriptName,
-      ownerCapabilityId,
-    })
-  );
-
   return [
     ...fileRegistrations,
-    { resourceType: 'dependency', resourceKey: PRISMA_CLIENT_PACKAGE, ownerCapabilityId },
-    { resourceType: 'dependency', resourceKey: PRISMA_CLI_PACKAGE, ownerCapabilityId },
-    ...scriptRegistrations,
+    ...claims.dependencies.map(
+      (name): OwnershipRegistration => ({
+        resourceType: 'dependency',
+        resourceKey: name,
+        ownerCapabilityId,
+      })
+    ),
+    ...claims.scripts.map(
+      (name): OwnershipRegistration => ({
+        resourceType: 'script',
+        resourceKey: name,
+        ownerCapabilityId,
+      })
+    ),
   ];
 }
 

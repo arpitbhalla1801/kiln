@@ -18,15 +18,12 @@ export function validateEnvVariableNames(variables: EnvVariableInput[]): void {
 export function buildOwnershipRegistrations(
   variables: EnvVariableInput[],
   envExamplePath: string,
-  ownerCapabilityId: string
+  ownerCapabilityId: string,
+  claimFile = true
 ): OwnershipRegistration[] {
-  const registrations: OwnershipRegistration[] = [
-    {
-      resourceType: 'file',
-      resourceKey: envExamplePath,
-      ownerCapabilityId,
-    },
-  ];
+  const registrations: OwnershipRegistration[] = claimFile
+    ? [{ resourceType: 'file', resourceKey: envExamplePath, ownerCapabilityId }]
+    : [];
 
   for (const variable of variables) {
     registrations.push({

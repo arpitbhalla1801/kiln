@@ -65,6 +65,25 @@ describe('AuthCapability', () => {
     expect(plan.capability.ownedEnvVars).toBeUndefined();
   });
 
+  test('does not claim next-auth when it was already installed', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({
+        name: 'demo-app',
+        version: '1.0.0',
+        dependencies: { 'next-auth': '^4.24.0' },
+      }),
+    });
+    const plan = await new AuthCapability().planAdd(root, {});
+
+    expect(plan.capability.ownedDependencies ?? []).not.toContain('next-auth');
+    expect(
+      plan.ownershipRegistrations.some(
+        (registration) =>
+          registration.resourceType === 'dependency' && registration.resourceKey === 'next-auth'
+      )
+    ).toBe(false);
+  });
+
   test('groups env and auth variables under separate section headers in .env.example', async () => {
     const root = await createTempProject({
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),

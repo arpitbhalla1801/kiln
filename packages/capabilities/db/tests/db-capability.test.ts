@@ -186,6 +186,27 @@ describe('DbCapability', () => {
     expect(packageJson.scripts['db:studio']).toBe('prisma studio');
   });
 
+  test('claims only the dependencies and scripts it adds', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({
+        name: 'demo-app',
+        version: '1.0.0',
+        scripts: { 'db:migrate': 'prisma migrate deploy' },
+        dependencies: { '@prisma/client': '^4.16.0' },
+      }),
+    });
+    const plan = await new DbCapability().planAdd(root, {});
+
+    expect(plan.capability.ownedDependencies).toEqual(['prisma']);
+    expect([...(plan.capability.ownedScripts ?? [])].sort()).toEqual(['db:generate', 'db:studio']);
+
+    const claimed = plan.ownershipRegistrations
+      .filter((registration) => registration.resourceType !== 'file')
+      .map((registration) => `${registration.resourceType}:${registration.resourceKey}`);
+    expect(claimed).not.toContain('dependency:@prisma/client');
+    expect(claimed).not.toContain('script:db:migrate');
+  });
+
   test('scaffolds schema.prisma and a client singleton at the project root', async () => {
     const root = await createTempProject({
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),
