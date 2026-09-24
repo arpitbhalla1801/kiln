@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { runAdd } from '../src/commands/add.js';
 import { runInitExisting } from '../src/commands/init.js';
 
 const tempRoots: string[] = [];
@@ -90,5 +91,31 @@ describe('kiln init --existing', () => {
     await runInitExisting(root, true);
 
     expect(await fileExists(join(root, '.kiln', 'ownership.json'))).toBe(false);
+  });
+
+  test('does not seed .env.example, so add env can merge into it', async () => {
+    const root = await createTempDir();
+    await writeCreateNextAppFixture(root);
+    await writeFile(join(root, '.env.example'), 'MY_VAR=1\n');
+
+    await runInitExisting(root);
+
+    const document = JSON.parse(await readFile(join(root, '.kiln', 'ownership.json'), 'utf8'));
+    const filePaths = document.ownership.files.map((entry: { filePath: string }) => entry.filePath);
+    expect(filePaths).not.toContain('.env.example');
+
+    await runAdd('env', { dryRun: true, cwd: root });
+  });
+
+  test('add auth refuses to overwrite an existing middleware.ts and says why', async () => {
+    const root = await createTempDir();
+    await writeCreateNextAppFixture(root);
+    await writeFile(join(root, 'src', 'middleware.ts'), 'export function middleware() {}\n');
+    await runInitExisting(root);
+
+    await expect(runAdd('auth', { dryRun: true, cwd: root })).rejects.toThrow('existed before kiln');
+    expect(await readFile(join(root, 'src', 'middleware.ts'), 'utf8')).toBe(
+      'export function middleware() {}\n'
+    );
   });
 });

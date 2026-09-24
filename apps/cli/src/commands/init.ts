@@ -1,13 +1,15 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { detectNextJs, detectPackageManager } from '@kiln/node-adapter';
-import { OwnershipTracker } from '@kiln/core';
+import { EXTERNAL_OWNER, OwnershipTracker } from '@kiln/core';
 import { saveOwnershipTracker } from '@kiln/project-model';
 import { validateProjectName } from '../validation/project-name.js';
 import { ensureTargetAvailable } from '../project.js';
 
-/** Owner id used for files discovered on disk during `kiln init --existing`. */
-export const EXTERNAL_OWNER = 'external';
+// Files a capability merges into and then claims. Seeding them as external would make
+// that capability's ownership registration conflict. ponytail: one entry, move to a
+// manifest field if a second capability needs it.
+const MERGE_TARGET_FILES = new Set(['.env.example']);
 
 const SKIP_DIRECTORIES = new Set([
   'node_modules',
@@ -142,7 +144,7 @@ export async function runInitExisting(rootPath: string, dryRun = false): Promise
   }
 
   const packageManager = await detectPackageManager(rootPath);
-  const files = await listProjectFiles(rootPath);
+  const files = (await listProjectFiles(rootPath)).filter((file) => !MERGE_TARGET_FILES.has(file));
 
   console.log(`Detected Next.js ${nextInfo.version ?? '(unknown version)'} project at ${rootPath}`);
   console.log(`  router: ${nextInfo.router ?? 'unknown'}`);

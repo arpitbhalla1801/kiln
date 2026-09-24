@@ -1,10 +1,11 @@
 import type { Capability, CapabilityId, FileOwnership } from './models.js';
-import type {
-  OwnershipConflict,
-  OwnershipRegistration,
-  OwnershipResourceType,
-  OwnershipSnapshot,
-  OwnershipTrackerOptions,
+import {
+  EXTERNAL_OWNER,
+  type OwnershipConflict,
+  type OwnershipRegistration,
+  type OwnershipResourceType,
+  type OwnershipSnapshot,
+  type OwnershipTrackerOptions,
 } from './ownership-types.js';
 
 type OwnershipMap = Map<string, CapabilityId>;
@@ -203,7 +204,12 @@ export class OwnershipTracker {
 }
 
 export function formatOwnershipConflict(conflict: OwnershipConflict): string {
-  return `Ownership conflict detected: ${conflict.resourceType} '${conflict.resourceKey}' is already owned by '${conflict.existingOwner}'`;
+  const base = `Ownership conflict detected: ${conflict.resourceType} '${conflict.resourceKey}' is already owned by '${conflict.existingOwner}'`;
+  if (conflict.existingOwner !== EXTERNAL_OWNER) {
+    return base;
+  }
+
+  return `${base}. It existed before kiln, so '${conflict.attemptedOwner}' will not overwrite it. Rename or remove it, or edit .kiln/ownership.json if you want kiln to manage it.`;
 }
 
 function mapToFileOwnership(map: OwnershipMap): FileOwnership[] {
