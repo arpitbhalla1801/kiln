@@ -10,7 +10,7 @@
       "cases": [
         {
           "id": "PD-01",
-          "name": "help lists create, add, inspect, doctor",
+          "name": "help lists init, add, inspect, doctor",
           "severity": "blocker"
         },
         {
@@ -40,7 +40,7 @@
         },
         {
           "id": "PD-07",
-          "name": "create rejects missing, invalid, and existing targets",
+          "name": "init rejects missing, invalid, and existing targets",
           "severity": "blocker"
         }
       ]
@@ -52,7 +52,7 @@
       "cases": [
         {
           "id": "PD-10",
-          "name": "create scaffolds Next.js app router files",
+          "name": "init scaffolds Next.js app router files",
           "severity": "blocker"
         },
         {

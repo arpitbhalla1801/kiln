@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { repoRoot, runKiln } from './cli-runner.js';
 
 describe('post-deploy CLI contract', () => {
-  test('PD-01 help lists create, add, inspect, doctor', () => {
+  test('PD-01 help lists init, add, inspect, doctor', () => {
     const result = runKiln(['--help']);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('create');
+    expect(result.stdout).toContain('init');
     expect(result.stdout).toContain('add');
     expect(result.stdout).toContain('inspect');
     expect(result.stdout).toContain('doctor');
@@ -54,20 +54,20 @@ describe('post-deploy CLI contract', () => {
     }
   });
 
-  test('PD-07 create rejects missing, invalid, and existing targets', () => {
-    const missing = runKiln(['create']);
+  test('PD-07 init rejects missing, invalid, and existing targets', () => {
+    const missing = runKiln(['init']);
     expect(missing.exitCode).not.toBe(0);
     expect(missing.output).toContain('Project name is required');
 
-    const invalid = runKiln(['create', 'Bad Name']);
+    const invalid = runKiln(['init', 'Bad Name']);
     expect(invalid.exitCode).not.toBe(0);
     expect(invalid.output).toContain('Invalid project name');
 
-    const parent = mkdtempSync(join(tmpdir(), 'kiln-create-guard-'));
+    const parent = mkdtempSync(join(tmpdir(), 'kiln-init-guard-'));
     try {
-      const first = runKiln(['create', 'taken-app'], parent);
+      const first = runKiln(['init', 'taken-app'], parent);
       expect(first.exitCode).toBe(0);
-      const second = runKiln(['create', 'taken-app'], parent);
+      const second = runKiln(['init', 'taken-app'], parent);
       expect(second.exitCode).not.toBe(0);
       expect(second.output).toContain('already exists and is not empty');
     } finally {

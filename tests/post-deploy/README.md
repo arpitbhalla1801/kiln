@@ -11,7 +11,7 @@ Kiln's product promise is: a developer can turn a Bun Next.js app into a capabil
 | Journey | What a version upgrade must not break |
 |---------|----------------------------------------|
 | CLI contract | Help, version, and error messages stay usable |
-| New project | `create` → `add env` → `add auth` → `doctor` → `build` |
+| New project | `init` → `add env` → `add auth` → `doctor` → `build` |
 | Existing project | The example app still inspects, doctors, and builds |
 | Re-apply | Running the same capability twice is a no-op |
 

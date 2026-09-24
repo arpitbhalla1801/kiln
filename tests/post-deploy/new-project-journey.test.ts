@@ -21,8 +21,8 @@ afterAll(async () => {
 describe('post-deploy new project journey', () => {
   test('PD-10 through PD-19 onboard env + auth and build', async () => {
     const parent = await createWorkspace();
-    // PD-10 create scaffolds Next.js app router files
-    const createResult = runKiln(['create', 'upgrade-app'], parent);
+    // PD-10 init scaffolds Next.js app router files
+    const createResult = runKiln(['init', 'upgrade-app'], parent);
     expect(createResult.exitCode).toBe(0);
     expect(createResult.stdout).toContain("Created kiln project 'upgrade-app'");
 
