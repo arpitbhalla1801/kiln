@@ -107,6 +107,21 @@ describe('kiln init --existing', () => {
     await runAdd('env', { dryRun: true, cwd: root });
   });
 
+  test('add env keeps values already in an existing .env.example and .env.local', async () => {
+    const root = await createTempDir();
+    await writeCreateNextAppFixture(root);
+    await writeFile(join(root, '.env.example'), 'DATABASE_URL=mysql://team-default/app\nOTHER=1\n');
+    await writeFile(join(root, '.env.local'), 'DATABASE_URL=postgres://real/db\n');
+    await runInitExisting(root);
+
+    await runAdd('env', { dryRun: false, cwd: root });
+
+    expect(await readFile(join(root, '.env.example'), 'utf8')).toBe(
+      'DATABASE_URL=mysql://team-default/app\nOTHER=1\n'
+    );
+    expect(await readFile(join(root, '.env.local'), 'utf8')).toBe('DATABASE_URL=postgres://real/db\n');
+  });
+
   test('add auth refuses to overwrite an existing middleware.ts and says why', async () => {
     const root = await createTempDir();
     await writeCreateNextAppFixture(root);

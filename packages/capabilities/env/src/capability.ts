@@ -146,7 +146,8 @@ export function buildTransforms(options: BuildTransformsOptions): TransformPipel
       toExampleOnlyVariables(variables),
       'Inject environment variables',
       undefined,
-      ownerCapabilityId
+      ownerCapabilityId,
+      true
     );
   }
 
