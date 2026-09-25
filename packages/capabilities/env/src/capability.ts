@@ -5,6 +5,7 @@ import {
   type CapabilityManifest,
   capabilityFromManifest,
   fileExists,
+  formatOwnershipConflict,
   loadManifestFromObject,
   mergeUnique,
   OwnershipTracker,
@@ -26,7 +27,6 @@ import {
 import {
   buildOwnershipRegistrations,
   toEnvVariableInputs,
-  validateEnvOwnership,
   validateEnvVariableNames,
 } from './validation.js';
 
@@ -53,7 +53,6 @@ export class EnvCapability implements Capability {
     validateEnvVariableNames(variableInputs);
 
     const tracker = options.tracker ?? new OwnershipTracker();
-    validateEnvOwnership(variableInputs, tracker, ENV_CAPABILITY_ID, envExamplePath);
 
     const envLocalExists =
       options.envLocalExists ?? (await fileExists(join(rootPath, DEFAULT_ENV_LOCAL_PATH)));
@@ -70,15 +69,39 @@ export class EnvCapability implements Capability {
       ...(await readEnvKeys(join(rootPath, envExamplePath))),
       ...(await readEnvKeys(join(rootPath, DEFAULT_ENV_LOCAL_PATH))),
     ]);
-    const claimedVariables = variableInputs.filter((variable) => !existingKeys.has(variable.name));
-    const claimFile = !envExampleExists;
+    const claimedVariables = variableInputs.filter(
+      (variable) =>
+        !existingKeys.has(variable.name) && tracker.getOwner('envVar', variable.name) === undefined
+    );
+    const claimFile = !envExampleExists && tracker.getOwner('file', envExamplePath) === undefined;
 
+    // The calling capability owns what it adds (auth owns AUTH_SECRET, db owns DATABASE_URL),
+    // so `kiln remove <capability>` cleans up its own env values.
     const ownershipRegistrations = buildOwnershipRegistrations(
       claimedVariables,
       envExamplePath,
-      ENV_CAPABILITY_ID,
+      ownerCapabilityId,
       claimFile
     );
+    // A resource owned by env or by this caller is fine (env is the shared baseline); one owned
+    // by any other capability is a conflict.
+    const conflicts = buildOwnershipRegistrations(variableInputs, envExamplePath, ownerCapabilityId).filter(
+      (registration) => {
+        const owner = tracker.getOwner(registration.resourceType, registration.resourceKey);
+        return owner !== undefined && owner !== ENV_CAPABILITY_ID && owner !== ownerCapabilityId;
+      }
+    );
+    if (conflicts.length > 0) {
+      const [first] = conflicts;
+      throw new Error(
+        formatOwnershipConflict({
+          resourceType: first.resourceType,
+          resourceKey: first.resourceKey,
+          existingOwner: tracker.getOwner(first.resourceType, first.resourceKey)!,
+          attemptedOwner: ownerCapabilityId,
+        })
+      );
+    }
 
     const transforms = buildTransforms({
       envExamplePath,
