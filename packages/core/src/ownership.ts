@@ -204,7 +204,7 @@ export class OwnershipTracker {
 }
 
 export function formatOwnershipConflict(conflict: OwnershipConflict): string {
-  const base = `Ownership conflict detected: ${conflict.resourceType} '${conflict.resourceKey}' is already owned by '${conflict.existingOwner}'`;
+  const base = `Ownership conflict detected: ${conflict.resourceType} '${conflict.resourceKey}' is already owned by '${conflict.existingOwner}' and '${conflict.attemptedOwner}' cannot claim it`;
   if (conflict.existingOwner !== EXTERNAL_OWNER) {
     return base;
   }
