@@ -54,8 +54,34 @@ describe('kiln remove safety', () => {
     expect(await readFile(join(root, middleware), 'utf8')).toContain('my own middleware rules');
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
     expect(envExample).not.toContain('AUTH_SECRET');
+    expect(envExample).not.toContain('# --- auth ---');
     expect(envExample).toContain('DATABASE_URL');
     expect(JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).dependencies?.['next-auth']).toBeUndefined();
+  }, 60000);
+
+  test('remove env takes back the .gitignore line it added but keeps the user lines', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'kiln-remove-'));
+    tempRoots.push(root);
+    await runInit(root, 'demo-app');
+    await writeFile(join(root, '.gitignore'), 'node_modules\n.next\n');
+    await runAdd('env', { cwd: root, dryRun: false });
+    expect(await readFile(join(root, '.gitignore'), 'utf8')).toContain('.env.local');
+
+    await runRemove('env', { cwd: root, dryRun: false });
+
+    expect(await readFile(join(root, '.gitignore'), 'utf8')).toBe('node_modules\n.next\n');
+  }, 60000);
+
+  test('remove auth deletes directories that only held its files', async () => {
+    const root = await projectWith('env');
+    await runAdd('auth', { cwd: root, dryRun: false }, {}, ['github']);
+    const routeDir = join(root, 'src/app/api/auth/[...nextauth]');
+    expect(await exists(routeDir)).toBe(true);
+
+    await runRemove('auth', { cwd: root, dryRun: false });
+
+    expect(await exists(join(root, 'src/app/api'))).toBe(false);
+    expect(await exists(join(root, 'src/app/page.tsx'))).toBe(true);
   }, 60000);
 
   test('remove db leaves migrations alone and says so', async () => {
