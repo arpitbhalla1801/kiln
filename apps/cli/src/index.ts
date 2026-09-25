@@ -70,6 +70,10 @@ function printHelp(topic?: string): void {
       console.log('Usage: kiln remove <capability>');
       console.log('Capabilities: env, auth, db');
       console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
+      console.log('Files you edited after kiln wrote them are kept. Refuses if code still imports');
+      console.log('what would be removed; --force removes anyway. `remove db` never touches');
+      console.log('prisma/migrations or your database.');
+      console.log('  --force     Remove even if remaining code imports what is deleted');
     }
 
     if (command === 'env') {
@@ -132,6 +136,7 @@ async function main(argv: string[]): Promise<void> {
 
   const cliOptions = {
     dryRun: isDryRunFlag,
+    force: flags.includes('--force'),
     cwd: process.cwd(),
   };
 

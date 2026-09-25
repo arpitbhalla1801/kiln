@@ -284,7 +284,7 @@ describe('kiln cli', () => {
     expect(logs.join('\n')).toContain('[pass] env-required-vars:');
   });
 
-  test('remove auth deletes owned files/deps, leaves env-owned vars alone', async () => {
+  test('remove auth deletes owned files/deps/env vars, leaves env-owned vars alone', async () => {
     const root = await createTempDir();
     await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: false });
@@ -299,8 +299,9 @@ describe('kiln cli', () => {
     expect(packageJson.dependencies?.['next-auth']).toBeUndefined();
 
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
-    expect(envExample).toContain('AUTH_SECRET=');
+    expect(envExample).not.toContain('AUTH_SECRET=');
     expect(envExample).toContain('DATABASE_URL=');
+    expect(await readFile(join(root, '.env.local'), 'utf8')).not.toContain('AUTH_SECRET=');
 
     const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
     expect(ownership.ownership.dependencies).toEqual([]);

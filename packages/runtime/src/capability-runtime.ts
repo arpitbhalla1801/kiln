@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { AuthCapability } from '@kiln/auth-capability';
 import type {
   Capability as PluginCapability,
@@ -18,6 +20,7 @@ import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { NodeAdapter } from '@kiln/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
 import {
+  FileHashStore,
   loadOwnershipTracker,
   LockfileStore,
   PluginConfigStore,
@@ -287,6 +290,28 @@ export class CapabilityRuntime {
       }
 
       await saveOwnershipTracker(tracker, context.rootPath);
+
+      // Remember what kiln wrote so `kiln remove` can keep files the user has since edited.
+      // Hash from disk, not plan content: env merges extend a file after it is created, and a
+      // later capability can extend a file an earlier one created (both are kiln edits).
+      const known = await FileHashStore.load(context.rootPath);
+      const written: Record<string, string> = {};
+      for (const transform of context.capabilityPlan?.transforms ?? []) {
+        const touchesFile =
+          transform.type === 'file-create' ||
+          ((transform.type === 'file-patch' || transform.type === 'env-mutation') &&
+            transform.filePath in known);
+        if (touchesFile) {
+          const onDisk = await readFile(join(context.rootPath, transform.filePath), 'utf8').catch(
+            () => undefined
+          );
+          if (onDisk !== undefined) {
+            written[transform.filePath] = onDisk;
+          }
+        }
+      }
+      await FileHashStore.update(context.rootPath, written);
+
       await this.updateLockfile(context);
     });
   }

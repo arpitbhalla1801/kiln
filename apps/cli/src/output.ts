@@ -3,6 +3,7 @@ import type { FileOperation, TransformPlan } from '@kiln/transform-engine';
 export interface CliOptions {
   dryRun: boolean;
   cwd: string;
+  force?: boolean;
 }
 
 export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): string {
