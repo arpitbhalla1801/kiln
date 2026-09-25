@@ -72,7 +72,7 @@ function printHelp(topic?: string): void {
       console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
       console.log('Files you edited after kiln wrote them are kept. Refuses if code still imports');
       console.log('what would be removed; --force removes anyway. `remove db` never touches');
-      console.log('prisma/migrations or your database.');
+      console.log('prisma/migrations or your database. A hand-edited auth.ts is kept whole.');
       console.log('  --force     Remove even if remaining code imports what is deleted');
     }
 

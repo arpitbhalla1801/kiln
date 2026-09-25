@@ -30,6 +30,9 @@ import {
   validateEnvVariableNames,
 } from './validation.js';
 
+/** Ownership key for the `.env.local` line kiln appends to .gitignore, so remove can take it back out. */
+export const GITIGNORE_ENV_LOCAL_KEY = `gitignore:${DEFAULT_ENV_LOCAL_PATH}`;
+
 export class EnvCapability implements Capability {
   readonly id = ENV_CAPABILITY_ID;
 
@@ -77,12 +80,15 @@ export class EnvCapability implements Capability {
 
     // The calling capability owns what it adds (auth owns AUTH_SECRET, db owns DATABASE_URL),
     // so `kiln remove <capability>` cleans up its own env values.
-    const ownershipRegistrations = buildOwnershipRegistrations(
-      claimedVariables,
-      envExamplePath,
-      ownerCapabilityId,
-      claimFile
-    );
+    const addsGitignoreLine =
+      ensureGitignoreCoversEnvLocal(gitignoreContent) !== undefined &&
+      tracker.getOwner('metadata', GITIGNORE_ENV_LOCAL_KEY) === undefined;
+    const ownershipRegistrations = [
+      ...buildOwnershipRegistrations(claimedVariables, envExamplePath, ownerCapabilityId, claimFile),
+      ...(addsGitignoreLine
+        ? [{ resourceType: 'metadata' as const, resourceKey: GITIGNORE_ENV_LOCAL_KEY, ownerCapabilityId }]
+        : []),
+    ];
     // A resource owned by env or by this caller is fine (env is the shared baseline); one owned
     // by any other capability is a conflict.
     const conflicts = buildOwnershipRegistrations(variableInputs, envExamplePath, ownerCapabilityId).filter(

@@ -47,6 +47,13 @@ kiln add auth
 `.kiln/ownership.json` marking every file already on disk as external, so a
 later `kiln add` refuses to overwrite it instead of clobbering it. `kiln remove` only
 removes what kiln itself added, never a file, dependency, script, or env var you already had.
+
+`kiln remove <capability>` removes the files, dependencies, scripts, env values, and the
+`.gitignore` line that kiln tracked for that capability. It keeps any kiln-written file you
+edited afterwards (delete it by hand), refuses while your code still imports what it would
+delete (`--force` overrides), and never touches `prisma/migrations` or your database. Provider
+entries kiln patched into a hand-edited `auth.ts` are not reverted line by line; that file is
+kept whole.
 `kiln add auth` and `kiln add db` write TypeScript files, so they refuse a project with no
 `tsconfig.json` and no `typescript` dependency.
 

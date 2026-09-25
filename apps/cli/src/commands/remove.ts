@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readFile, rmdir } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import {
   FileHashStore,
   loadOwnershipTracker,
@@ -7,7 +7,7 @@ import {
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
 } from '@kiln/project-model';
-import { buildEnvRemovalTransforms } from '@kiln/env-capability';
+import { buildEnvRemovalTransforms, GITIGNORE_ENV_LOCAL_KEY } from '@kiln/env-capability';
 import { SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import { createTransformPipeline, TransformEngine } from '@kiln/transform-engine';
 import type { OwnershipSnapshot } from '@kiln/core';
@@ -34,7 +34,12 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
   const ownedScripts = snapshot.scripts.filter((entry) => entry.ownerCapabilityId === capabilityId);
   const ownedEnvVars = snapshot.envVars.filter((entry) => entry.ownerCapabilityId === capabilityId);
 
+  const ownsGitignoreLine = snapshot.metadata.some(
+    (entry) => entry.ownerCapabilityId === capabilityId && entry.key === GITIGNORE_ENV_LOCAL_KEY
+  );
+
   const ownsNothing =
+    !ownsGitignoreLine &&
     ownedFiles.length === 0 &&
     ownedDependencies.length === 0 &&
     ownedScripts.length === 0 &&
@@ -79,6 +84,15 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
 
   for (const filePath of deletable) {
     builder.fileDelete(`${capabilityId}-remove-${filePath}`, filePath);
+  }
+
+  // Take back the `.env.local` line kiln appended to .gitignore. Skipped when the user has
+  // since removed or reworked it, since a patch with no match would fail.
+  const gitignore = ownsGitignoreLine
+    ? await readFile(join(rootPath, '.gitignore'), 'utf8').catch(() => undefined)
+    : undefined;
+  if (gitignore?.includes('\n.env.local\n')) {
+    builder.filePatch(`${capabilityId}-remove-gitignore-line`, '.gitignore', '\n.env.local\n', '\n');
   }
 
   if (ownedDependencies.length > 0 || ownedScripts.length > 0) {
@@ -134,7 +148,10 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
     const known = await FileHashStore.load(rootPath);
     const rebaselined: Record<string, string> = {};
     for (const transform of transforms) {
-      if (transform.type === 'env-mutation' && transform.filePath in known) {
+      if (
+        (transform.type === 'env-mutation' || transform.type === 'file-patch') &&
+        transform.filePath in known
+      ) {
         const content = await readFile(join(rootPath, transform.filePath), 'utf8').catch(() => undefined);
         if (content !== undefined) {
           rebaselined[transform.filePath] = content;
@@ -142,6 +159,10 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
       }
     }
     await FileHashStore.update(rootPath, rebaselined, [...deletable, ...edited]);
+
+    for (const filePath of deletable) {
+      await removeEmptyParents(rootPath, filePath);
+    }
 
     const remaining: OwnershipSnapshot = {
       files: snapshot.files.filter((entry) => entry.ownerCapabilityId !== capabilityId),
@@ -160,6 +181,19 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
       );
       await LockfileStore.save(lockfile, rootPath);
     }
+  }
+}
+
+/** Remove directories that only held the deleted file; rmdir refuses non-empty ones. */
+async function removeEmptyParents(rootPath: string, filePath: string): Promise<void> {
+  let directory = dirname(filePath);
+  while (directory !== '.' && directory !== '/') {
+    try {
+      await rmdir(join(rootPath, directory));
+    } catch {
+      return;
+    }
+    directory = dirname(directory);
   }
 }
 
