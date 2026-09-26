@@ -76,6 +76,12 @@ function printHelp(topic?: string): void {
       console.log('  --force     Remove even if remaining code imports what is deleted');
     }
 
+    if (command === 'inspect') {
+      console.log('Usage: kiln inspect [--verbose]');
+      console.log('Shows project, capabilities, managed files, last operation, and health.');
+      console.log('  --verbose   Also list every owned file, dependency, and env var');
+    }
+
     if (command === 'env') {
       console.log('Usage: kiln env remove <NAME> [<NAME>...]');
       console.log('Removes the given variables from .env.local and .env.example.');
@@ -137,6 +143,7 @@ async function main(argv: string[]): Promise<void> {
   const cliOptions = {
     dryRun: isDryRunFlag,
     force: flags.includes('--force'),
+    verbose: flags.includes('--verbose'),
     cwd: process.cwd(),
   };
 
