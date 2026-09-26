@@ -12,7 +12,7 @@ afterAll(async () => {
   for (const root of tempRoots) {
     await rm(root, { recursive: true, force: true });
   }
-}, 30000);
+}, 120000);
 
 async function projectWith(...capabilities: string[]): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'kiln-remove-'));
