@@ -385,7 +385,17 @@ export class CapabilityRuntime {
     for (const dependencyId of dependencyIds) {
       const accessor = this.getCapabilityAccessor(dependencyId);
       if (accessor) {
-        dependencies.push(await accessor());
+        // Dependencies are validated for presence only. A dependency's files may already be owned
+        // by the capability being added (auth-only installs own .env.example), so claiming them
+        // here would fail every re-run. Ownership is enforced when the dependency itself executes.
+        dependencies.push({
+          ...(await accessor()),
+          files: [],
+          ownedDependencies: [],
+          ownedScripts: [],
+          ownedEnvVars: [],
+          ownedMetadata: [],
+        });
       }
     }
 
