@@ -3,6 +3,19 @@
   "version": "1.2.0",
   "description": "Capability-based scaffolding CLI for Node/Next.js projects",
   "license": "MIT",
+  "keywords": [
+    "cli",
+    "nextjs",
+    "scaffold",
+    "scaffolding",
+    "generator",
+    "auth",
+    "next-auth",
+    "prisma",
+    "env",
+    "capabilities",
+    "plugins"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/arpitbhalla1801/kiln.git",
