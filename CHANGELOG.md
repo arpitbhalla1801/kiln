@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.0.0
+
+### Breaking
+
+- `kiln create` is replaced by `kiln init`
+
+### Features
+
+- `kiln init --existing` retrofits kiln onto an existing app
+- `kiln remove` refuses to clobber edited files, warns about broken imports, keeps shared env values, and reverts the gitignore line, empty env sections and empty directories
+- `kiln add` warns when it skips a kiln-owned file you edited
+- `kiln add auth` and `kiln add db` refuse projects without TypeScript
+- Installs work with npm, pnpm, yarn and bun
+
+### Fixes
+
+- Adding `env` or `db` keeps existing `.env.example` values, Prisma versions and db scripts
+- Capabilities claim only what kiln adds, so `remove` leaves user files alone
+- `package.json` key order and indentation are preserved
+- Ownership conflict errors name the attempted owner
+
 ## 1.2.0
 
 ### Fixes
