@@ -96,6 +96,8 @@ export interface InstallSnapshot {
   capabilities: CapabilityVersion[];
   timestamp: string;
   engineVersion: string;
+  /** Id of the capability most recently added; `capabilities` is sorted, so order is not recency. */
+  lastCapability?: string;
 }
 
 /** Kiln lockfile format for installed capability snapshots. */
