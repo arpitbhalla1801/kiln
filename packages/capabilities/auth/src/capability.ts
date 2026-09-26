@@ -151,9 +151,12 @@ export class AuthCapability implements Capability {
     );
 
     const manifest = await this.getManifest();
-    const capability = buildCapabilityWithOwnership(manifest, paths, allProviders);
+    // Claim next-auth only when this add installs it, so `kiln remove auth` never
+    // removes a dependency the user already had.
+    const claimDependency = !nextAuthInstalled;
+    const capability = buildCapabilityWithOwnership(manifest, paths, allProviders, claimDependency);
     const ownershipRegistrations = [
-      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, allProviders),
+      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, allProviders, claimDependency),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -311,7 +314,8 @@ function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileEx
 function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
   paths: AuthFilePaths,
-  providers: string[] = []
+  providers: string[] = [],
+  claimDependency = true
 ): ResolvedCapability {
   const activePaths: Record<string, string> = { ...paths };
   if (providers.length === 0) {
@@ -325,7 +329,9 @@ function buildCapabilityWithOwnership(
     ownership: {
       ...manifest.ownership,
       files: ownedFiles,
-      dependencies: mergeUnique(manifest.ownership?.dependencies ?? [], [NEXT_AUTH_PACKAGE]),
+      dependencies: claimDependency
+        ? mergeUnique(manifest.ownership?.dependencies ?? [], [NEXT_AUTH_PACKAGE])
+        : [],
     },
   });
 }

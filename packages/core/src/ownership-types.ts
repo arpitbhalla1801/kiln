@@ -1,5 +1,8 @@
 import type { CapabilityId, FileOwnership } from './models.js';
 
+/** Owner id for files that existed before kiln, seeded by `kiln init --existing`. */
+export const EXTERNAL_OWNER = 'external';
+
 export type OwnershipResourceType =
   | 'file'
   | 'dependency'

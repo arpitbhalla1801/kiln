@@ -9,7 +9,7 @@ import type {
   TypedTransform,
 } from './transform-types.js';
 import type { VirtualFilesystem } from './vfs.js';
-import { StructuredMutationEngine } from './mutation-engine.js';
+import { detectJsonIndent, StructuredMutationEngine } from './mutation-engine.js';
 import { PackageJsonMerger } from './package-json-merger.js';
 import { normalizePath } from './path-utils.js';
 
@@ -120,7 +120,10 @@ function applyPackageJsonMutation(vfs: VirtualFilesystem, transform: PackageJson
   const current = vfs.read(filePath);
   const packageJson = current ? mutationEngine.parse(current, filePath) : {};
   const merged = packageJsonMerger.merge(packageJson, transform);
-  const serialized = mutationEngine.serialize(merged);
+  const serialized = mutationEngine.serialize(merged, {
+    preserveKeyOrder: true,
+    indent: detectJsonIndent(current),
+  });
 
   if (serialized !== (current ?? '')) {
     vfs.write(filePath, serialized);
@@ -173,15 +176,45 @@ function applyEnvMutation(vfs: VirtualFilesystem, transform: EnvMutationTransfor
   }
 
   const removeKeys = new Set(transform.removeVariables ?? []);
-  const remaining = removeKeys.size > 0
-    ? entries.filter((entry) => entry.type !== 'var' || !removeKeys.has(entry.key))
-    : entries;
+  const remaining = removeKeys.size > 0 ? removeVariableEntries(entries, removeKeys) : entries;
 
   const serialized = formatEnvEntries(remaining);
 
   if (serialized !== current.replace(/\r\n/g, '\n')) {
     vfs.write(filePath, serialized);
   }
+}
+
+const ENV_SECTION_HEADER = /^# --- .+ ---$/;
+
+/** Drop the removed variables, the `# required` note above each, and section headers left empty. */
+function removeVariableEntries(entries: EnvEntry[], removeKeys: Set<string>): EnvEntry[] {
+  const kept: EnvEntry[] = [];
+  for (const entry of entries) {
+    if (entry.type === 'var' && removeKeys.has(entry.key)) {
+      const previous = kept[kept.length - 1];
+      if (previous?.type === 'raw' && previous.text.trim() === '# required') {
+        kept.pop();
+      }
+      continue;
+    }
+    kept.push(entry);
+  }
+
+  return kept.filter((entry, index) => {
+    if (entry.type !== 'raw' || !ENV_SECTION_HEADER.test(entry.text.trim())) {
+      return true;
+    }
+    for (const next of kept.slice(index + 1)) {
+      if (next.type === 'var') {
+        return true;
+      }
+      if (ENV_SECTION_HEADER.test(next.text.trim())) {
+        return false;
+      }
+    }
+    return false;
+  });
 }
 
 interface EnvVarEntry {

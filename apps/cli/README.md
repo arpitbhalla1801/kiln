@@ -1,58 +1,27 @@
 # kiln
 
-Capability-based scaffolding CLI for Node/Next.js projects. `kiln create` scaffolds a project; `kiln add <capability>` layers in features (`env`, `auth`) while tracking which capability owns which file, dependency, script, and env var so capabilities never silently clobber each other's changes.
+**Create your app once. Compose capabilities over time.**
 
-## Requirements
-
-- [Bun](https://bun.sh) 1.3+ (kiln shells out to Bun to install dependencies)
+Capability-based CLI for Next.js apps. Add `auth`, `db`, `env` with one command, remove them just as cleanly. Kiln tracks every file, dependency, script and env var it adds, so `kiln remove` never touches yours.
 
 ## Install
 
 ```bash
-npm install -g @kiln-cli/kiln
+npm install -g @kiln-cli/kiln    # or pnpm / yarn / bun
+# or: npx @kiln-cli/kiln init my-app
 ```
 
-Or run it without installing:
+## Use
 
 ```bash
-npx @kiln-cli/kiln create my-app
+kiln init my-app && cd my-app && bun install
+kiln add auth --provider github
+kiln add db
+kiln remove auth
 ```
 
-## Quick start
+Adopt an existing app with `kiln init --existing`. Preview any change with `--dry-run`. Works with bun, pnpm, npm and yarn.
 
-```bash
-kiln create my-app
-cd my-app
-bun install
-kiln add env
-kiln add auth
-bun run build
-```
+Full docs, plugin guide and architecture: [github.com/arpitbhalla1801/kiln](https://github.com/arpitbhalla1801/kiln#readme)
 
-Project names must be npm-safe: lowercase letters, numbers, hyphens, or underscores (e.g. `my-app`).
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `kiln create <name>` | Scaffold a new Next.js + TypeScript project |
-| `kiln add env [--var KEY=value]` | Add environment variable capability |
-| `kiln add auth` | Add auth capability ([next-auth](https://authjs.dev)) |
-| `kiln remove <env\|auth>` | Remove a capability: deletes its owned files, dependencies, scripts, and env vars |
-| `kiln inspect` | Inspect project metadata and ownership |
-| `kiln doctor` | Run environment and project health checks |
-
-Global flags: `--dry-run`, `--help`, `--version`
-
-## Troubleshooting
-
-**`Target directory already exists`** — choose a new project name; `kiln create` will not overwrite non-empty directories.
-
-**Doctor reports `package-json-health` failures** — your `package.json` may be missing required scripts or dependencies for a Next.js project.
-
-**`Dependency install failed`** — make sure Bun is installed and on your `PATH`; `kiln add` uses it to install packages like `next-auth`.
-
-## Links
-
-- [Source & issues](https://github.com/arpitbhalla1801/kiln)
-- License: MIT
+MIT

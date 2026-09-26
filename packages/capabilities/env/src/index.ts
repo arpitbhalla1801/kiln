@@ -1,6 +1,11 @@
 ﻿export const name = '@kiln/env-capability';
 
-export { EnvCapability, buildTransforms, buildEnvRemovalTransforms } from './capability.js';
+export {
+  EnvCapability,
+  GITIGNORE_ENV_LOCAL_KEY,
+  buildTransforms,
+  buildEnvRemovalTransforms,
+} from './capability.js';
 export {
   buildOwnershipRegistrations,
   toEnvVariableInputs,

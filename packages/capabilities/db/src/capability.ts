@@ -9,6 +9,7 @@ import {
   loadManifestFromObject,
   mergeUnique,
   OwnershipTracker,
+  readPackageJson,
 } from '@kiln/core';
 import type { Capability } from '@kiln/capability-sdk';
 import { DB_MANIFEST } from './manifest-data.js';
@@ -25,7 +26,7 @@ import {
   type DbCapabilityPlanOptions,
   type DbFilePaths,
 } from './types.js';
-import { buildDbOwnershipRegistrations, validateDbOwnership } from './validation.js';
+import { buildDbOwnershipRegistrations, type DbClaims, validateDbOwnership } from './validation.js';
 
 const DB_SOURCE_ROOT_MARKERS = ['app', 'pages'];
 
@@ -69,7 +70,22 @@ export class DbCapability implements Capability {
     assertNoUnownedFile(tracker, paths.schemaFile, schemaFileExists);
     assertNoUnownedFile(tracker, paths.clientFile, clientFileExists);
 
-    const dbTransforms = buildDbTransforms(paths, prismaInstalled, schemaFileExists, clientFileExists);
+    const clientInstalled =
+      options.clientInstalled ??
+      options.prismaInstalled ??
+      (await hasDependency(rootPath, PRISMA_CLIENT_PACKAGE));
+    const existingScripts = options.existingScripts ?? (await readExistingScripts(rootPath));
+    const clientVersion = options.clientVersion ?? (await readClientVersion(rootPath));
+
+    const dbTransforms = buildDbTransforms(
+      paths,
+      prismaInstalled,
+      schemaFileExists,
+      clientFileExists,
+      clientInstalled,
+      existingScripts,
+      clientVersion
+    );
 
     const envPlan = await this.envCapability.planAdd(rootPath, {
       variables: DB_ENV_VARS,
@@ -81,10 +97,20 @@ export class DbCapability implements Capability {
       ownerCapabilityId: DB_CAPABILITY_ID,
     });
 
+    // Claim only the dependencies and scripts this add actually writes, so `kiln remove db`
+    // never deletes ones the user already had.
+    const claims: DbClaims = {
+      dependencies: [
+        ...(clientInstalled ? [] : [PRISMA_CLIENT_PACKAGE]),
+        ...(prismaInstalled ? [] : [PRISMA_CLI_PACKAGE]),
+      ],
+      scripts: Object.keys(missingDbScripts(existingScripts)),
+    };
+
     const manifest = await this.getManifest();
-    const capability = buildCapabilityWithOwnership(manifest, paths);
+    const capability = buildCapabilityWithOwnership(manifest, paths, claims);
     const ownershipRegistrations = [
-      ...buildDbOwnershipRegistrations(paths, DB_CAPABILITY_ID),
+      ...buildDbOwnershipRegistrations(paths, DB_CAPABILITY_ID, claims),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -123,16 +149,21 @@ export function buildDbTransforms(
   paths: DbFilePaths,
   prismaInstalled: boolean,
   schemaFileExists: boolean,
-  clientFileExists: boolean
+  clientFileExists: boolean,
+  clientInstalled = prismaInstalled,
+  existingScripts: Record<string, string> = {},
+  clientVersion?: string
 ): TransformPipeline {
   const builder = createTransformPipeline();
+  // The CLI must match an already-installed client's version, or the two disagree.
+  const cliVersion = clientInstalled && clientVersion ? clientVersion : PRISMA_VERSION;
 
-  if (!prismaInstalled) {
+  if (!clientInstalled || !prismaInstalled) {
     builder.packageJsonMutation(
       `${DB_CAPABILITY_ID}-install-prisma`,
       {
-        dependencies: { [PRISMA_CLIENT_PACKAGE]: PRISMA_VERSION },
-        devDependencies: { [PRISMA_CLI_PACKAGE]: PRISMA_VERSION },
+        ...(clientInstalled ? {} : { dependencies: { [PRISMA_CLIENT_PACKAGE]: PRISMA_VERSION } }),
+        ...(prismaInstalled ? {} : { devDependencies: { [PRISMA_CLI_PACKAGE]: cliVersion } }),
       },
       'Install Prisma'
     );
@@ -156,13 +187,35 @@ export function buildDbTransforms(
     );
   }
 
-  builder.packageJsonMutation(
-    `${DB_CAPABILITY_ID}-add-scripts`,
-    { scripts: DB_SCRIPTS },
-    'Add Prisma scripts'
-  );
+  const missingScripts = missingDbScripts(existingScripts);
+  if (Object.keys(missingScripts).length > 0) {
+    builder.packageJsonMutation(
+      `${DB_CAPABILITY_ID}-add-scripts`,
+      { scripts: missingScripts },
+      'Add Prisma scripts'
+    );
+  }
 
   return builder.build();
+}
+
+function missingDbScripts(existingScripts: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(DB_SCRIPTS).filter(([name]) => !(name in existingScripts)));
+}
+
+async function readClientVersion(rootPath: string): Promise<string | undefined> {
+  const packageJson = await readPackageJson(rootPath);
+  const range = [packageJson?.dependencies, packageJson?.devDependencies]
+    .map((deps) => (deps as Record<string, unknown> | undefined)?.[PRISMA_CLIENT_PACKAGE])
+    .find((value): value is string => typeof value === 'string');
+
+  // Only reuse a real semver range; "latest" or "workspace:*" would not be a valid CLI pin.
+  return range && /^[\^~]?\d/.test(range) ? range : undefined;
+}
+
+async function readExistingScripts(rootPath: string): Promise<Record<string, string>> {
+  const scripts = (await readPackageJson(rootPath))?.scripts;
+  return typeof scripts === 'object' && scripts !== null ? (scripts as Record<string, string>) : {};
 }
 
 function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileExists: boolean): void {
@@ -181,7 +234,11 @@ function assertNoUnownedFile(tracker: OwnershipTracker, filePath: string, fileEx
   );
 }
 
-function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFilePaths): ResolvedCapability {
+function buildCapabilityWithOwnership(
+  manifest: CapabilityManifest,
+  paths: DbFilePaths,
+  claims: DbClaims
+): ResolvedCapability {
   const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(paths));
 
   return capabilityFromManifest({
@@ -189,6 +246,8 @@ function buildCapabilityWithOwnership(manifest: CapabilityManifest, paths: DbFil
     ownership: {
       ...manifest.ownership,
       files: ownedFiles,
+      dependencies: claims.dependencies,
+      scripts: claims.scripts,
     },
   });
 }
