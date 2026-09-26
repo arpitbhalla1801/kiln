@@ -4,6 +4,7 @@ export interface CliOptions {
   dryRun: boolean;
   cwd: string;
   force?: boolean;
+  verbose?: boolean;
 }
 
 export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): string {

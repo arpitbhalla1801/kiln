@@ -356,6 +356,7 @@ export class CapabilityRuntime {
         capabilities: [...otherCapabilities, entry],
         timestamp: new Date().toISOString(),
         engineVersion: pkg.version,
+        lastCapability: capability.id,
       },
     };
 

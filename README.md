@@ -73,7 +73,7 @@ kiln init --existing      # adopt the project in the current directory
 |---------|------|
 | `kiln env remove <NAME>...` | Drop single env vars |
 | `kiln db migrate` | `prisma migrate dev` with `.env.local` loaded |
-| `kiln inspect` | Project shape, package manager, ownership |
+| `kiln inspect` | Project, capabilities, managed files, last operation, health (`--verbose` lists ownership) |
 | `kiln doctor` | Health checks |
 
 Global flags: `--dry-run`, `--help`, `--version`.
