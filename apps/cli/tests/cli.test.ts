@@ -20,7 +20,7 @@ afterAll(async () => {
   for (const root of tempRoots) {
     await rm(root, { recursive: true, force: true });
   }
-}, 30000);
+}, 120000);
 
 describe('kiln cli', () => {
   test('create scaffolds a project', async () => {

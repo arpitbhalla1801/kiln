@@ -19,7 +19,7 @@ afterAll(async () => {
   for (const root of tempRoots) {
     await rm(root, { recursive: true, force: true });
   }
-}, 30000);
+}, 120000);
 
 async function capture(run: () => Promise<unknown>): Promise<string> {
   const logs: string[] = [];
