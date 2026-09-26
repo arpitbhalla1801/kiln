@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { AuthCapability } from '@kiln/auth-capability';
 import type {
   Capability as PluginCapability,
@@ -18,6 +20,8 @@ import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { NodeAdapter } from '@kiln/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
 import {
+  FileHashStore,
+  hashContent,
   loadOwnershipTracker,
   LockfileStore,
   PluginConfigStore,
@@ -192,6 +196,7 @@ export class CapabilityRuntime {
       resolvedDependencies: context.resolvedDependencies,
       inspection: context.inspection,
       capabilityPlan: context.capabilityPlan,
+      warnings: context.warnings ?? [],
     };
   }
 
@@ -240,6 +245,11 @@ export class CapabilityRuntime {
         dryRun: context.dryRun,
         rootDir: context.rootPath,
       });
+      context.warnings = await findSkippedEditedFiles(
+        context.rootPath,
+        context.capabilityPlan.capability.files ?? [],
+        context.preview.operations.map((operation) => operation.filePath)
+      );
       context.resolvedDependencies = finalized.resolvedDependencies;
       context.dependenciesToInstall = extractInstallDependencies(context.capabilityPlan.transforms);
       context.state.preview = context.preview;
@@ -287,6 +297,28 @@ export class CapabilityRuntime {
       }
 
       await saveOwnershipTracker(tracker, context.rootPath);
+
+      // Remember what kiln wrote so `kiln remove` can keep files the user has since edited.
+      // Hash from disk, not plan content: env merges extend a file after it is created, and a
+      // later capability can extend a file an earlier one created (both are kiln edits).
+      const known = await FileHashStore.load(context.rootPath);
+      const written: Record<string, string> = {};
+      for (const transform of context.capabilityPlan?.transforms ?? []) {
+        const touchesFile =
+          transform.type === 'file-create' ||
+          ((transform.type === 'file-patch' || transform.type === 'env-mutation') &&
+            transform.filePath in known);
+        if (touchesFile) {
+          const onDisk = await readFile(join(context.rootPath, transform.filePath), 'utf8').catch(
+            () => undefined
+          );
+          if (onDisk !== undefined) {
+            written[transform.filePath] = onDisk;
+          }
+        }
+      }
+      await FileHashStore.update(context.rootPath, written);
+
       await this.updateLockfile(context);
     });
   }
@@ -360,12 +392,44 @@ export class CapabilityRuntime {
     for (const dependencyId of dependencyIds) {
       const accessor = this.getCapabilityAccessor(dependencyId);
       if (accessor) {
-        dependencies.push(await accessor());
+        // Dependencies are validated for presence only. A dependency's files may already be owned
+        // by the capability being added (auth-only installs own .env.example), so claiming them
+        // here would fail every re-run. Ownership is enforced when the dependency itself executes.
+        dependencies.push({
+          ...(await accessor()),
+          files: [],
+          ownedDependencies: [],
+          ownedScripts: [],
+          ownedEnvVars: [],
+          ownedMetadata: [],
+        });
       }
     }
 
     return [...dependencies, capability];
   }
+}
+
+/** Owned files that differ from what kiln last wrote and that this run leaves untouched. */
+async function findSkippedEditedFiles(
+  rootPath: string,
+  ownedFiles: string[],
+  touchedFiles: string[]
+): Promise<string[]> {
+  const known = await FileHashStore.load(rootPath);
+  const warnings: string[] = [];
+
+  for (const filePath of ownedFiles) {
+    if (touchedFiles.includes(filePath) || !(filePath in known)) {
+      continue;
+    }
+    const onDisk = await readFile(join(rootPath, filePath), 'utf8').catch(() => undefined);
+    if (onDisk !== undefined && hashContent(onDisk) !== known[filePath]) {
+      warnings.push(`Skipped ${filePath}: edited since kiln wrote it, left as is.`);
+    }
+  }
+
+  return warnings;
 }
 
 export function createCapabilityRuntime(options?: CapabilityRuntimeOptions): CapabilityRuntime {

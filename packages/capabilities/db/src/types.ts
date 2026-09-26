@@ -25,6 +25,9 @@ export interface DbCapabilityPlanOptions {
   envLocalExists?: boolean;
   gitignoreContent?: string | null;
   prismaInstalled?: boolean;
+  clientInstalled?: boolean;
+  clientVersion?: string;
+  existingScripts?: Record<string, string>;
   sourceRoot?: string;
   schemaFileExists?: boolean;
   clientFileExists?: boolean;

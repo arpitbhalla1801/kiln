@@ -1,8 +1,11 @@
+import { detectNextJs } from '@kiln/node-adapter';
 import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import type { EnvVariableMap } from '@kiln/env-capability';
 import { formatCapabilityResult } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
+
+const TYPESCRIPT_CAPABILITIES = ['auth', 'db'];
 
 const DEFAULT_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
@@ -21,6 +24,14 @@ export async function runAdd(
   }
 
   const rootPath = await resolveProjectRoot(options.cwd);
+
+  if (TYPESCRIPT_CAPABILITIES.includes(capabilityId) && !(await detectNextJs(rootPath)).typescript) {
+    throw new Error(
+      `Refusing to add ${capabilityId}: it writes TypeScript files, but this project has no TypeScript setup ` +
+        '(no tsconfig.json and no typescript dependency). Add TypeScript first, then run this again.'
+    );
+  }
+
   const runtime = createCapabilityRuntime();
 
   const variables =
@@ -44,6 +55,10 @@ export async function runAdd(
       result.resolvedDependencies
     )
   );
+
+  for (const warning of result.warnings) {
+    console.warn(`Warning: ${warning}`);
+  }
 }
 
 function parseFlagValues(argv: string[], flagName: string): string[] {

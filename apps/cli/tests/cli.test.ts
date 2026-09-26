@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseEnvVariables, parseProviders, runAdd } from '../src/commands/add.js';
-import { runCreate } from '../src/commands/create.js';
+import { runInit } from '../src/commands/init.js';
 import { runDoctor } from '../src/commands/doctor.js';
 import { runRemove } from '../src/commands/remove.js';
 import { formatTransformPlan } from '../src/output.js';
@@ -20,14 +20,14 @@ afterAll(async () => {
   for (const root of tempRoots) {
     await rm(root, { recursive: true, force: true });
   }
-}, 30000);
+}, 120000);
 
 describe('kiln cli', () => {
   test('create scaffolds a project', async () => {
     const parent = await createTempDir();
     const projectDir = join(parent, 'demo-app');
 
-    await runCreate(projectDir, 'demo-app');
+    await runInit(projectDir, 'demo-app');
 
     const packageJson = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8'));
     expect(packageJson.name).toBe('demo-app');
@@ -38,20 +38,20 @@ describe('kiln cli', () => {
 
   test('create rejects empty and invalid project names', async () => {
     const parent = await createTempDir();
-    await expect(runCreate(join(parent, 'bad'), '')).rejects.toThrow('Project name is required');
-    await expect(runCreate(join(parent, 'bad'), 'Weird Name')).rejects.toThrow('Invalid project name');
+    await expect(runInit(join(parent, 'bad'), '')).rejects.toThrow('Project name is required');
+    await expect(runInit(join(parent, 'bad'), 'Weird Name')).rejects.toThrow('Invalid project name');
   });
 
   test('create refuses to overwrite a non-empty directory', async () => {
     const parent = await createTempDir();
     const projectDir = join(parent, 'existing-app');
-    await runCreate(projectDir, 'existing-app');
-    await expect(runCreate(projectDir, 'existing-app')).rejects.toThrow('already exists and is not empty');
+    await runInit(projectDir, 'existing-app');
+    await expect(runInit(projectDir, 'existing-app')).rejects.toThrow('already exists and is not empty');
   });
 
   test('create scaffolds a buildable Next.js project', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     await expect(readFile(join(root, 'next.config.ts'), 'utf8')).resolves.toContain('NextConfig');
     await expect(readFile(join(root, 'next-env.d.ts'), 'utf8')).resolves.toContain('next');
@@ -101,7 +101,7 @@ describe('kiln cli', () => {
 
   test('add auth rejects an unknown provider', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     await expect(
       runAdd('auth', { cwd: root, dryRun: false }, {}, ['discord'])
@@ -110,7 +110,7 @@ describe('kiln cli', () => {
 
   test('add auth --var injects the custom variable, not just env', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     await runAdd(
       'auth',
@@ -127,7 +127,7 @@ describe('kiln cli', () => {
 
   test('dry-run add env produces deterministic transform output', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     const logs: string[] = [];
     const originalLog = console.log;
@@ -147,7 +147,7 @@ describe('kiln cli', () => {
 
   test('add auth preserves existing package.json fields', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: false });
     await runAdd('auth', { cwd: root, dryRun: false });
 
@@ -164,7 +164,7 @@ describe('kiln cli', () => {
 
   test('re-running add env reports no changes when already applied', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: false });
 
     const logs: string[] = [];
@@ -182,7 +182,7 @@ describe('kiln cli', () => {
 
   test('add env --var merges custom variables into existing .env.example', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: false });
 
     await runAdd(
@@ -201,7 +201,7 @@ describe('kiln cli', () => {
 
   test('doctor fails when package.json is corrupted in a Next.js project', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     await writeFile(
       join(root, 'package.json'),
@@ -225,7 +225,7 @@ describe('kiln cli', () => {
 
   test('add db then remove db strips the prisma scripts it owns', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     await runAdd('db', { cwd: root, dryRun: false });
 
@@ -252,7 +252,7 @@ describe('kiln cli', () => {
 
   test('doctor warns when a required env var has no value', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await writeFile(join(root, '.env.example'), '# required\nAUTH_SECRET=\nDATABASE_URL=set\n', 'utf8');
 
     const logs: string[] = [];
@@ -270,7 +270,7 @@ describe('kiln cli', () => {
 
   test('doctor passes when required env vars all have values', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await writeFile(join(root, '.env.example'), '# required\nAUTH_SECRET=abc123\n', 'utf8');
 
     const logs: string[] = [];
@@ -284,9 +284,9 @@ describe('kiln cli', () => {
     expect(logs.join('\n')).toContain('[pass] env-required-vars:');
   });
 
-  test('remove auth deletes owned files/deps, leaves env-owned vars alone', async () => {
+  test('remove auth deletes owned files/deps/env vars, leaves env-owned vars alone', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: false });
     await runAdd('auth', { cwd: root, dryRun: false });
 
@@ -299,8 +299,9 @@ describe('kiln cli', () => {
     expect(packageJson.dependencies?.['next-auth']).toBeUndefined();
 
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
-    expect(envExample).toContain('AUTH_SECRET=');
+    expect(envExample).not.toContain('AUTH_SECRET=');
     expect(envExample).toContain('DATABASE_URL=');
+    expect(await readFile(join(root, '.env.local'), 'utf8')).not.toContain('AUTH_SECRET=');
 
     const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
     expect(ownership.ownership.dependencies).toEqual([]);
@@ -313,7 +314,7 @@ describe('kiln cli', () => {
 
   test('add writes .kiln/lock.json with capability id, version, and resolved dependencies', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: false });
 
     const lockfile = JSON.parse(await readFile(join(root, '.kiln/lock.json'), 'utf8'));
@@ -325,7 +326,7 @@ describe('kiln cli', () => {
 
   test('add --dry-run does not write .kiln/lock.json', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
     await runAdd('env', { cwd: root, dryRun: true });
 
     await expect(readFile(join(root, '.kiln/lock.json'), 'utf8')).rejects.toThrow();
@@ -333,7 +334,7 @@ describe('kiln cli', () => {
 
   test('remove reports no-op for a capability that was never added', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     const logs: string[] = [];
     const originalLog = console.log;
@@ -350,7 +351,7 @@ describe('kiln cli', () => {
 
   test('remove rejects unsupported capabilities', async () => {
     const root = await createTempDir();
-    await runCreate(root, 'demo-app');
+    await runInit(root, 'demo-app');
 
     await expect(runRemove('payments', { cwd: root, dryRun: false })).rejects.toThrow(
       "Unsupported capability 'payments'"

@@ -165,6 +165,48 @@ describe('DbCapability', () => {
     expect(vfs.read('package.json')).toBe(alphabetizedPackageJson);
   });
 
+  test('keeps an existing @prisma/client version and an existing db:migrate script', async () => {
+    const initial = JSON.stringify({
+      name: 'demo-app',
+      version: '1.0.0',
+      scripts: { 'db:migrate': 'prisma migrate deploy' },
+      dependencies: { '@prisma/client': '^4.16.0' },
+    });
+    const root = await createTempProject({ 'package.json': initial });
+    const plan = await new DbCapability().planAdd(root, {});
+
+    const vfs = new VirtualFilesystem({ initialFiles: { 'package.json': initial } });
+    new TransformApplier().applyAll(vfs, plan.transforms);
+
+    const packageJson = JSON.parse(vfs.read('package.json') ?? '{}');
+    expect(packageJson.dependencies['@prisma/client']).toBe('^4.16.0');
+    expect(packageJson.devDependencies.prisma).toBe('^4.16.0');
+    expect(packageJson.scripts['db:migrate']).toBe('prisma migrate deploy');
+    expect(packageJson.scripts['db:generate']).toBe('prisma generate');
+    expect(packageJson.scripts['db:studio']).toBe('prisma studio');
+  });
+
+  test('claims only the dependencies and scripts it adds', async () => {
+    const root = await createTempProject({
+      'package.json': JSON.stringify({
+        name: 'demo-app',
+        version: '1.0.0',
+        scripts: { 'db:migrate': 'prisma migrate deploy' },
+        dependencies: { '@prisma/client': '^4.16.0' },
+      }),
+    });
+    const plan = await new DbCapability().planAdd(root, {});
+
+    expect(plan.capability.ownedDependencies).toEqual(['prisma']);
+    expect([...(plan.capability.ownedScripts ?? [])].sort()).toEqual(['db:generate', 'db:studio']);
+
+    const claimed = plan.ownershipRegistrations
+      .filter((registration) => registration.resourceType !== 'file')
+      .map((registration) => `${registration.resourceType}:${registration.resourceKey}`);
+    expect(claimed).not.toContain('dependency:@prisma/client');
+    expect(claimed).not.toContain('script:db:migrate');
+  });
+
   test('scaffolds schema.prisma and a client singleton at the project root', async () => {
     const root = await createTempProject({
       'package.json': JSON.stringify({ name: 'demo-app', version: '1.0.0' }),

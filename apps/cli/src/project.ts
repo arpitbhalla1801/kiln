@@ -16,7 +16,7 @@ export async function resolveProjectRoot(cwd: string): Promise<string> {
   }
 
   throw new Error(
-    'No kiln project found. Run `kiln create` or run this command from a project with package.json.'
+    'No kiln project found. Run `kiln init` or run this command from a project with package.json.'
   );
 }
 

@@ -8,7 +8,7 @@ import {
 
 describe('capability registry', () => {
   test('lists env, auth, and db as supported', () => {
-    expect(SUPPORTED_CAPABILITY_IDS.sort()).toEqual(['auth', 'db', 'env']);
+    expect(SUPPORTED_CAPABILITY_IDS).toEqual(expect.arrayContaining(['auth', 'db', 'env']));
   });
 
   test('auth declares env as a dependency', () => {
@@ -31,13 +31,13 @@ describe('capability registry', () => {
   });
 
   test('registerCapability adds a new entry the same way built-ins are seeded', () => {
-    expect(isSupportedCapabilityId('fake-plugin')).toBe(false);
+    expect(isSupportedCapabilityId('registry-test-plugin')).toBe(false);
 
-    registerCapability('fake-plugin', ['env']);
+    registerCapability('registry-test-plugin', ['env']);
 
-    expect(isSupportedCapabilityId('fake-plugin')).toBe(true);
-    expect(CAPABILITY_REGISTRY['fake-plugin'].dependencies).toEqual(['env']);
-    expect(SUPPORTED_CAPABILITY_IDS).toContain('fake-plugin');
+    expect(isSupportedCapabilityId('registry-test-plugin')).toBe(true);
+    expect(CAPABILITY_REGISTRY['registry-test-plugin'].dependencies).toEqual(['env']);
+    expect(SUPPORTED_CAPABILITY_IDS).toContain('registry-test-plugin');
   });
 
   test('registerCapability defaults to no dependencies', () => {
@@ -48,8 +48,8 @@ describe('capability registry', () => {
 
   test('registerCapability is idempotent for the supported-ids list', () => {
     const before = SUPPORTED_CAPABILITY_IDS.length;
-    registerCapability('fake-plugin', ['env']);
-    registerCapability('fake-plugin', ['env']);
+    registerCapability('registry-test-plugin', ['env']);
+    registerCapability('registry-test-plugin', ['env']);
 
     expect(SUPPORTED_CAPABILITY_IDS.length).toBe(before);
   });

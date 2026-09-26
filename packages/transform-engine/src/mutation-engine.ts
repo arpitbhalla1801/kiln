@@ -19,6 +19,17 @@ export interface JsonMergeMutation {
 
 export type JsonAstMutation = JsonSetMutation | JsonDeleteMutation | JsonMergeMutation;
 
+export interface SerializeOptions {
+  /** Keep the document's own key order instead of sorting alphabetically. */
+  preserveKeyOrder?: boolean;
+  indent?: string | number;
+}
+
+/** Returns the indentation an existing JSON file uses (a tab or N spaces), defaulting to 2 spaces. */
+export function detectJsonIndent(content: string | undefined): string | number {
+  return content?.match(/^([ \t]+)"/m)?.[1] ?? 2;
+}
+
 /** Structured JSON mutation engine with idempotent AST operations. */
 export class StructuredMutationEngine {
   parse(content: string, filePath = 'json'): Record<string, unknown> {
@@ -36,8 +47,9 @@ export class StructuredMutationEngine {
     }
   }
 
-  serialize(document: Record<string, unknown>): string {
-    return `${JSON.stringify(sortJsonKeys(document), null, 2)}\n`;
+  serialize(document: Record<string, unknown>, options: SerializeOptions = {}): string {
+    const body = options.preserveKeyOrder ? document : sortJsonKeys(document);
+    return `${JSON.stringify(body, null, options.indent ?? 2)}\n`;
   }
 
   apply(document: Record<string, unknown>, mutation: JsonAstMutation): void {

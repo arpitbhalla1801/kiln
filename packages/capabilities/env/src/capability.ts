@@ -5,6 +5,7 @@ import {
   type CapabilityManifest,
   capabilityFromManifest,
   fileExists,
+  formatOwnershipConflict,
   loadManifestFromObject,
   mergeUnique,
   OwnershipTracker,
@@ -26,9 +27,11 @@ import {
 import {
   buildOwnershipRegistrations,
   toEnvVariableInputs,
-  validateEnvOwnership,
   validateEnvVariableNames,
 } from './validation.js';
+
+/** Ownership key for the `.env.local` line kiln appends to .gitignore, so remove can take it back out. */
+export const GITIGNORE_ENV_LOCAL_KEY = `gitignore:${DEFAULT_ENV_LOCAL_PATH}`;
 
 export class EnvCapability implements Capability {
   readonly id = ENV_CAPABILITY_ID;
@@ -53,13 +56,6 @@ export class EnvCapability implements Capability {
     validateEnvVariableNames(variableInputs);
 
     const tracker = options.tracker ?? new OwnershipTracker();
-    validateEnvOwnership(variableInputs, tracker, ENV_CAPABILITY_ID, envExamplePath);
-
-    const ownershipRegistrations = buildOwnershipRegistrations(
-      variableInputs,
-      envExamplePath,
-      ENV_CAPABILITY_ID
-    );
 
     const envLocalExists =
       options.envLocalExists ?? (await fileExists(join(rootPath, DEFAULT_ENV_LOCAL_PATH)));
@@ -69,6 +65,49 @@ export class EnvCapability implements Capability {
         : await readGitignore(rootPath);
     const envExampleExists =
       options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)));
+
+    // Claim only what this add creates, so `kiln remove` never deletes a user's own
+    // .env.example or variables that were defined before kiln touched them.
+    const existingKeys = new Set([
+      ...(await readEnvKeys(join(rootPath, envExamplePath))),
+      ...(await readEnvKeys(join(rootPath, DEFAULT_ENV_LOCAL_PATH))),
+    ]);
+    const claimedVariables = variableInputs.filter(
+      (variable) =>
+        !existingKeys.has(variable.name) && tracker.getOwner('envVar', variable.name) === undefined
+    );
+    const claimFile = !envExampleExists && tracker.getOwner('file', envExamplePath) === undefined;
+
+    // The calling capability owns what it adds (auth owns AUTH_SECRET, db owns DATABASE_URL),
+    // so `kiln remove <capability>` cleans up its own env values.
+    const addsGitignoreLine =
+      ensureGitignoreCoversEnvLocal(gitignoreContent) !== undefined &&
+      tracker.getOwner('metadata', GITIGNORE_ENV_LOCAL_KEY) === undefined;
+    const ownershipRegistrations = [
+      ...buildOwnershipRegistrations(claimedVariables, envExamplePath, ownerCapabilityId, claimFile),
+      ...(addsGitignoreLine
+        ? [{ resourceType: 'metadata' as const, resourceKey: GITIGNORE_ENV_LOCAL_KEY, ownerCapabilityId }]
+        : []),
+    ];
+    // A resource owned by env or by this caller is fine (env is the shared baseline); one owned
+    // by any other capability is a conflict.
+    const conflicts = buildOwnershipRegistrations(variableInputs, envExamplePath, ownerCapabilityId).filter(
+      (registration) => {
+        const owner = tracker.getOwner(registration.resourceType, registration.resourceKey);
+        return owner !== undefined && owner !== ENV_CAPABILITY_ID && owner !== ownerCapabilityId;
+      }
+    );
+    if (conflicts.length > 0) {
+      const [first] = conflicts;
+      throw new Error(
+        formatOwnershipConflict({
+          resourceType: first.resourceType,
+          resourceKey: first.resourceKey,
+          existingOwner: tracker.getOwner(first.resourceType, first.resourceKey)!,
+          attemptedOwner: ownerCapabilityId,
+        })
+      );
+    }
 
     const transforms = buildTransforms({
       envExamplePath,
@@ -80,7 +119,12 @@ export class EnvCapability implements Capability {
     });
 
     const manifest = await this.getManifest();
-    const capability = buildCapabilityWithOwnership(manifest, variableInputs, envExamplePath);
+    const capability = buildCapabilityWithOwnership(
+      manifest,
+      claimedVariables,
+      envExamplePath,
+      claimFile
+    );
 
     return {
       transforms,
@@ -146,7 +190,8 @@ export function buildTransforms(options: BuildTransformsOptions): TransformPipel
       toExampleOnlyVariables(variables),
       'Inject environment variables',
       undefined,
-      ownerCapabilityId
+      ownerCapabilityId,
+      true
     );
   }
 
@@ -223,6 +268,15 @@ function toFlatEnvLocalVariables(variables: EnvVariableMap): EnvVariableMap {
   return flat;
 }
 
+async function readEnvKeys(filePath: string): Promise<string[]> {
+  const content = await readFile(filePath, 'utf8').catch(() => '');
+  return content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== '' && !line.startsWith('#') && line.includes('='))
+    .map((line) => line.slice(0, line.indexOf('=')).trim());
+}
+
 async function readGitignore(rootPath: string): Promise<string | null> {
   try {
     return await readFile(join(rootPath, '.gitignore'), 'utf8');
@@ -251,10 +305,12 @@ function ensureGitignoreCoversEnvLocal(content: string | null): string | undefin
 function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
   variables: import('./types.js').EnvVariableInput[],
-  envExamplePath: string
+  envExamplePath: string,
+  claimFile: boolean
 ): ResolvedCapability {
   const ownedEnvVars = mergeUnique(manifest.ownership?.envVars ?? [], variables.map((v) => v.name));
-  const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], [envExamplePath]);
+  const manifestFiles = (manifest.ownership?.files ?? []).filter((file) => file !== envExamplePath);
+  const ownedFiles = claimFile ? mergeUnique(manifestFiles, [envExamplePath]) : manifestFiles;
 
   return capabilityFromManifest({
     ...manifest,

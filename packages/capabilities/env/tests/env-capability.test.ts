@@ -130,6 +130,38 @@ describe('EnvCapability', () => {
     ).toThrow(/Ownership conflict detected/);
   });
 
+  test('rejects a db add whose env var is already owned by auth, and names both owners', async () => {
+    const tracker = new OwnershipTracker();
+    tracker.registerEnvVar('DATABASE_URL', 'auth');
+
+    const env = new EnvCapability();
+    const root = await createTempProject();
+
+    await expect(
+      env.planAdd(root, {
+        variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+        tracker,
+        ownerCapabilityId: 'db',
+      })
+    ).rejects.toThrow(/auth.*db|db.*auth/s);
+  });
+
+  test('lets the owning capability re-add its own env var without conflict', async () => {
+    const tracker = new OwnershipTracker();
+    tracker.registerEnvVar('DATABASE_URL', 'db');
+
+    const env = new EnvCapability();
+    const root = await createTempProject();
+
+    const plan = await env.planAdd(root, {
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+      tracker,
+      ownerCapabilityId: 'db',
+    });
+
+    expect(plan.ownershipRegistrations.some((r) => r.resourceKey === 'DATABASE_URL')).toBe(false);
+  });
+
   test('detects a file-ownership conflict against a custom envExamplePath, not the default', async () => {
     const tracker = new OwnershipTracker();
     tracker.registerFile('.env.staging', 'other-capability');

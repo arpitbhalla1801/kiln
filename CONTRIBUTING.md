@@ -24,7 +24,7 @@ Both suites run in CI (`.github/workflows/post-deploy.yml`) on Linux, macOS, and
 
 ```bash
 bun run link-cli   # builds @kiln-cli/kiln and bun links it globally
-kiln create test-app
+kiln init test-app
 ```
 
 ## Repo layout

@@ -1,102 +1,116 @@
 # kiln
 
-**v1.0.0** — capability-based project toolkit for Bun-compatible Next.js apps.
+**Create your app once. Compose capabilities over time.**
 
-Kiln scaffolds projects, adds capabilities (`env`, `auth`), and tracks ownership of generated files.
+[![npm](https://img.shields.io/npm/v/@kiln-cli/kiln?color=cb3837)](https://www.npmjs.com/package/@kiln-cli/kiln)
+[![downloads](https://img.shields.io/npm/dm/@kiln-cli/kiln)](https://www.npmjs.com/package/@kiln-cli/kiln)
+[![CI](https://github.com/arpitbhalla1801/kiln/actions/workflows/post-deploy.yml/badge.svg)](https://github.com/arpitbhalla1801/kiln/actions/workflows/post-deploy.yml)
+[![license](https://img.shields.io/npm/l/@kiln-cli/kiln)](LICENSE)
+[![node](https://img.shields.io/node/v/@kiln-cli/kiln)](https://nodejs.org)
 
-## Requirements
+Most scaffolders run once and walk away. Kiln stays. Start a Next.js app, then add `auth`, `db`, `env` as it grows. Kiln tracks every file, dependency, script and env var it adds, so `kiln remove` undoes exactly that and nothing of yours.
 
-- [Bun](https://bun.sh) 1.3+
+- **Add** in one command. Preview with `--dry-run`.
+- **Remove** cleanly. Kiln only deletes what it owns.
+- **Adopt** an existing Next.js app without clobbering a file.
+- **Extend** with your own capability plugins.
+- Works with **bun, pnpm, npm, yarn**.
 
-## Quick start (from git clone)
-
-```bash
-git clone https://github.com/arpitbhalla1801/kiln.git
-cd kiln
-git checkout v1.0.0   # or main after the v1 release merges
-bun install
-bun run build
-bun run test:unit
-bun run test:post-deploy
-bun run link-cli
-```
-
-### Create a new project
+## Demo
 
 ```bash
-kiln create my-app
-cd my-app
-bun install
-kiln add env
-kiln add auth
-bun run build
+kiln init my-app && cd my-app && bun install
+kiln add auth --provider github
 ```
 
-Project names must be npm-safe: lowercase letters, numbers, hyphens, or underscores (e.g. `my-app`).
+```diff
++ src/auth.ts            # next-auth config
++ src/middleware.ts      # route protection
 
-### Try the example app
+  package.json
++   "next-auth": "^5.0.0-beta.32"
+
+  .env.example
++ AUTH_SECRET=replace-me
++ AUTH_GITHUB_ID=
++ AUTH_GITHUB_SECRET=
+```
+
+Everything is recorded in `.kiln/ownership.json`. `kiln remove auth` deletes only that.
+
+## Install
 
 ```bash
-cd examples/nextjs-app
-bun install
-bun run build
-bun run dev
+npm install -g @kiln-cli/kiln    # or pnpm / yarn / bun
+# or run once: npx @kiln-cli/kiln init my-app
 ```
 
-Open http://localhost:3000
+Kiln detects your package manager from `packageManager` or the lockfile and uses it. `kiln init` scaffolds with bun; existing projects keep theirs.
 
-## CLI commands
-
-| Command | Description |
-|---------|-------------|
-| `kiln create <name>` | Scaffold a new Next.js + TypeScript project |
-| `kiln add env [--var KEY=value]` | Add environment variable capability |
-| `kiln add auth` | Add auth capability (next-auth) |
-| `kiln inspect` | Inspect project metadata and ownership |
-| `kiln doctor` | Run environment and project health checks |
-
-Global flags: `--dry-run`, `--help`, `--version`
-
-## Monorepo scripts
-
-| Script | Description |
-|--------|-------------|
-| `bun run build` | Build all packages |
-| `bun run test:unit` | Unit tests in `apps` and `packages` |
-| `bun run test:post-deploy` | Version-upgrade smoke tests (after `bun run build`) |
-| `bun run link-cli` | Link `@kiln/cli` globally via `bun link` |
-| `bun run lint` | Lint all packages |
-| `bun run format` | Format all packages |
-
-## Version upgrade / post-deploy checks
-
-After each kiln version is built, run the business-journey suite against the compiled CLI:
+## Create
 
 ```bash
-bun run build
-bun run test:post-deploy
+kiln init my-app          # new Next.js + TypeScript project
+kiln init --existing      # adopt the project in the current directory
 ```
 
-Catalog: [`tests/post-deploy/README.md`](tests/post-deploy/README.md). CI: `.github/workflows/post-deploy.yml` (PRs, `main`, tags `v*`, `workflow_dispatch`).
+`--existing` marks every file already on disk as external, so `kiln add` never overwrites it and `kiln remove` never deletes it.
 
-## Project structure
+## Capabilities
+
+| Command | Adds |
+|---------|------|
+| `kiln add env [--var KEY=value]` | Env vars in `.env.local` and `.env.example` |
+| `kiln add auth [--provider github\|google\|credentials]` | next-auth, middleware, provider env vars |
+| `kiln add db` | Prisma schema, client and scripts (PostgreSQL) |
+| `kiln remove <capability>` | Everything kiln added for it, and only that |
+
+`remove` keeps files you edited, refuses while your code still imports what it would delete (`--force` overrides), and never touches `prisma/migrations` or your database.
+
+## Other commands
+
+| Command | Does |
+|---------|------|
+| `kiln env remove <NAME>...` | Drop single env vars |
+| `kiln db migrate` | `prisma migrate dev` with `.env.local` loaded |
+| `kiln inspect` | Project shape, package manager, ownership |
+| `kiln doctor` | Health checks |
+
+Global flags: `--dry-run`, `--help`, `--version`.
+
+## Write your own capability
+
+```bash
+kiln init-plugin hello-world    # scaffolds kiln-capability-hello-world
+kiln plugins list               # entries in kiln.plugins.json and whether they load
+kiln plugins verify             # version-pin mismatches
+```
+
+Plugins are opt-in via `kiln.plugins.json`. Guides: [writing a plugin](docs/writing-a-plugin.md), [plugin architecture](docs/plugin-architecture.md).
+
+## Architecture
+
+The planner checks ownership conflicts, the transform engine applies changes on a virtual filesystem, and files are written only if the plan is clean.
 
 ```
-apps/cli                   # kiln CLI (@kiln/cli@1.0.0)
-packages/core              # Shared types, ownership, validation
-packages/runtime           # Capability execution runtime
-packages/transform-engine  # Virtual filesystem and transforms
-packages/capabilities/     # env, auth capabilities
-examples/nextjs-app        # Reference app with env + auth applied
-tests/post-deploy          # Upgrade smoke suite
+apps/cli                packages/planner         packages/capabilities/{env,auth,db}
+packages/core           packages/runtime         packages/sdk
+packages/project-model  packages/transform-engine  packages/adapters/node
 ```
 
-## Troubleshooting
+## Development
 
-**Build fails with missing `.d.ts` files** — run `bun run build` again (builds use `tsc -b --force`).
+```bash
+git clone https://github.com/arpitbhalla1801/kiln.git && cd kiln
+bun install && bun run build && bun run test:unit && bun run link-cli
+```
 
-**`kiln: command not found`** — run `bun run link-cli` from the repo root.
+Needs Bun 1.3+. Try `examples/nextjs-app`. Smoke suite: [tests/post-deploy](tests/post-deploy/README.md).
 
-**`Target directory already exists`** — choose a new project name; `kiln create` will not overwrite non-empty directories.
+## Contributing
 
-**Doctor reports package-json-health failures** — your `package.json` may be missing required scripts or dependencies for a Next.js project.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [SECURITY.md](SECURITY.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE)
