@@ -21,6 +21,7 @@ import { NodeAdapter } from '@kiln/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
 import {
   FileHashStore,
+  hashContent,
   loadOwnershipTracker,
   LockfileStore,
   PluginConfigStore,
@@ -195,6 +196,7 @@ export class CapabilityRuntime {
       resolvedDependencies: context.resolvedDependencies,
       inspection: context.inspection,
       capabilityPlan: context.capabilityPlan,
+      warnings: context.warnings ?? [],
     };
   }
 
@@ -243,6 +245,11 @@ export class CapabilityRuntime {
         dryRun: context.dryRun,
         rootDir: context.rootPath,
       });
+      context.warnings = await findSkippedEditedFiles(
+        context.rootPath,
+        context.capabilityPlan.capability.files ?? [],
+        context.preview.operations.map((operation) => operation.filePath)
+      );
       context.resolvedDependencies = finalized.resolvedDependencies;
       context.dependenciesToInstall = extractInstallDependencies(context.capabilityPlan.transforms);
       context.state.preview = context.preview;
@@ -401,6 +408,28 @@ export class CapabilityRuntime {
 
     return [...dependencies, capability];
   }
+}
+
+/** Owned files that differ from what kiln last wrote and that this run leaves untouched. */
+async function findSkippedEditedFiles(
+  rootPath: string,
+  ownedFiles: string[],
+  touchedFiles: string[]
+): Promise<string[]> {
+  const known = await FileHashStore.load(rootPath);
+  const warnings: string[] = [];
+
+  for (const filePath of ownedFiles) {
+    if (touchedFiles.includes(filePath) || !(filePath in known)) {
+      continue;
+    }
+    const onDisk = await readFile(join(rootPath, filePath), 'utf8').catch(() => undefined);
+    if (onDisk !== undefined && hashContent(onDisk) !== known[filePath]) {
+      warnings.push(`Skipped ${filePath}: edited since kiln wrote it, left as is.`);
+    }
+  }
+
+  return warnings;
 }
 
 export function createCapabilityRuntime(options?: CapabilityRuntimeOptions): CapabilityRuntime {

@@ -55,6 +55,10 @@ export async function runAdd(
       result.resolvedDependencies
     )
   );
+
+  for (const warning of result.warnings) {
+    console.warn(`Warning: ${warning}`);
+  }
 }
 
 function parseFlagValues(argv: string[], flagName: string): string[] {

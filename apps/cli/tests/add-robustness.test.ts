@@ -33,6 +33,18 @@ async function capture(run: () => Promise<unknown>): Promise<string> {
   return logs.join('\n');
 }
 
+async function captureWarnings(run: () => Promise<unknown>): Promise<string> {
+  const warnings: string[] = [];
+  const original = console.warn;
+  console.warn = (message?: unknown) => warnings.push(String(message));
+  try {
+    await capture(run);
+  } finally {
+    console.warn = original;
+  }
+  return warnings.join('\n');
+}
+
 /** The "create|modify|delete <path>" lines of a plan, ignoring diff bodies and mode headers. */
 function operations(output: string): string[] {
   return output
@@ -95,9 +107,19 @@ describe('add robustness', () => {
     const edited = `${await read(root, 'src/auth.ts')}\n// my edit\n`;
     await writeFile(join(root, 'src/auth.ts'), edited);
 
-    await capture(() => runAdd('auth', { cwd: root, dryRun: false }));
+    const warnings = await captureWarnings(() => runAdd('auth', { cwd: root, dryRun: false }));
 
     expect(await read(root, 'src/auth.ts')).toBe(edited);
+    expect(warnings).toContain('Skipped src/auth.ts');
+  }, 60000);
+
+  test('re-running add auth does not warn when nothing was edited', async () => {
+    const root = await createProject();
+    await runAdd('auth', { cwd: root, dryRun: false });
+
+    const warnings = await captureWarnings(() => runAdd('auth', { cwd: root, dryRun: false }));
+
+    expect(warnings).toBe('');
   }, 60000);
 
   test('re-running add auth keeps user-added env values and never rotates AUTH_SECRET', async () => {
