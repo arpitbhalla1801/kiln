@@ -19,9 +19,12 @@ export interface RuntimeExecutionResult {
   resolvedDependencies: Map<string, string>;
   inspection: ProjectInspection;
   capabilityPlan: CapabilityExecutionPlan;
+  /** Owned files kiln left alone because the user edited them since kiln wrote them. */
+  warnings: string[];
 }
 
 export interface KilnRuntimeContext extends LifecycleContext {
+  warnings?: string[];
   rootPath: string;
   dryRun: boolean;
   capabilityId: SupportedCapabilityId;
