@@ -39,9 +39,12 @@ export async function runAdd(
   providers: string[] = []
 ): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
+  const runtime = createCapabilityRuntime();
+  // A third-party capability isn't in SUPPORTED_CAPABILITY_IDS until its
+  // kiln.plugins.json entry is loaded and registered on this runtime.
+  await runtime.loadPlugins(rootPath);
   await assertCapabilityPrerequisites(capabilityId, rootPath);
 
-  const runtime = createCapabilityRuntime();
   const variables = resolveEnvVariables(capabilityId, envVariables);
 
   const result = await runtime.addCapability(capabilityId, {

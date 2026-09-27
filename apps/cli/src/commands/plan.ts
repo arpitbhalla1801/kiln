@@ -12,9 +12,10 @@ export async function runPlanAdd(
   providers: string[] = []
 ): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
+  const runtime = createCapabilityRuntime();
+  await runtime.loadPlugins(rootPath);
   await assertCapabilityPrerequisites(capabilityId, rootPath);
 
-  const runtime = createCapabilityRuntime();
   const variables = resolveEnvVariables(capabilityId, envVariables);
 
   const result = await runtime.planCapability(capabilityId, {

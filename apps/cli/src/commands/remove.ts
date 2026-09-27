@@ -8,7 +8,7 @@ import {
   OwnershipMetadataStore,
 } from '@kiln/project-model';
 import { buildEnvRemovalTransforms, GITIGNORE_ENV_LOCAL_KEY } from '@kiln/env-capability';
-import { SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
+import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
 import { createTransformPipeline, TransformEngine } from '@kiln/transform-engine';
 import type { OwnershipSnapshot } from '@kiln/core';
 import { formatTransformPlan } from '../output.js';
@@ -17,13 +17,17 @@ import { resolveProjectRoot } from '../project.js';
 import { findRemovalBreakage, partitionEditedFiles } from './remove-impact.js';
 
 export async function runRemove(capabilityId: string, options: CliOptions): Promise<void> {
+  const rootPath = await resolveProjectRoot(options.cwd);
+  // Ownership-driven, so remove needs no capability instance -- but a
+  // third-party capability isn't in SUPPORTED_CAPABILITY_IDS until its
+  // kiln.plugins.json entry is loaded and registered.
+  await createCapabilityRuntime().loadPlugins(rootPath);
+
   if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {
     throw new Error(
       `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITY_IDS.join(', ')}`
     );
   }
-
-  const rootPath = await resolveProjectRoot(options.cwd);
   const tracker = await loadOwnershipTracker(rootPath);
   const snapshot = tracker.toSnapshot();
 
