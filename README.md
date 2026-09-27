@@ -75,6 +75,7 @@ kiln init --existing      # adopt the project in the current directory
 | `kiln db migrate` | `prisma migrate dev` with `.env.local` loaded |
 | `kiln inspect` | Project, capabilities, managed files, last operation, health (`--verbose` lists ownership) |
 | `kiln doctor` | Health checks |
+| `kiln plan add <capability>` | Preview of `kiln add <capability> --dry-run`: writes nothing |
 
 Global flags: `--dry-run`, `--help`, `--version`.
 

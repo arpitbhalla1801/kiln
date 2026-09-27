@@ -22,7 +22,7 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
+type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'plan';
 
 const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
@@ -34,6 +34,7 @@ const commands: Record<CommandName, string> = {
   doctor: 'Run environment checks for kiln.',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
+  plan: 'Preview what adding a capability would do, without writing anything.',
 };
 
 function printHelp(topic?: string): void {
@@ -64,6 +65,12 @@ function printHelp(topic?: string): void {
       console.log('  kiln add env [--var KEY=value]');
       console.log('  kiln add auth [--provider github|google|credentials] [--var KEY=value]');
       console.log('  kiln add db');
+    }
+
+    if (command === 'plan') {
+      console.log('Usage: kiln plan add <capability>');
+      console.log('Same as `kiln add <capability> --dry-run`: shows dependencies to add and');
+      console.log('files to create or modify, without touching the filesystem.');
     }
 
     if (command === 'remove') {
@@ -191,6 +198,21 @@ async function main(argv: string[]): Promise<void> {
     const envVariables = parseEnvVariables(argv);
     const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
     await runAdd(capabilityId, cliOptions, envVariables, providers);
+    return;
+  }
+
+  if (firstArg === 'plan') {
+    if (secondArg !== 'add') {
+      throw new Error(`Unknown 'plan' subcommand '${secondArg}'. Usage: kiln plan add <capability>`);
+    }
+    const capabilityId = thirdArg;
+    if (!capabilityId) {
+      throw new Error('Missing capability. Usage: kiln plan add <env|auth|db>');
+    }
+
+    const envVariables = parseEnvVariables(argv);
+    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    await runAdd(capabilityId, { ...cliOptions, dryRun: true }, envVariables, providers);
     return;
   }
 
