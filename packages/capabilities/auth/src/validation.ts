@@ -5,6 +5,7 @@ import {
 } from '@kiln/core';
 import {
   AUTH_CAPABILITY_ID,
+  AUTH_PRISMA_ADAPTER_PACKAGE,
   NEXT_AUTH_PACKAGE,
   type AuthFilePaths,
 } from './types.js';
@@ -13,7 +14,8 @@ export function buildAuthOwnershipRegistrations(
   paths: AuthFilePaths,
   ownerCapabilityId = AUTH_CAPABILITY_ID,
   providers: string[] = [],
-  claimDependency = true
+  claimDependency = true,
+  claimAdapterDependency = false
 ): OwnershipRegistration[] {
   const activePaths: Record<string, string> = { ...paths };
   if (providers.length === 0) {
@@ -26,17 +28,20 @@ export function buildAuthOwnershipRegistrations(
     ownerCapabilityId,
   }));
 
+  const claimedDependencies = [
+    ...(claimDependency ? [NEXT_AUTH_PACKAGE] : []),
+    ...(claimAdapterDependency ? [AUTH_PRISMA_ADAPTER_PACKAGE] : []),
+  ];
+
   return [
     ...fileRegistrations,
-    ...(claimDependency
-      ? [
-          {
-            resourceType: 'dependency' as const,
-            resourceKey: NEXT_AUTH_PACKAGE,
-            ownerCapabilityId,
-          },
-        ]
-      : []),
+    ...claimedDependencies.map(
+      (name): OwnershipRegistration => ({
+        resourceType: 'dependency',
+        resourceKey: name,
+        ownerCapabilityId,
+      })
+    ),
   ];
 }
 

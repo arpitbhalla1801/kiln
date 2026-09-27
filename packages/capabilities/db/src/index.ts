@@ -3,6 +3,7 @@ export const name = '@kiln/db-capability';
 export { DbCapability, buildDbFilePaths, buildDbTransforms } from './capability.js';
 export { buildDbOwnershipRegistrations, validateDbOwnership } from './validation.js';
 export {
+  createAuthAwareSchemaPrismaContent,
   createDbClientContent,
   createSchemaPrismaContent,
 } from './templates.js';

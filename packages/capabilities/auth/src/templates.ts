@@ -1,24 +1,47 @@
 import type { AuthFilePaths } from './types.js';
 import { resolveProvider } from './providers.js';
 
-export function createAuthConfigContent(providerIds: string[] = []): string {
+/** Options for wiring the Auth.js Prisma adapter into the generated auth config. */
+export interface AuthAdapterOptions {
+  /** Relative import specifier (no extension) for the db capability's client, e.g. "./lib/db". */
+  dbClientImportPath: string;
+}
+
+export function createAuthConfigContent(
+  providerIds: string[] = [],
+  adapter?: AuthAdapterOptions
+): string {
   const providers = providerIds.map(resolveProvider);
 
   const providerImports = providers
     .map((provider) => `import ${provider.importName} from "${provider.importSpecifier}";`)
     .join('\n');
 
+  // Kept empty (not '\n') when there's no adapter, so the no-adapter output stays
+  // byte-identical to before -- every "was this hand-edited" check compares against it.
+  const adapterImportLines = adapter
+    ? `\nimport { PrismaAdapter } from "@auth/prisma-adapter";\nimport { db } from "${adapter.dbClientImportPath}";`
+    : '';
+
   const importBlock = providerImports
-    ? `import NextAuth from "next-auth";\n${providerImports}`
-    : 'import NextAuth from "next-auth";';
+    ? `import NextAuth from "next-auth";\n${providerImports}${adapterImportLines}`
+    : `import NextAuth from "next-auth";${adapterImportLines}`;
 
   const providersList = providers.map((provider) => `    ${provider.factoryExpression},`).join('\n');
   const providersArray = providersList ? `[\n${providersList}\n  ]` : '[]';
 
+  // This comment lands in the generated file itself, for whoever reads auth.ts next.
+  const adapterField = adapter
+    ? '  // Session strategy defaults to "database" because an adapter is set (it would\n' +
+      '  // be "jwt" without one): sessions live in the adapter\'s Session model instead\n' +
+      '  // of being encoded into a signed cookie. Override with `session: { strategy }`.\n' +
+      '  adapter: PrismaAdapter(db),\n'
+    : '';
+
   return `${importBlock}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: ${providersArray},
+${adapterField}  providers: ${providersArray},
 });
 `;
 }
