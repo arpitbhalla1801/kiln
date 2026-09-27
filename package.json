@@ -18,7 +18,7 @@
     "format": "turbo run format",
     "test": "turbo run test",
     "test:unit": "bun test apps packages",
-    "test:post-deploy": "bun test tests/post-deploy",
+    "test:business-journeys": "bun test tests/business-journeys",
     "link-cli": "bun run build --filter=@kiln-cli/kiln && cd apps/cli && bun link"
   },
   "overrides": {

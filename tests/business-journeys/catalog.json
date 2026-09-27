@@ -1,7 +1,7 @@
 {
-  "suite": "kiln-post-deploy",
+  "suite": "kiln-business-journeys",
   "purpose": "Business-level smoke tests for each kiln version upgrade. Run after build, before publishing or tagging a release.",
-  "command": "bun run test:post-deploy",
+  "command": "bun run test:business-journeys",
   "journeys": [
     {
       "id": "cli-contract",
@@ -98,6 +98,18 @@
         {
           "id": "PD-19",
           "name": "generated app production-builds",
+          "severity": "blocker"
+        }
+      ]
+    },
+    {
+      "id": "edit-then-reapply",
+      "title": "A developer's hand-edits to a kiln-owned file survive a re-apply",
+      "businessValue": "Ownership tracking is the moat: kiln never clobbers work a developer did after kiln wrote the file, even across a second install of the same capability.",
+      "cases": [
+        {
+          "id": "PD-24",
+          "name": "hand-edited auth file survives add auth twice and the app still builds",
           "severity": "blocker"
         }
       ]

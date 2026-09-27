@@ -4,7 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/@kiln-cli/kiln?color=cb3837)](https://www.npmjs.com/package/@kiln-cli/kiln)
 [![downloads](https://img.shields.io/npm/dm/@kiln-cli/kiln)](https://www.npmjs.com/package/@kiln-cli/kiln)
-[![CI](https://github.com/arpitbhalla1801/kiln/actions/workflows/post-deploy.yml/badge.svg)](https://github.com/arpitbhalla1801/kiln/actions/workflows/post-deploy.yml)
+[![CI](https://github.com/arpitbhalla1801/kiln/actions/workflows/business-journeys.yml/badge.svg)](https://github.com/arpitbhalla1801/kiln/actions/workflows/business-journeys.yml)
 [![license](https://img.shields.io/npm/l/@kiln-cli/kiln)](LICENSE)
 [![node](https://img.shields.io/node/v/@kiln-cli/kiln)](https://nodejs.org)
 
@@ -106,7 +106,7 @@ git clone https://github.com/arpitbhalla1801/kiln.git && cd kiln
 bun install && bun run build && bun run test:unit && bun run link-cli
 ```
 
-Needs Bun 1.3+. Try `examples/nextjs-app`. Smoke suite: [tests/post-deploy](tests/post-deploy/README.md).
+Needs Bun 1.3+. Try `examples/nextjs-app`. Business journey tests: [tests/business-journeys](tests/business-journeys/README.md).
 
 ## Contributing
 

@@ -7,7 +7,7 @@ interface Catalog {
   journeys: Array<{ cases: Array<{ id: string }> }>;
 }
 
-describe('post-deploy catalog', () => {
+describe('business journey catalog', () => {
   test('catalog IDs are referenced by test files', () => {
     const dir = dirname(fileURLToPath(import.meta.url));
     const catalog = JSON.parse(readFileSync(join(dir, 'catalog.json'), 'utf8')) as Catalog;
