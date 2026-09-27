@@ -23,6 +23,17 @@ export interface RuntimeExecutionResult {
   warnings: string[];
 }
 
+export interface CapabilityPlanResult {
+  capabilityId: string;
+  inspection: ProjectInspection;
+  /** Human-readable ownership conflicts; non-empty means `preview` is absent and nothing else was computed. */
+  conflicts: string[];
+  /** `<resourceType> <resourceKey> -> <capabilityId>` lines for resources this add would newly claim. */
+  ownershipUpdates: string[];
+  preview: TransformPlan | undefined;
+  resolvedDependencies: Map<string, string>;
+}
+
 export interface KilnRuntimeContext extends LifecycleContext {
   warnings?: string[];
   rootPath: string;

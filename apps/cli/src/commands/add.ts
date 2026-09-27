@@ -11,33 +11,38 @@ const DEFAULT_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
 };
 
-export async function runAdd(
-  capabilityId: string,
-  options: CliOptions,
-  envVariables: EnvVariableMap = {},
-  providers: string[] = []
-): Promise<void> {
+/** Shared by `add` and `plan add`: capability id and TypeScript prerequisites. */
+export async function assertCapabilityPrerequisites(capabilityId: string, rootPath: string): Promise<void> {
   if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {
     throw new Error(
       `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITY_IDS.join(', ')}`
     );
   }
 
-  const rootPath = await resolveProjectRoot(options.cwd);
-
   if (TYPESCRIPT_CAPABILITIES.includes(capabilityId) && !(await detectNextJs(rootPath)).typescript) {
     throw new Error(
-      `Refusing to add ${capabilityId}: it writes TypeScript files, but this project has no TypeScript setup ` +
+      `Refusing capability '${capabilityId}': it writes TypeScript files, but this project has no TypeScript setup ` +
         '(no tsconfig.json and no typescript dependency). Add TypeScript first, then run this again.'
     );
   }
+}
+
+/** Shared by `add` and `plan add`: fills in default env vars when none were passed for the `env` capability. */
+export function resolveEnvVariables(capabilityId: string, envVariables: EnvVariableMap): EnvVariableMap {
+  return capabilityId === 'env' && Object.keys(envVariables).length === 0 ? DEFAULT_ENV_VARS : envVariables;
+}
+
+export async function runAdd(
+  capabilityId: string,
+  options: CliOptions,
+  envVariables: EnvVariableMap = {},
+  providers: string[] = []
+): Promise<void> {
+  const rootPath = await resolveProjectRoot(options.cwd);
+  await assertCapabilityPrerequisites(capabilityId, rootPath);
 
   const runtime = createCapabilityRuntime();
-
-  const variables =
-    capabilityId === 'env' && Object.keys(envVariables).length === 0
-      ? DEFAULT_ENV_VARS
-      : envVariables;
+  const variables = resolveEnvVariables(capabilityId, envVariables);
 
   const result = await runtime.addCapability(capabilityId, {
     cwd: rootPath,
