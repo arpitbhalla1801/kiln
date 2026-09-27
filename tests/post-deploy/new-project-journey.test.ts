@@ -102,12 +102,11 @@ describe('post-deploy new project journey', () => {
       ['API_URL', 'AUTH_SECRET', 'DATABASE_URL'].sort()
     );
 
-    const inspect = runKiln(['inspect'], projectDir);
+    const inspect = runKiln(['inspect', '--verbose'], projectDir);
     expect(inspect.exitCode).toBe(0);
     // PD-16 inspect reports Next.js app router project
-    expect(inspect.stdout).toContain('name: upgrade-app');
-    expect(inspect.stdout).toContain('nextjs: yes');
-    expect(inspect.stdout).toContain('nextRouter: app');
+    expect(inspect.stdout).toContain('Project: Next.js +');
+    expect(inspect.stdout).toContain('✓ auth');
     expect(inspect.stdout).toContain('file src/auth.ts -> auth');
 
     const doctor = runKiln(['doctor'], projectDir);
