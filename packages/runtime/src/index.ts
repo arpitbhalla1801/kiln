@@ -22,6 +22,7 @@ export {
   type CapabilityRegistryEntry,
 } from './capability-registry.js';
 export type {
+  CapabilityPlanResult,
   KilnRuntimeContext,
   RuntimeExecutionResult,
   RuntimeOptions,

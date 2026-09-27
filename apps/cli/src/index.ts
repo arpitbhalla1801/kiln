@@ -3,6 +3,7 @@
 import { resolve } from 'node:path';
 import pkg from '../package.json';
 import { runAdd, parseEnvVariables, parseProviders } from './commands/add.js';
+import { runPlanAdd } from './commands/plan.js';
 import { runInit, runInitExisting } from './commands/init.js';
 import { runDbMigrate } from './commands/db-migrate.js';
 import { runDoctor } from './commands/doctor.js';
@@ -69,8 +70,8 @@ function printHelp(topic?: string): void {
 
     if (command === 'plan') {
       console.log('Usage: kiln plan add <capability>');
-      console.log('Same as `kiln add <capability> --dry-run`: shows dependencies to add and');
-      console.log('files to create or modify, without touching the filesystem.');
+      console.log('Preview: dependencies to add, files to create or modify, ownership');
+      console.log('updates, and ownership conflicts. Writes nothing either way.');
     }
 
     if (command === 'remove') {
@@ -212,7 +213,7 @@ async function main(argv: string[]): Promise<void> {
 
     const envVariables = parseEnvVariables(argv);
     const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
-    await runAdd(capabilityId, { ...cliOptions, dryRun: true }, envVariables, providers);
+    await runPlanAdd(capabilityId, cliOptions, envVariables, providers);
     return;
   }
 
