@@ -171,7 +171,7 @@ Docs-only phase, no runtime code. Full write-up lives in
 ## Verification checklist (re-run per phase, not just at the end)
 
 1. `bunx turbo run build` and `bunx turbo run test` green.
-2. `bun run test:post-deploy` green (built CLI against real temp projects).
+2. `bun run test:business-journeys` green (built CLI against real temp projects).
 3. Phase 2: a registry-registered fake capability round-trips through
    `add`/`remove`/lockfile with zero change to existing env/auth/db
    behavior.

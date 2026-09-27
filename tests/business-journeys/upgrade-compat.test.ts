@@ -12,7 +12,7 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-describe('post-deploy upgrade compatibility', () => {
+describe('business journey upgrade compatibility', () => {
   test('PD-20 example inspect still detects Next.js and ownership', () => {
     const result = runKiln(['inspect', '--verbose'], exampleAppRoot);
     expect(result.exitCode).toBe(0);

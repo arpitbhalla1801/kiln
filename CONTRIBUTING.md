@@ -15,10 +15,10 @@ bun run build
 
 ```bash
 bun run test:unit         # unit tests across apps/ and packages/
-bun run test:post-deploy  # end-to-end CLI smoke tests (run after bun run build)
+bun run test:business-journeys  # end-to-end CLI smoke tests (run after bun run build)
 ```
 
-Both suites run in CI (`.github/workflows/post-deploy.yml`) on Linux, macOS, and Windows for every PR — please make sure they pass locally first.
+Both suites run in CI (`.github/workflows/business-journeys.yml`) on Linux, macOS, and Windows for every PR — please make sure they pass locally first.
 
 ## Trying your changes as the real CLI
 
@@ -39,7 +39,7 @@ packages/adapters/node        # package-manager + Next.js detection
 packages/capabilities/         # env, auth, db capabilities
 packages/runtime               # wires lifecycle + planner + transform-engine together
 examples/nextjs-app             # reference app with env + auth already applied
-tests/post-deploy                # CLI smoke-test suite run against the built bin
+tests/business-journeys        # business journey (CLI smoke-test) suite run against the built bin
 docs/                          # architecture references that outlive any single issue/PR
 ```
 
@@ -62,7 +62,7 @@ git history:
 
 1. Open an issue first for anything beyond a trivial fix — this project tracks its roadmap through GitHub issues with labels like `p0`/`p1`/`p2`, `security`, `capability`, `rfc`; a quick discussion before a PR avoids wasted work on the wrong approach.
 2. Add or update tests for the behavior you're changing. A bug fix without a regression test is considered incomplete.
-3. Run `bun run build`, `bun run test:unit`, and `bun run test:post-deploy` before opening a PR.
+3. Run `bun run build`, `bun run test:unit`, and `bun run test:business-journeys` before opening a PR.
 4. Keep PRs focused — one fix or feature per PR is much easier to review than a bundle of unrelated changes.
 
 ## Releasing `@kiln/capability-sdk`

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runCommand, runKiln } from './cli-runner.js';
@@ -7,7 +7,7 @@ import { runCommand, runKiln } from './cli-runner.js';
 const tempRoots: string[] = [];
 
 async function createWorkspace(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'kiln-post-deploy-'));
+  const root = await mkdtemp(join(tmpdir(), 'kiln-business-journey-'));
   tempRoots.push(root);
   return root;
 }
@@ -18,7 +18,7 @@ afterAll(async () => {
   }
 }, 30000);
 
-describe('post-deploy new project journey', () => {
+describe('business journey new project journey', () => {
   test('PD-10 through PD-19 onboard env + auth and build', async () => {
     const parent = await createWorkspace();
     // PD-10 init scaffolds Next.js app router files
@@ -130,6 +130,33 @@ describe('post-deploy new project journey', () => {
     const build = runCommand('bun', ['run', 'build'], projectDir);
     expect(build.exitCode).toBe(0);
     // PD-19 generated app production-builds
+    expect(build.output).toContain('Compiled successfully');
+  }, 180000);
+
+  test('PD-24 hand-edited auth file survives add auth twice and the app still builds', async () => {
+    const parent = await createWorkspace();
+    const initResult = runKiln(['init', 'edit-app'], parent);
+    expect(initResult.exitCode).toBe(0);
+
+    const projectDir = join(parent, 'edit-app');
+    expect(runCommand('bun', ['install'], projectDir).exitCode).toBe(0);
+    expect(runKiln(['add', 'env'], projectDir).exitCode).toBe(0);
+    expect(runKiln(['add', 'auth'], projectDir).exitCode).toBe(0);
+
+    // A developer's own edit to a kiln-owned file, after kiln wrote it.
+    const middlewarePath = join(projectDir, 'src/middleware.ts');
+    const edited = `${await readFile(middlewarePath, 'utf8')}\n// kept: reviewer-added comment\n`;
+    await writeFile(middlewarePath, edited, 'utf8');
+
+    const reAddAuth = runKiln(['add', 'auth'], projectDir);
+    expect(reAddAuth.exitCode).toBe(0);
+    expect(reAddAuth.output).toContain('Warning: Skipped src/middleware.ts');
+
+    const middlewareAfter = await readFile(middlewarePath, 'utf8');
+    expect(middlewareAfter).toContain('// kept: reviewer-added comment');
+
+    const build = runCommand('bun', ['run', 'build'], projectDir);
+    expect(build.exitCode).toBe(0);
     expect(build.output).toContain('Compiled successfully');
   }, 180000);
 });
