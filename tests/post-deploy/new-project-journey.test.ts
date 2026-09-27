@@ -36,6 +36,12 @@ describe('post-deploy new project journey', () => {
     expect(dryRun.stdout).toContain('Mode: dry-run');
     await expect(readFile(join(projectDir, '.env.example'), 'utf8')).rejects.toThrow();
 
+    // PD-11b plan add is the same preview, without --dry-run, and writes nothing either
+    const plan = runKiln(['plan', 'add', 'env'], projectDir);
+    expect(plan.exitCode).toBe(0);
+    expect(plan.stdout).toContain('Mode: dry-run');
+    await expect(readFile(join(projectDir, '.env.example'), 'utf8')).rejects.toThrow();
+
     const install = runCommand('bun', ['install'], projectDir);
     expect(install.exitCode).toBe(0);
 
