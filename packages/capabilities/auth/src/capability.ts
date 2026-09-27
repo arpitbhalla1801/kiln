@@ -46,6 +46,13 @@ import { resolveProvider } from './providers.js';
 
 const AUTH_SOURCE_ROOT_MARKERS = ['app', 'pages', 'auth.ts'];
 
+// The credentials provider needs no external OAuth app, so its demo vars get a
+// real, working default instead of a placeholder -- the example runs as-is.
+const CREDENTIALS_DEMO_DEFAULTS: Record<string, string> = {
+  AUTH_DEMO_EMAIL: 'demo@kiln.dev',
+  AUTH_DEMO_PASSWORD: 'kiln-demo-password',
+};
+
 export function buildAuthEnvVars(providers: string[], generateSecret = true): EnvVariableMap {
   const envVars: EnvVariableMap = generateSecret
     ? { AUTH_SECRET: { value: randomBytes(32).toString('base64'), required: true } }
@@ -54,7 +61,10 @@ export function buildAuthEnvVars(providers: string[], generateSecret = true): En
   for (const providerId of providers) {
     const provider = resolveProvider(providerId);
     for (const envVar of provider.envVars) {
-      envVars[envVar] = { example: 'replace-me', required: true };
+      envVars[envVar] =
+        envVar in CREDENTIALS_DEMO_DEFAULTS
+          ? { value: CREDENTIALS_DEMO_DEFAULTS[envVar], required: true }
+          : { example: 'replace-me', required: true };
     }
   }
 
