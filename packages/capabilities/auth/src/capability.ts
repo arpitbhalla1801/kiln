@@ -29,9 +29,12 @@ import {
   createMiddlewareContent,
   createRouteHandlerContent,
   resolveAuthImportPath,
+  type AuthAdapterOptions,
 } from './templates.js';
 import {
   AUTH_CAPABILITY_ID,
+  AUTH_PRISMA_ADAPTER_PACKAGE,
+  AUTH_PRISMA_ADAPTER_VERSION,
   NEXT_AUTH_PACKAGE,
   NEXT_AUTH_VERSION,
   type AuthCapabilityPlan,
@@ -45,6 +48,14 @@ import {
 import { resolveProvider } from './providers.js';
 
 const AUTH_SOURCE_ROOT_MARKERS = ['app', 'pages', 'auth.ts'];
+
+// Mirrors @kiln/db-capability's PRISMA_CLIENT_PACKAGE -- not imported directly,
+// to avoid a circular workspace dependency between the two capabilities.
+const PRISMA_CLIENT_PACKAGE = '@prisma/client';
+// Both capabilities place their file at `${sourceRoot}/auth.ts` and
+// `${sourceRoot}/lib/db.ts` respectively, so the import from one to the
+// other is always this, regardless of what sourceRoot resolves to.
+const DB_CLIENT_IMPORT_PATH = './lib/db';
 
 // The credentials provider needs no external OAuth app, so its demo vars get a
 // real, working default instead of a placeholder -- the example runs as-is.
@@ -121,6 +132,13 @@ export class AuthCapability implements Capability {
       options.nextAuthInstalled ?? (await hasDependency(rootPath, NEXT_AUTH_PACKAGE));
     const authSecretExists =
       options.authSecretExists ?? (await envLocalHasNonEmptyValue(rootPath, 'AUTH_SECRET'));
+    const dbPresent = options.dbPresent ?? (await hasDependency(rootPath, PRISMA_CLIENT_PACKAGE));
+    const adapterPackageInstalled = dbPresent
+      ? options.adapterPackageInstalled ?? (await hasDependency(rootPath, AUTH_PRISMA_ADAPTER_PACKAGE))
+      : true;
+    const adapter: AuthAdapterOptions | undefined = dbPresent
+      ? { dbClientImportPath: DB_CLIENT_IMPORT_PATH }
+      : undefined;
 
     assertNoUnownedFile(tracker, paths.authFile, authFileExists);
     assertNoUnownedFile(tracker, paths.middlewareFile, middlewareFileExists);
@@ -132,7 +150,9 @@ export class AuthCapability implements Capability {
       middlewareFileExists,
       routeHandlerFileExists,
       nextAuthInstalled,
-      allProviders
+      allProviders,
+      adapter,
+      adapterPackageInstalled
     );
 
     if (authFileExists && (newProviders.length > 0 || removedProviders.length > 0)) {
@@ -142,6 +162,26 @@ export class AuthCapability implements Capability {
       authTransforms.push(
         ...buildProviderMergeTransforms(paths, currentAuthFileContent, existingProviders, allProviders)
       );
+    } else if (authFileExists && dbPresent) {
+      // db was added after auth, with no provider change in this same call: if the
+      // file is still kiln's plain, unedited version, it's safe to regenerate with
+      // the adapter added. Re-run `kiln add auth` with no --provider to pick this up
+      // after adding a provider and db in the same call.
+      const currentAuthFileContent =
+        options.authFileContent ??
+        (await readFile(join(rootPath, paths.authFile), 'utf8').catch(() => undefined));
+      if (currentAuthFileContent === createAuthConfigContent(existingProviders)) {
+        authTransforms.push(
+          ...createTransformPipeline()
+            .fileCreate(
+              `${AUTH_CAPABILITY_ID}-add-db-adapter`,
+              paths.authFile,
+              createAuthConfigContent(existingProviders, adapter),
+              'Wire Prisma adapter into auth config'
+            )
+            .build()
+        );
+      }
     }
 
     const envPlan = await this.envCapability.planAdd(
@@ -161,12 +201,26 @@ export class AuthCapability implements Capability {
     );
 
     const manifest = await this.getManifest();
-    // Claim next-auth only when this add installs it, so `kiln remove auth` never
-    // removes a dependency the user already had.
+    // Claim next-auth (and the Prisma adapter package, if wired) only when this
+    // add installs them, so `kiln remove auth` never removes a dependency the
+    // user already had.
     const claimDependency = !nextAuthInstalled;
-    const capability = buildCapabilityWithOwnership(manifest, paths, allProviders, claimDependency);
+    const claimAdapterDependency = Boolean(adapter) && !adapterPackageInstalled;
+    const capability = buildCapabilityWithOwnership(
+      manifest,
+      paths,
+      allProviders,
+      claimDependency,
+      claimAdapterDependency
+    );
     const ownershipRegistrations = [
-      ...buildAuthOwnershipRegistrations(paths, AUTH_CAPABILITY_ID, allProviders, claimDependency),
+      ...buildAuthOwnershipRegistrations(
+        paths,
+        AUTH_CAPABILITY_ID,
+        allProviders,
+        claimDependency,
+        claimAdapterDependency
+      ),
       ...envPlan.ownershipRegistrations,
     ];
 
@@ -207,7 +261,9 @@ export function buildAuthTransforms(
   middlewareFileExists: boolean,
   routeHandlerFileExists: boolean,
   nextAuthInstalled: boolean,
-  providers: string[] = []
+  providers: string[] = [],
+  adapter?: AuthAdapterOptions,
+  adapterPackageInstalled = false
 ): TransformPipeline {
   const builder = createTransformPipeline();
   const authImportPath = resolveAuthImportPath(paths);
@@ -222,11 +278,21 @@ export function buildAuthTransforms(
     );
   }
 
+  if (adapter && !adapterPackageInstalled) {
+    builder.packageJsonMutation(
+      `${AUTH_CAPABILITY_ID}-install-prisma-adapter`,
+      {
+        dependencies: { [AUTH_PRISMA_ADAPTER_PACKAGE]: AUTH_PRISMA_ADAPTER_VERSION },
+      },
+      'Install Auth.js Prisma adapter dependency'
+    );
+  }
+
   if (!authFileExists) {
     builder.fileCreate(
       `${AUTH_CAPABILITY_ID}-create-auth-config`,
       paths.authFile,
-      createAuthConfigContent(providers),
+      createAuthConfigContent(providers, adapter),
       'Create auth config'
     );
   }
@@ -325,7 +391,8 @@ function buildCapabilityWithOwnership(
   manifest: CapabilityManifest,
   paths: AuthFilePaths,
   providers: string[] = [],
-  claimDependency = true
+  claimDependency = true,
+  claimAdapterDependency = false
 ): ResolvedCapability {
   const activePaths: Record<string, string> = { ...paths };
   if (providers.length === 0) {
@@ -333,15 +400,20 @@ function buildCapabilityWithOwnership(
   }
 
   const ownedFiles = mergeUnique(manifest.ownership?.files ?? [], Object.values(activePaths));
+  const dependencies = [
+    ...(claimDependency ? [NEXT_AUTH_PACKAGE] : []),
+    ...(claimAdapterDependency ? [AUTH_PRISMA_ADAPTER_PACKAGE] : []),
+  ];
 
   return capabilityFromManifest({
     ...manifest,
     ownership: {
       ...manifest.ownership,
       files: ownedFiles,
-      dependencies: claimDependency
-        ? mergeUnique(manifest.ownership?.dependencies ?? [], [NEXT_AUTH_PACKAGE])
-        : [],
+      dependencies:
+        dependencies.length > 0
+          ? mergeUnique(manifest.ownership?.dependencies ?? [], dependencies)
+          : [],
     },
   });
 }

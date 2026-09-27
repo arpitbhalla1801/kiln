@@ -67,6 +67,8 @@ kiln init --existing      # adopt the project in the current directory
 
 `remove` keeps files you edited, refuses while your code still imports what it would delete (`--force` overrides), and never touches `prisma/migrations` or your database.
 
+Adding `auth` and `db` together (either order) wires the Auth.js Prisma adapter automatically: `Account`/`Session`/`VerificationToken` models, `User` relations, and `adapter: PrismaAdapter(db)` in `auth.ts` — which switches NextAuth's default session strategy from `jwt` to `database`.
+
 ## Other commands
 
 | Command | Does |

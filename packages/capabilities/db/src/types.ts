@@ -31,6 +31,9 @@ export interface DbCapabilityPlanOptions {
   sourceRoot?: string;
   schemaFileExists?: boolean;
   clientFileExists?: boolean;
+  /** Whether next-auth is already a dependency; picks the Auth.js-compatible schema. */
+  authPresent?: boolean;
+  schemaFileContent?: string;
 }
 
 export interface DbCapabilityPlan {

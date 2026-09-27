@@ -5,6 +5,8 @@ import type { EnvCapabilityPlan, EnvVariableMap } from '@kiln/env-capability';
 export const AUTH_CAPABILITY_ID = 'auth';
 export const NEXT_AUTH_PACKAGE = 'next-auth';
 export const NEXT_AUTH_VERSION = '^5.0.0-beta.32';
+export const AUTH_PRISMA_ADAPTER_PACKAGE = '@auth/prisma-adapter';
+export const AUTH_PRISMA_ADAPTER_VERSION = '^2.7.4';
 
 export interface AuthFilePaths {
   authFile: string;
@@ -28,6 +30,9 @@ export interface AuthCapabilityPlanOptions {
   authFileContent?: string;
   extraEnvVars?: EnvVariableMap;
   authSecretExists?: boolean;
+  /** Whether @prisma/client is already a dependency; wires the Auth.js Prisma adapter. */
+  dbPresent?: boolean;
+  adapterPackageInstalled?: boolean;
 }
 
 export interface AuthCapabilityPlan {

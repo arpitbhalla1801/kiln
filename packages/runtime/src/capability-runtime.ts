@@ -42,6 +42,12 @@ import type {
   SupportedCapabilityId,
 } from './types.js';
 
+// Built-in capability pairs that adjust their own output based on the other's
+// presence (auth wires the Prisma adapter when db is present; db adds Auth.js
+// models when auth is present). A small, explicit exception to the runtime
+// otherwise not knowing about specific capability ids.
+const CROSS_CAPABILITY_SIBLINGS: Record<string, string> = { auth: 'db', db: 'auth' };
+
 export interface CapabilityRuntimeOptions {
   adapter?: NodeAdapter;
   envCapability?: EnvCapability;
@@ -134,7 +140,24 @@ export class CapabilityRuntime {
     };
     const capabilityPlan = await capability.planAdd(rootPath, planOptions);
 
-    return this.executeCapabilityPlan(id, rootPath, capabilityPlan, options);
+    const result = await this.executeCapabilityPlan(id, rootPath, capabilityPlan, options);
+
+    // auth and db each notice the other's presence on their OWN next add (e.g. auth
+    // wires the Prisma adapter once @prisma/client is a dependency), but nothing
+    // re-triggers that add automatically. So a single `kiln add auth` (or `add db`)
+    // fully wires both sides in one command regardless of which was added first,
+    // re-run the sibling here if it's already installed.
+    const siblingId = CROSS_CAPABILITY_SIBLINGS[id];
+    if (siblingId && !options.dryRun && !options.skipSiblingRefresh && this.capabilities.has(siblingId)) {
+      const updatedLockfile = await LockfileStore.load(rootPath);
+      const siblingPresent =
+        updatedLockfile?.snapshot.capabilities.some((entry) => entry.id === siblingId) ?? false;
+      if (siblingPresent) {
+        await this.addCapability(siblingId, { ...options, skipSiblingRefresh: true });
+      }
+    }
+
+    return result;
   }
 
   /**
