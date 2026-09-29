@@ -27,13 +27,13 @@ async function exists(path: string): Promise<boolean> {
   );
 }
 
-async function planOutput(capabilityId: string, root: string): Promise<string> {
+async function planOutput(capabilityId: string, root: string, json = false): Promise<string> {
   const lines: string[] = [];
   const spy = spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
     lines.push(args.join(' '));
   });
   try {
-    await runPlanAdd(capabilityId, { cwd: root, dryRun: false });
+    await runPlanAdd(capabilityId, { cwd: root, dryRun: false, json });
   } finally {
     spy.mockRestore();
   }
@@ -77,7 +77,22 @@ describe('kiln plan add', () => {
     expect(output).toContain('create  .env.example');
     expect(output).toContain('Ownership updates:');
     expect(output).toContain('file .env.example -> env');
+    expect(output).toContain('Summary:');
+    expect(output).toContain('+ create   .env.example');
+    expect(output).toContain('+ owns     file .env.example -> env');
     expect(await exists(join(root, '.env.example'))).toBe(false);
+  }, 60000);
+
+  test('--json prints the plan as parseable JSON only', async () => {
+    const root = await createTempDir();
+    await runInit(root, 'demo-app');
+
+    const plan = JSON.parse(await planOutput('env', root, true));
+
+    expect(plan.capabilityId).toBe('env');
+    expect(plan.conflicts).toEqual([]);
+    expect(plan.operations).toContainEqual({ type: 'create', filePath: '.env.example' });
+    expect(plan.ownershipUpdates).toContain('file .env.example -> env');
   }, 60000);
 
   test('reports an ownership conflict instead of throwing', async () => {
@@ -89,6 +104,7 @@ describe('kiln plan add', () => {
     const output = await planOutput('auth', root);
 
     expect(output).toContain('Conflicts detected:');
+    expect(output).toContain('✗ conflict');
     expect(output).toContain('src/middleware.ts');
     expect(output).toContain('external');
     expect(output).not.toContain('Ownership updates:');
