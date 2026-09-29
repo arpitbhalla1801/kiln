@@ -32,7 +32,15 @@ describe('kiln init-plugin', () => {
 
     const manifest = JSON.parse(await readFile(join(pluginDir, 'kiln.manifest.json'), 'utf8'));
     expect(manifest.id).toBe('stripe');
-    expect(manifest.ownership.files).toEqual(['stripe.txt']);
+    expect(manifest.ownership).toEqual({
+      files: ['src/lib/stripe.ts'],
+      dependencies: ['zod'],
+      scripts: ['stripe:check'],
+      envVars: ['STRIPE_API_KEY'],
+    });
+
+    const readme = await readFile(join(pluginDir, 'README.md'), 'utf8');
+    expect(readme).toContain('https://github.com/arpitbhalla1801/kiln/blob/main/docs/writing-a-plugin.md');
 
     for (const relativePath of [
       'tsconfig.json',
@@ -74,9 +82,9 @@ describe('kiln init-plugin', () => {
         id: string;
         planAdd: (
           rootPath: string,
-          options: Record<string, unknown>
+          options: { variables?: Record<string, string> }
         ) => Promise<{
-          transforms: unknown[];
+          transforms: { id: string }[];
           ownershipRegistrations: unknown[];
         }>;
       };
@@ -85,10 +93,21 @@ describe('kiln init-plugin', () => {
 
     expect(capability.id).toBe('hello-world');
 
-    const plan = await capability.planAdd('/tmp/does-not-matter', {});
-    expect(plan.transforms).toHaveLength(1);
-    expect(plan.ownershipRegistrations).toEqual([
-      { resourceType: 'file', resourceKey: 'hello-world.txt', ownerCapabilityId: 'hello-world' },
+    const plan = await capability.planAdd(await createTempParentDir(), {
+      variables: { HELLO_WORLD_API_KEY: 'real-secret' },
+    });
+    expect(plan.transforms.map((transform) => transform.id)).toEqual([
+      'hello-world-create-module',
+      'hello-world-package-json',
+      'hello-world-env-example',
+      'hello-world-env-local',
+      'hello-world-gitignore-env-local',
     ]);
+    expect(JSON.stringify(plan.transforms[2])).not.toContain('real-secret');
+    expect(plan.ownershipRegistrations).toContainEqual({
+      resourceType: 'envVar',
+      resourceKey: 'HELLO_WORLD_API_KEY',
+      ownerCapabilityId: 'hello-world',
+    });
   });
 });

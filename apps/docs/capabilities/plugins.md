@@ -20,8 +20,7 @@ kiln plugins list      # list installed plugin capabilities
 kiln plugins verify    # verify installed plugin version pins
 ```
 
-## Reference plugin
+## Writing a plugin
 
-See the reference "hello world" plugin linked from
-[CONTRIBUTING.md](https://github.com/arpitbhalla1801/kiln/blob/main/CONTRIBUTING.md)
-for a full worked example: capability definition, `planAdd`, and lockfile round-trip.
+[docs/writing-a-plugin.md](https://github.com/arpitbhalla1801/kiln/blob/main/docs/writing-a-plugin.md)
+covers transforms, ownership and remove, options, testing, distribution and trust.
