@@ -31,6 +31,23 @@ kiln is a capability-based CLI for Bun and Next.js projects. Instead of hand-wir
 
 A capability-based CLI means each feature — auth, env, plugins — is an isolated, composable unit you opt into. Run `kiln add auth` to wire up next-auth with a provider of your choice, `kiln add env` to generate a `.env.local` from your `.env.example`, or `kiln init-plugin` to scaffold a third-party capability using the `@kiln/capability-sdk`. Built for Bun and Next.js, kiln keeps generated code idiomatic to both.
 
+## Why a capability-based CLI
+
+Most project generators give you a starting point and then get out of the way, which means auth, env handling, and plugin wiring end up copy-pasted between projects and drift out of sync over time. kiln treats each of these as a capability with its own generator, its own file ownership record, and its own upgrade path, so adding a capability to an existing Bun and Next.js app is as safe as adding it to a brand new one.
+
+Because kiln tracks which files each capability generated, running `kiln add` again after you've hand-edited the output won't silently clobber your changes — it warns you instead. That ownership tracking is also what makes the plugin architecture work: a third-party capability built with `@kiln/capability-sdk` follows the same rules as the built-in auth and env capabilities.
+
+## Quick example
+
+```bash
+kiln init my-app
+cd my-app
+kiln add auth --provider github
+kiln add env
+```
+
+The commands above scaffold a new Bun and Next.js project, wire up next-auth with GitHub as the provider, and generate a `.env.local` from `.env.example`. Each step is a capability you can run independently, skip entirely, or extend with your own plugin.
+
 ## Install
 
 ```bash

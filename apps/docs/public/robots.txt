@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://arpitbhalla1801.github.io/kiln/sitemap.xml
