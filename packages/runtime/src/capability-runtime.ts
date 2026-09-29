@@ -25,6 +25,8 @@ import {
   hashContent,
   loadOwnershipTracker,
   LockfileStore,
+  ownershipMetadataFromSnapshot,
+  OwnershipMetadataStore,
   PluginConfigStore,
   saveOwnershipTracker,
   type KilnLockfile,
@@ -399,7 +401,27 @@ export class CapabilityRuntime {
         throw new Error('Ownership tracker missing during finalize');
       }
 
-      await saveOwnershipTracker(tracker, context.rootPath);
+      // A var this capability's plan removes (e.g. a dropped auth provider's) stops being owned.
+      const capabilityId = context.capabilityPlan?.capability.id;
+      const released = new Set(
+        (context.capabilityPlan?.transforms ?? []).flatMap((transform) =>
+          transform.type === 'env-mutation' ? transform.removeVariables ?? [] : []
+        )
+      );
+      if (released.size > 0) {
+        const snapshot = tracker.toSnapshot();
+        await OwnershipMetadataStore.save(
+          ownershipMetadataFromSnapshot({
+            ...snapshot,
+            envVars: snapshot.envVars.filter(
+              (entry) => !(released.has(entry.name) && entry.ownerCapabilityId === capabilityId)
+            ),
+          }),
+          context.rootPath
+        );
+      } else {
+        await saveOwnershipTracker(tracker, context.rootPath);
+      }
 
       // Remember what kiln wrote so `kiln remove` can keep files the user has since edited.
       // Hash from disk, not plan content: env merges extend a file after it is created, and a

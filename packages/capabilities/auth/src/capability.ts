@@ -15,6 +15,7 @@ import {
 import type { Capability } from '@kiln/capability-sdk';
 import { AUTH_MANIFEST } from './manifest-data.js';
 import {
+  buildEnvRemovalTransforms,
   DEFAULT_ENV_LOCAL_PATH,
   EnvCapability,
   type EnvVariableMap,
@@ -224,8 +225,16 @@ export class AuthCapability implements Capability {
       ...envPlan.ownershipRegistrations,
     ];
 
+    // A dropped provider's vars go too; the runtime releases their ownership.
+    const keptVars = new Set(allProviders.flatMap((id) => resolveProvider(id).envVars));
+    const droppedVars = removedProviders
+      .flatMap((id) => resolveProvider(id).envVars)
+      .filter((name) => !keptVars.has(name));
+    const envRemovalTransforms =
+      droppedVars.length > 0 ? buildEnvRemovalTransforms(droppedVars, options.envExamplePath) : [];
+
     return {
-      transforms: [...authTransforms, ...envPlan.transforms],
+      transforms: [...authTransforms, ...envPlan.transforms, ...envRemovalTransforms],
       capability,
       ownershipRegistrations,
       envPlan,
