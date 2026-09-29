@@ -69,9 +69,11 @@ function printHelp(topic?: string): void {
     }
 
     if (command === 'plan') {
-      console.log('Usage: kiln plan add <capability>');
+      console.log('Usage: kiln plan add <capability> [--json]');
       console.log('Preview: dependencies to add, files to create or modify, ownership');
       console.log('updates, and ownership conflicts. Writes nothing either way.');
+      console.log('Summary symbols: + add, ~ modify, - delete, ✗ conflict.');
+      console.log('  --json      Print the plan as JSON for scripts');
     }
 
     if (command === 'remove') {
@@ -152,6 +154,7 @@ async function main(argv: string[]): Promise<void> {
     dryRun: isDryRunFlag,
     force: flags.includes('--force'),
     verbose: flags.includes('--verbose'),
+    json: flags.includes('--json'),
     cwd: process.cwd(),
   };
 

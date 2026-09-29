@@ -5,6 +5,7 @@ export interface CliOptions {
   cwd: string;
   force?: boolean;
   verbose?: boolean;
+  json?: boolean;
 }
 
 export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): string {
