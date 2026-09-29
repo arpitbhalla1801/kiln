@@ -37,11 +37,15 @@ export async function loadPlugin(
 
   const packageDir = join(projectRoot, 'node_modules', entry.package);
   let installedVersion: string | undefined;
+  let entryFile: string;
   try {
     const installedPackageJson = JSON.parse(
       await readFile(join(packageDir, 'package.json'), 'utf8')
-    ) as { version?: string };
+    ) as { version?: string; main?: string };
     installedVersion = installedPackageJson.version;
+    // Node's ESM loader rejects directory imports, so import the entry file itself.
+    // ponytail: `main` only; resolve `exports` too if a plugin ever ships exports-only.
+    entryFile = join(packageDir, installedPackageJson.main ?? 'index.js');
   } catch {
     return skip(entry, `'${entry.package}' is not installed in this project's node_modules`);
   }
@@ -72,7 +76,7 @@ export async function loadPlugin(
 
   let capability: Capability | undefined;
   try {
-    const moduleUrl = pathToFileURL(packageDir).href;
+    const moduleUrl = pathToFileURL(entryFile).href;
     const loadedModule: unknown = await import(moduleUrl);
     capability = resolvePluginCapability(loadedModule);
   } catch (error) {

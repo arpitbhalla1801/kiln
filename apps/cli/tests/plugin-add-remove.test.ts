@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -115,5 +116,16 @@ describe('third-party capability via kiln.plugins.json', () => {
 
     await runRemove(CAPABILITY_ID, { cwd: root, dryRun: false });
     expect(await exists(join(root, 'widget.txt'))).toBe(false);
+  });
+
+  // Bun allows directory imports, node's ESM loader doesn't -- and the published CLI runs on node.
+  test('the built CLI loads the plugin under node', async () => {
+    const root = await createProjectWithPlugin();
+    const cli = join(import.meta.dir, '../dist/index.js');
+
+    const result = spawnSync('node', [cli, 'plan', 'add', CAPABILITY_ID], { cwd: root, encoding: 'utf8' });
+
+    expect(result.stderr).not.toContain('skipping plugin');
+    expect(result.stdout).toContain(`Capability: ${CAPABILITY_ID}`);
   });
 });
