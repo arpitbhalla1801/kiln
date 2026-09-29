@@ -1,15 +1,39 @@
 import { defineConfig } from "vitepress";
 
+const siteUrl = "https://arpitbhalla1801.github.io/kiln/";
+
 export default defineConfig({
   title: "kiln — Capability-based CLI for Bun + Next.js",
   description: "CLI to scaffold auth, env, and plugin capabilities into your app",
   lang: "en-US",
   base: "/kiln/",
   cleanUrls: true,
+  sitemap: {
+    hostname: siteUrl,
+  },
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/kiln/favicon.svg" }],
     ["link", { rel: "apple-touch-icon", href: "/kiln/favicon.svg" }],
-    ["link", { rel: "canonical", href: "https://arpitbhalla1801.github.io/kiln/" }],
+    ["link", { rel: "canonical", href: siteUrl }],
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:url", content: siteUrl }],
+    ["meta", { property: "og:title", content: "kiln — Capability-based CLI for Bun + Next.js" }],
+    [
+      "meta",
+      {
+        property: "og:description",
+        content: "CLI to scaffold auth, env, and plugin capabilities into your app",
+      },
+    ],
+    ["meta", { name: "twitter:card", content: "summary" }],
+    ["meta", { name: "twitter:title", content: "kiln — Capability-based CLI for Bun + Next.js" }],
+    [
+      "meta",
+      {
+        name: "twitter:description",
+        content: "CLI to scaffold auth, env, and plugin capabilities into your app",
+      },
+    ],
   ],
   themeConfig: {
     siteTitle: "kiln",
