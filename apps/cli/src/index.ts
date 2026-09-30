@@ -12,6 +12,7 @@ import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
 import { runPluginsList, runPluginsVerify } from './commands/plugins.js';
 import { runRemove } from './commands/remove.js';
+import { runUndo, withUndoJournal } from './commands/undo.js';
 import { checkForUpdate } from './update-check.js';
 
 declare const process: {
@@ -23,7 +24,7 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'plan';
+type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'plan' | 'undo';
 
 const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
@@ -36,6 +37,7 @@ const commands: Record<CommandName, string> = {
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
   plan: 'Preview what adding a capability would do, without writing anything.',
+  undo: 'Revert the files changed by the last add, remove, or env remove.',
 };
 
 function printHelp(topic?: string): void {
@@ -84,6 +86,13 @@ function printHelp(topic?: string): void {
       console.log('what would be removed; --force removes anyway. `remove db` never touches');
       console.log('prisma/migrations or your database. A hand-edited auth.ts is kept whole.');
       console.log('  --force     Remove even if remaining code imports what is deleted');
+    }
+
+    if (command === 'undo') {
+      console.log('Usage: kiln undo [--dry-run]');
+      console.log('Restores every file the last successful add, remove, or env remove changed.');
+      console.log('Refuses if any of those files changed since. Only one operation deep.');
+      console.log('Does not touch node_modules, database migrations, or remote data.');
     }
 
     if (command === 'inspect') {
@@ -158,6 +167,9 @@ async function main(argv: string[]): Promise<void> {
     cwd: process.cwd(),
   };
 
+  const journaled = (operation: string, run: () => Promise<void>) =>
+    cliOptions.dryRun ? run() : withUndoJournal(cliOptions.cwd, operation, run);
+
   if (isHelpFlag) {
     printHelp(firstArg in commands ? firstArg : undefined);
     return;
@@ -201,7 +213,7 @@ async function main(argv: string[]): Promise<void> {
 
     const envVariables = parseEnvVariables(argv);
     const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
-    await runAdd(capabilityId, cliOptions, envVariables, providers);
+    await journaled(`add ${capabilityId}`, () => runAdd(capabilityId, cliOptions, envVariables, providers));
     return;
   }
 
@@ -234,7 +246,7 @@ async function main(argv: string[]): Promise<void> {
     if (secondArg !== 'remove') {
       throw new Error(`Unknown 'env' subcommand '${secondArg}'. Usage: kiln env remove <NAME> [<NAME>...]`);
     }
-    await runEnvRemove(args.slice(2), cliOptions);
+    await journaled(`env remove ${args.slice(2).join(' ')}`, () => runEnvRemove(args.slice(2), cliOptions));
     return;
   }
 
@@ -244,7 +256,12 @@ async function main(argv: string[]): Promise<void> {
       throw new Error('Missing capability. Usage: kiln remove <env|auth>');
     }
 
-    await runRemove(capabilityId, cliOptions);
+    await journaled(`remove ${capabilityId}`, () => runRemove(capabilityId, cliOptions));
+    return;
+  }
+
+  if (firstArg === 'undo') {
+    await runUndo(cliOptions);
     return;
   }
 
