@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { spawnSafely } from '../spawn-safe.js';
 import type { PackageManagerInfo, PackageManagerKind } from '../types.js';
 
-const LOCKFILES: Array<{ file: string; kind: PackageManagerKind }> = [
+export const LOCKFILES: Array<{ file: string; kind: PackageManagerKind }> = [
   { file: 'bun.lock', kind: 'bun' },
   { file: 'bun.lockb', kind: 'bun' },
   { file: 'package-lock.json', kind: 'npm' },

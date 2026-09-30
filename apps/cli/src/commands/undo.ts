@@ -1,12 +1,30 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
+import { LOCKFILES } from '@kiln/node-adapter';
+import {
+  FILE_HASHES_FILE,
+  KILN_DIRECTORY,
+  LOCKFILE_FILE,
+  OWNERSHIP_METADATA_FILE,
+} from '@kiln/project-model';
+import { onBeforePersist } from '@kiln/transform-engine';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 
-const JOURNAL_PATH = join('.kiln', 'undo.json');
-const JOURNAL_GITIGNORE = join('.kiln', '.gitignore');
-const SKIP_DIRECTORIES = new Set(['node_modules', '.git', '.next', 'dist', 'build', 'out', '.turbo', 'coverage']);
+const JOURNAL_PATH = join(KILN_DIRECTORY, 'undo.json');
+const JOURNAL_GITIGNORE = join(KILN_DIRECTORY, '.gitignore');
+
+/**
+ * Files kiln changes outside the transform engine: its own metadata, and what
+ * a dependency install rewrites. Everything else is captured as the engine
+ * persists it.
+ */
+const FILES_WRITTEN_OUTSIDE_ENGINE = [
+  ...[OWNERSHIP_METADATA_FILE, LOCKFILE_FILE, FILE_HASHES_FILE].map((file) => `${KILN_DIRECTORY}/${file}`),
+  'package.json',
+  ...LOCKFILES.map((lockfile) => lockfile.file),
+];
 
 interface JournalEntry {
   path: string;
@@ -24,21 +42,33 @@ interface Journal {
 
 /**
  * Runs `operation` and, if it succeeds and changed any files, replaces the
- * one-deep undo journal with the before-state of every changed file.
- * ponytail: snapshots every project file in memory; fine for app-sized trees,
- * switch to capturing only planned paths if large repos get slow.
+ * one-deep undo journal with the before-state of every changed file. Reads
+ * only files kiln is about to write, never the whole project.
  */
 export async function withUndoJournal(cwd: string, operation: string, run: () => Promise<void>): Promise<void> {
   const rootPath = await resolveProjectRoot(cwd);
-  const before = await snapshot(rootPath);
-  await run();
-  const after = await snapshot(rootPath);
+  const before = new Map<string, Buffer | undefined>();
+  const capture = async (absolutePath: string): Promise<void> => {
+    const path = relative(rootPath, absolutePath).split(sep).join('/');
+    if (!before.has(path)) {
+      before.set(path, await readFile(absolutePath).catch(() => undefined));
+    }
+  };
+
+  for (const path of FILES_WRITTEN_OUTSIDE_ENGINE) {
+    await capture(join(rootPath, path));
+  }
+  onBeforePersist(capture);
+  try {
+    await run();
+  } finally {
+    onBeforePersist(undefined);
+  }
 
   const files: JournalEntry[] = [];
-  for (const path of new Set([...before.keys(), ...after.keys()])) {
-    const previous = before.get(path);
-    const next = after.get(path);
-    if (previous && next && previous.equals(next)) {
+  for (const [path, previous] of before) {
+    const next = await readFile(join(rootPath, path)).catch(() => undefined);
+    if (previous === next || (previous && next && previous.equals(next))) {
       continue;
     }
     files.push({
@@ -53,7 +83,7 @@ export async function withUndoJournal(cwd: string, operation: string, run: () =>
   }
 
   const journal: Journal = { operation, timestamp: new Date().toISOString(), files };
-  await mkdir(join(rootPath, '.kiln'), { recursive: true });
+  await mkdir(join(rootPath, KILN_DIRECTORY), { recursive: true });
   // The journal holds .env.local contents, so it must never be committed.
   await writeFile(join(rootPath, JOURNAL_GITIGNORE), 'undo.json\n');
   await writeFile(join(rootPath, JOURNAL_PATH), JSON.stringify(journal));
@@ -98,12 +128,15 @@ export async function runUndo(options: CliOptions): Promise<void> {
     const target = join(rootPath, entry.path);
     if (entry.before === null) {
       await rm(target, { force: true });
+      await removeEmptyParents(rootPath, entry.path);
     } else {
       await mkdir(dirname(target), { recursive: true });
       await writeFile(target, Buffer.from(entry.before, 'base64'));
     }
   }
   await rm(join(rootPath, JOURNAL_PATH), { force: true });
+  await rm(join(rootPath, JOURNAL_GITIGNORE), { force: true });
+  await removeEmptyParents(rootPath, JOURNAL_PATH);
 
   if (journal.files.some((entry) => entry.path === 'package.json')) {
     console.log('package.json changed: run your package manager install to sync node_modules.');
@@ -111,27 +144,15 @@ export async function runUndo(options: CliOptions): Promise<void> {
   console.log('Database migrations and remote data are not rolled back.');
 }
 
-async function snapshot(rootPath: string): Promise<Map<string, Buffer>> {
-  const files = new Map<string, Buffer>();
-
-  async function walk(directory: string): Promise<void> {
-    for (const entry of await readdir(directory, { withFileTypes: true })) {
-      const fullPath = join(directory, entry.name);
-      if (entry.isDirectory()) {
-        if (!SKIP_DIRECTORIES.has(entry.name)) {
-          await walk(fullPath);
-        }
-      } else if (entry.isFile()) {
-        const path = relative(rootPath, fullPath).split(sep).join('/');
-        if (path !== '.kiln/undo.json' && path !== '.kiln/.gitignore') {
-          files.set(path, await readFile(fullPath));
-        }
-      }
+/** Removes directories left empty by deleting `path`; rmdir refuses non-empty ones. */
+async function removeEmptyParents(rootPath: string, path: string): Promise<void> {
+  for (let directory = dirname(path); directory !== '.'; directory = dirname(directory)) {
+    try {
+      await rmdir(join(rootPath, directory));
+    } catch {
+      return;
     }
   }
-
-  await walk(rootPath);
-  return files;
 }
 
 function sha256(content: Buffer): string {
