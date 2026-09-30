@@ -63,6 +63,8 @@ describe('kiln undo', () => {
 
     await quietly(() => runUndo(options(root)));
     expect(await tree(root)).toEqual(baseline);
+    // init writes nothing under .kiln, so undoing the first add leaves no empty folder behind.
+    expect(await readdir(join(root, '.kiln')).catch(() => 'missing')).toBe('missing');
   }, 60000);
 
   test('undoes a remove', async () => {

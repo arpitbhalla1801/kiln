@@ -20,6 +20,19 @@ export interface PersistableFileOperation {
   content?: string;
 }
 
+type BeforePersistListener = (targetPath: string) => Promise<void>;
+
+let beforePersist: BeforePersistListener | undefined;
+
+/**
+ * Registers a callback awaited just before each file is written or deleted,
+ * so a caller (kiln undo's journal) can capture the prior content. Pass
+ * undefined to unregister.
+ */
+export function onBeforePersist(listener: BeforePersistListener | undefined): void {
+  beforePersist = listener;
+}
+
 /** Commits virtual filesystem mutations to disk with atomic per-file writes. */
 export class FilesystemPersistence {
   async persistVirtualFilesystem(
@@ -63,12 +76,14 @@ export class FilesystemPersistence {
         const targetPath = resolveTargetPath(rootDir, operation.filePath);
         const content = operation.content ?? '';
 
+        await beforePersist?.(targetPath);
         await atomicWriteFile(targetPath, content, encoding, pendingTempFiles);
         written.push(targetPath);
       }
 
       for (const operation of deleteOperations) {
         const targetPath = resolveTargetPath(rootDir, operation.filePath);
+        await beforePersist?.(targetPath);
         await safeDelete(targetPath);
         deleted.push(targetPath);
       }
