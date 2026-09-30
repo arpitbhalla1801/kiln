@@ -13,7 +13,8 @@ export default defineConfig({
   },
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/kiln/favicon.svg" }],
-    ["link", { rel: "apple-touch-icon", href: "/kiln/favicon.svg" }],
+    ["link", { rel: "icon", type: "image/x-icon", href: "/kiln/favicon.ico" }],
+    ["link", { rel: "apple-touch-icon", href: "/kiln/apple-touch-icon.png" }],
     ["link", { rel: "canonical", href: siteUrl }],
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:url", content: siteUrl }],
@@ -33,6 +34,24 @@ export default defineConfig({
         name: "twitter:description",
         content: "CLI to scaffold auth, env, and plugin capabilities into your app",
       },
+    ],
+    [
+      "script",
+      { type: "application/ld+json" },
+      JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "kiln",
+        description: "CLI to scaffold auth, env, and plugin capabilities into your app",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Cross-platform",
+        url: siteUrl,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      }),
     ],
   ],
   themeConfig: {
