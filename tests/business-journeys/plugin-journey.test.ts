@@ -20,17 +20,17 @@ const exists = (path: string) =>
 
 describe('business journey plugin journey', () => {
   // Needs network: the scaffolded plugin installs @kiln-cli/capability-sdk from the real npm registry.
-  test('PD-24 through PD-29 scaffold, install from npm, pack, verify, add and remove a plugin', async () => {
+  test('PD-25 through PD-30 scaffold, install from npm, pack, verify, add and remove a plugin', async () => {
     const parent = await mkdtemp(join(tmpdir(), 'kiln-plugin-journey-'));
     tempRoots.push(parent);
 
-    // PD-24 init-plugin output installs and builds on a clean machine
+    // PD-25 init-plugin output installs and builds on a clean machine
     expect(runKiln(['init-plugin', 'hello'], parent).exitCode).toBe(0);
     const pluginDir = join(parent, 'kiln-capability-hello');
     expect(runCommand('bun', ['install'], pluginDir).exitCode).toBe(0);
     expect(runCommand('bun', ['run', 'build'], pluginDir).exitCode).toBe(0);
 
-    // PD-25 the plugin packs and installs into a fresh app as a direct dependency
+    // PD-26 the plugin packs and installs into a fresh app as a direct dependency
     const pack = runCommand('bun', ['pm', 'pack'], pluginDir);
     expect(pack.exitCode).toBe(0);
     const tarball = (await readdir(pluginDir)).find((name) => name.endsWith('.tgz'));
@@ -40,7 +40,7 @@ describe('business journey plugin journey', () => {
     const installPlugin = runCommand('bun', ['add', join(pluginDir, tarball as string)], appDir);
     expect(installPlugin.exitCode).toBe(0);
 
-    // PD-26 plugins verify accepts the pinned version
+    // PD-27 plugins verify accepts the pinned version
     await writeFile(
       join(appDir, 'kiln.plugins.json'),
       JSON.stringify({ plugins: [{ package: 'kiln-capability-hello', version: '0.1.0' }] })
@@ -49,19 +49,19 @@ describe('business journey plugin journey', () => {
     expect(verify.exitCode).toBe(0);
     expect(verify.output).toContain('(ok)');
 
-    // PD-27 plan add previews the plugin and writes nothing
+    // PD-28 plan add previews the plugin and writes nothing
     const plan = runKiln(['plan', 'add', 'hello'], appDir);
     expect(plan.exitCode).toBe(0);
     expect(plan.stdout).toContain('src/lib/hello.ts');
     expect(await exists(join(appDir, 'src/lib/hello.ts'))).toBe(false);
     expect(runKiln(['inspect'], appDir).stdout).toContain('✗ hello');
 
-    // PD-28 add writes the plugin's files and inspect shows it installed
+    // PD-29 add writes the plugin's files and inspect shows it installed
     expect(runKiln(['add', 'hello'], appDir).exitCode).toBe(0);
     expect(await exists(join(appDir, 'src/lib/hello.ts'))).toBe(true);
     expect(runKiln(['inspect'], appDir).stdout).toContain('✓ hello');
 
-    // PD-29 remove takes the plugin's files back out
+    // PD-30 remove takes the plugin's files back out
     expect(runKiln(['remove', 'hello'], appDir).exitCode).toBe(0);
     expect(await exists(join(appDir, 'src/lib/hello.ts'))).toBe(false);
     expect(runKiln(['inspect'], appDir).stdout).toContain('✗ hello');

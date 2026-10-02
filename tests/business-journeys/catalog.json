@@ -147,32 +147,32 @@
       "businessValue": "A plugin author can scaffold, install and ship a capability without kiln's source tree.",
       "cases": [
         {
-          "id": "PD-24",
+          "id": "PD-25",
           "name": "init-plugin output installs from npm and builds",
           "severity": "blocker"
         },
         {
-          "id": "PD-25",
+          "id": "PD-26",
           "name": "plugin packs and installs into a fresh app",
           "severity": "blocker"
         },
         {
-          "id": "PD-26",
+          "id": "PD-27",
           "name": "plugins verify accepts the pinned version",
           "severity": "major"
         },
         {
-          "id": "PD-27",
+          "id": "PD-28",
           "name": "plan add previews the plugin and writes nothing",
           "severity": "major"
         },
         {
-          "id": "PD-28",
+          "id": "PD-29",
           "name": "add writes plugin files, inspect shows it installed",
           "severity": "blocker"
         },
         {
-          "id": "PD-29",
+          "id": "PD-30",
           "name": "remove takes plugin files back out",
           "severity": "major"
         }
