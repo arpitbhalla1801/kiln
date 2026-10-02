@@ -14,7 +14,7 @@ describe('business journey catalog', () => {
     const ids = catalog.journeys.flatMap((journey) => journey.cases.map((testCase) => testCase.id));
     expect(ids.length).toBeGreaterThan(0);
 
-    const sources = ['cli-contract.test.ts', 'new-project-journey.test.ts', 'upgrade-compat.test.ts']
+    const sources = ['cli-contract.test.ts', 'new-project-journey.test.ts', 'upgrade-compat.test.ts', 'plugin-journey.test.ts']
       .map((fileName) => readFileSync(join(dir, fileName), 'utf8'))
       .join('\n');
 

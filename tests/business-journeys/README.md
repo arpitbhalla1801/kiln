@@ -13,6 +13,7 @@ Use them as a **release gate on every version upgrade**.
 | Existing project | The example app still inspects, doctors, and builds |
 | Re-apply | Running the same capability twice is a no-op |
 | Edit-then-re-apply | A hand-edited kiln-owned file survives `add auth` twice and the project still builds |
+| Plugin | `init-plugin` output installs from npm, then verify, plan, add and remove work |
 
 The machine-readable catalog is [`catalog.json`](./catalog.json). IDs (`PD-01` … `PD-23`) match test names and stay stable across the rename.
 
