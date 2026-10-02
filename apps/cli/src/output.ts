@@ -1,9 +1,11 @@
-import type { FileOperation, TransformPlan } from '@kiln/transform-engine';
+import type { FileOperation, TransformPlan } from '@kiln-cli/transform-engine';
 
 export interface CliOptions {
   dryRun: boolean;
   cwd: string;
   force?: boolean;
+  verbose?: boolean;
+  json?: boolean;
 }
 
 export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): string {

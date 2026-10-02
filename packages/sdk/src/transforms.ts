@@ -1,7 +1,7 @@
 /**
- * Structural mirror of @kiln/transform-engine's transform shapes.
+ * Structural mirror of @kiln-cli/transform-engine's transform shapes.
  *
- * @kiln/transform-engine is a private, unpublished workspace package, but
+ * @kiln-cli/transform-engine is a private, unpublished workspace package, but
  * TransformPipeline is just TypedTransform[] -- plain data, no class or
  * builder function required at runtime. A plugin builds these as plain
  * object literals; kiln's real TransformApplier dispatches on the `type`
@@ -73,7 +73,7 @@ export interface EnvMutationTransform extends TransformBase {
  * The six transform kinds a capability may compose. This union is closed
  * deliberately -- kiln does not support plugin-registered transform kinds.
  * A genuinely new mutation primitive ships as a first-party addition to
- * @kiln/transform-engine, never something a plugin can register at
+ * @kiln-cli/transform-engine, never something a plugin can register at
  * runtime. See docs/plugin-architecture.md's "Rejected alternatives".
  */
 export type TypedTransform =

@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { FileHashStore, hashContent } from '@kiln/project-model';
+import { FileHashStore, hashContent } from '@kiln-cli/project-model';
 
 const SKIP_DIRECTORIES = new Set(['node_modules', '.git', '.next', '.kiln', '.turbo', 'dist', 'build', 'coverage']);
 const SOURCE_EXTENSION = /\.(?:[cm]?[jt]sx?)$/;

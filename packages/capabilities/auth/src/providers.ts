@@ -25,8 +25,11 @@ export const AUTH_PROVIDERS: Record<string, AuthProviderDescriptor> = {
     id: 'credentials',
     importName: 'Credentials',
     importSpecifier: 'next-auth/providers/credentials',
-    factoryExpression: 'Credentials({ credentials: {}, authorize: () => null })',
-    envVars: [],
+    // Demo-only check against env-configured credentials, not a user database --
+    // swap authorize() for a real lookup before shipping this to production.
+    factoryExpression:
+      'Credentials({ credentials: { email: {}, password: {} }, authorize: async (creds) => (creds?.email === process.env.AUTH_DEMO_EMAIL && creds?.password === process.env.AUTH_DEMO_PASSWORD) ? { id: "1", email: String(creds.email) } : null })',
+    envVars: ['AUTH_DEMO_EMAIL', 'AUTH_DEMO_PASSWORD'],
   },
 };
 

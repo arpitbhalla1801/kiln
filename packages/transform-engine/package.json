@@ -1,6 +1,6 @@
 {
-  "name": "@kiln/transform-engine",
-  "version": "2.0.0",
+  "name": "@kiln-cli/transform-engine",
+  "version": "2.1.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -10,7 +10,7 @@
     }
   },
   "dependencies": {
-    "@kiln/core": "workspace:*"
+    "@kiln-cli/core": "workspace:*"
   },
   "scripts": {
     "build": "bunx tsc -b --force",

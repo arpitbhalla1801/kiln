@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/core';
+﻿export const name = '@kiln-cli/core';
 
 export * from './dependency-reconciliation.js';
 export * from './fs-utils.js';

@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { TransformApplier, VirtualFilesystem } from '@kiln/transform-engine';
+import { TransformApplier, VirtualFilesystem } from '@kiln-cli/transform-engine';
 import { EnvCapability } from '../src/capability.js';
 
 const tempRoots: string[] = [];

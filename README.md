@@ -4,7 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/@kiln-cli/kiln?color=cb3837)](https://www.npmjs.com/package/@kiln-cli/kiln)
 [![downloads](https://img.shields.io/npm/dm/@kiln-cli/kiln)](https://www.npmjs.com/package/@kiln-cli/kiln)
-[![CI](https://github.com/arpitbhalla1801/kiln/actions/workflows/post-deploy.yml/badge.svg)](https://github.com/arpitbhalla1801/kiln/actions/workflows/post-deploy.yml)
+[![CI](https://github.com/arpitbhalla1801/kiln/actions/workflows/business-journeys.yml/badge.svg)](https://github.com/arpitbhalla1801/kiln/actions/workflows/business-journeys.yml)
 [![license](https://img.shields.io/npm/l/@kiln-cli/kiln)](LICENSE)
 [![node](https://img.shields.io/node/v/@kiln-cli/kiln)](https://nodejs.org)
 
@@ -67,14 +67,17 @@ kiln init --existing      # adopt the project in the current directory
 
 `remove` keeps files you edited, refuses while your code still imports what it would delete (`--force` overrides), and never touches `prisma/migrations` or your database.
 
+Adding `auth` and `db` together (either order) wires the Auth.js Prisma adapter automatically: `Account`/`Session`/`VerificationToken` models, `User` relations, and `adapter: PrismaAdapter(db)` in `auth.ts` — which switches NextAuth's default session strategy from `jwt` to `database`.
+
 ## Other commands
 
 | Command | Does |
 |---------|------|
 | `kiln env remove <NAME>...` | Drop single env vars |
 | `kiln db migrate` | `prisma migrate dev` with `.env.local` loaded |
-| `kiln inspect` | Project shape, package manager, ownership |
+| `kiln inspect` | Project, capabilities, managed files, last operation, health (`--verbose` lists ownership) |
 | `kiln doctor` | Health checks |
+| `kiln plan add <capability>` | Preview: files, dependencies, ownership updates, and conflicts as data (never throws). Writes nothing |
 
 Global flags: `--dry-run`, `--help`, `--version`.
 
@@ -105,7 +108,7 @@ git clone https://github.com/arpitbhalla1801/kiln.git && cd kiln
 bun install && bun run build && bun run test:unit && bun run link-cli
 ```
 
-Needs Bun 1.3+. Try `examples/nextjs-app`. Smoke suite: [tests/post-deploy](tests/post-deploy/README.md).
+Needs Bun 1.3+. Try `examples/nextjs-app`. Business journey tests: [tests/business-journeys](tests/business-journeys/README.md).
 
 ## Contributing
 

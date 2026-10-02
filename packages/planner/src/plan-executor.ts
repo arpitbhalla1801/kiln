@@ -4,8 +4,8 @@ import {
   DependencyVersionRegistry,
   OwnershipRegistration,
   OwnershipTracker,
-} from '@kiln/core';
-import { TransformEngine, type TransformPipeline, type TypedTransform } from '@kiln/transform-engine';
+} from '@kiln-cli/core';
+import { TransformEngine, type TransformPipeline, type TypedTransform } from '@kiln-cli/transform-engine';
 
 export interface CapabilityExecutionPlan {
   transforms: TransformPipeline;

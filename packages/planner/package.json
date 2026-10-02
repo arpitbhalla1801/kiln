@@ -1,15 +1,15 @@
 {
-  "name": "@kiln/planner",
-  "version": "2.0.0",
+  "name": "@kiln-cli/planner",
+  "version": "2.1.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@kiln/core": "workspace:*",
-    "@kiln/transform-engine": "workspace:*"
+    "@kiln-cli/core": "workspace:*",
+    "@kiln-cli/transform-engine": "workspace:*"
   },
   "devDependencies": {
-    "@kiln/auth-capability": "workspace:*",
+    "@kiln-cli/auth-capability": "workspace:*",
     "@types/node": "^25.9.1"
   },
   "scripts": {

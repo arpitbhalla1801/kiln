@@ -1,6 +1,6 @@
 {
   "name": "@kiln-cli/kiln",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Capability-based scaffolding CLI for Node/Next.js projects",
   "license": "MIT",
   "keywords": [
@@ -39,14 +39,14 @@
     "access": "public"
   },
   "devDependencies": {
-    "@kiln/capability-sdk": "workspace:*",
-    "@kiln/core": "workspace:*",
-    "@kiln/env-capability": "workspace:*",
-    "@kiln/node-adapter": "workspace:*",
-    "@kiln/planner": "workspace:*",
-    "@kiln/project-model": "workspace:*",
-    "@kiln/runtime": "workspace:*",
-    "@kiln/transform-engine": "workspace:*",
+    "@kiln-cli/capability-sdk": "workspace:*",
+    "@kiln-cli/core": "workspace:*",
+    "@kiln-cli/env-capability": "workspace:*",
+    "@kiln-cli/node-adapter": "workspace:*",
+    "@kiln-cli/planner": "workspace:*",
+    "@kiln-cli/project-model": "workspace:*",
+    "@kiln-cli/runtime": "workspace:*",
+    "@kiln-cli/transform-engine": "workspace:*",
     "@types/node": "^25.9.1",
     "esbuild": "^0.28.2",
     "shx": "^0.4.0"

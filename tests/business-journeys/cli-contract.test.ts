@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { repoRoot, runKiln } from './cli-runner.js';
 
-describe('post-deploy CLI contract', () => {
+describe('business journey CLI contract', () => {
   test('PD-01 help lists init, add, inspect, doctor', () => {
     const result = runKiln(['--help']);
     expect(result.exitCode).toBe(0);

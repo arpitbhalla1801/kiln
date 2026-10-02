@@ -1,19 +1,19 @@
 {
-  "name": "@kiln/runtime",
-  "version": "2.0.0",
+  "name": "@kiln-cli/runtime",
+  "version": "2.1.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@kiln/auth-capability": "workspace:*",
-    "@kiln/capability-sdk": "workspace:*",
-    "@kiln/core": "workspace:*",
-    "@kiln/db-capability": "workspace:*",
-    "@kiln/env-capability": "workspace:*",
-    "@kiln/node-adapter": "workspace:*",
-    "@kiln/planner": "workspace:*",
-    "@kiln/project-model": "workspace:*",
-    "@kiln/transform-engine": "workspace:*"
+    "@kiln-cli/auth-capability": "workspace:*",
+    "@kiln-cli/capability-sdk": "workspace:*",
+    "@kiln-cli/core": "workspace:*",
+    "@kiln-cli/db-capability": "workspace:*",
+    "@kiln-cli/env-capability": "workspace:*",
+    "@kiln-cli/node-adapter": "workspace:*",
+    "@kiln-cli/planner": "workspace:*",
+    "@kiln-cli/project-model": "workspace:*",
+    "@kiln-cli/transform-engine": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

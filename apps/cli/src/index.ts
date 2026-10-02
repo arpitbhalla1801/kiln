@@ -3,6 +3,7 @@
 import { resolve } from 'node:path';
 import pkg from '../package.json';
 import { runAdd, parseEnvVariables, parseProviders } from './commands/add.js';
+import { runPlanAdd } from './commands/plan.js';
 import { runInit, runInitExisting } from './commands/init.js';
 import { runDbMigrate } from './commands/db-migrate.js';
 import { runDoctor } from './commands/doctor.js';
@@ -11,6 +12,7 @@ import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
 import { runPluginsList, runPluginsVerify } from './commands/plugins.js';
 import { runRemove } from './commands/remove.js';
+import { runUndo, withUndoJournal } from './commands/undo.js';
 import { checkForUpdate } from './update-check.js';
 
 declare const process: {
@@ -22,7 +24,7 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins';
+type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'plan' | 'undo';
 
 const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
@@ -34,6 +36,8 @@ const commands: Record<CommandName, string> = {
   doctor: 'Run environment checks for kiln.',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
+  plan: 'Preview what adding a capability would do, without writing anything.',
+  undo: 'Revert the files changed by the last add, remove, or env remove.',
 };
 
 function printHelp(topic?: string): void {
@@ -66,6 +70,14 @@ function printHelp(topic?: string): void {
       console.log('  kiln add db');
     }
 
+    if (command === 'plan') {
+      console.log('Usage: kiln plan add <capability> [--json]');
+      console.log('Preview: dependencies to add, files to create or modify, ownership');
+      console.log('updates, and ownership conflicts. Writes nothing either way.');
+      console.log('Summary symbols: + add, ~ modify, - delete, ✗ conflict.');
+      console.log('  --json      Print the plan as JSON for scripts');
+    }
+
     if (command === 'remove') {
       console.log('Usage: kiln remove <capability>');
       console.log('Capabilities: env, auth, db');
@@ -74,6 +86,19 @@ function printHelp(topic?: string): void {
       console.log('what would be removed; --force removes anyway. `remove db` never touches');
       console.log('prisma/migrations or your database. A hand-edited auth.ts is kept whole.');
       console.log('  --force     Remove even if remaining code imports what is deleted');
+    }
+
+    if (command === 'undo') {
+      console.log('Usage: kiln undo [--dry-run]');
+      console.log('Restores every file the last successful add, remove, or env remove changed.');
+      console.log('Refuses if any of those files changed since. Only one operation deep.');
+      console.log('Does not touch node_modules, database migrations, or remote data.');
+    }
+
+    if (command === 'inspect') {
+      console.log('Usage: kiln inspect [--verbose]');
+      console.log('Shows project, capabilities, managed files, last operation, and health.');
+      console.log('  --verbose   Also list every owned file, dependency, and env var');
     }
 
     if (command === 'env') {
@@ -89,7 +114,7 @@ function printHelp(topic?: string): void {
     if (command === 'init-plugin') {
       console.log('Usage: kiln init-plugin <name>');
       console.log(
-        'Scaffolds a kiln-capability-<name> package wired against @kiln/capability-sdk.'
+        'Scaffolds a kiln-capability-<name> package wired against @kiln-cli/capability-sdk.'
       );
     }
 
@@ -137,8 +162,13 @@ async function main(argv: string[]): Promise<void> {
   const cliOptions = {
     dryRun: isDryRunFlag,
     force: flags.includes('--force'),
+    verbose: flags.includes('--verbose'),
+    json: flags.includes('--json'),
     cwd: process.cwd(),
   };
+
+  const journaled = (operation: string, run: () => Promise<void>) =>
+    cliOptions.dryRun ? run() : withUndoJournal(cliOptions.cwd, operation, run);
 
   if (isHelpFlag) {
     printHelp(firstArg in commands ? firstArg : undefined);
@@ -183,7 +213,22 @@ async function main(argv: string[]): Promise<void> {
 
     const envVariables = parseEnvVariables(argv);
     const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
-    await runAdd(capabilityId, cliOptions, envVariables, providers);
+    await journaled(`add ${capabilityId}`, () => runAdd(capabilityId, cliOptions, envVariables, providers));
+    return;
+  }
+
+  if (firstArg === 'plan') {
+    if (secondArg !== 'add') {
+      throw new Error(`Unknown 'plan' subcommand '${secondArg}'. Usage: kiln plan add <capability>`);
+    }
+    const capabilityId = thirdArg;
+    if (!capabilityId) {
+      throw new Error('Missing capability. Usage: kiln plan add <env|auth|db>');
+    }
+
+    const envVariables = parseEnvVariables(argv);
+    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    await runPlanAdd(capabilityId, cliOptions, envVariables, providers);
     return;
   }
 
@@ -201,7 +246,7 @@ async function main(argv: string[]): Promise<void> {
     if (secondArg !== 'remove') {
       throw new Error(`Unknown 'env' subcommand '${secondArg}'. Usage: kiln env remove <NAME> [<NAME>...]`);
     }
-    await runEnvRemove(args.slice(2), cliOptions);
+    await journaled(`env remove ${args.slice(2).join(' ')}`, () => runEnvRemove(args.slice(2), cliOptions));
     return;
   }
 
@@ -211,7 +256,12 @@ async function main(argv: string[]): Promise<void> {
       throw new Error('Missing capability. Usage: kiln remove <env|auth>');
     }
 
-    await runRemove(capabilityId, cliOptions);
+    await journaled(`remove ${capabilityId}`, () => runRemove(capabilityId, cliOptions));
+    return;
+  }
+
+  if (firstArg === 'undo') {
+    await runUndo(cliOptions);
     return;
   }
 

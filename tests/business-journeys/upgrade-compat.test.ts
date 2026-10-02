@@ -12,12 +12,12 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-describe('post-deploy upgrade compatibility', () => {
+describe('business journey upgrade compatibility', () => {
   test('PD-20 example inspect still detects Next.js and ownership', () => {
-    const result = runKiln(['inspect'], exampleAppRoot);
+    const result = runKiln(['inspect', '--verbose'], exampleAppRoot);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('name: kiln-nextjs-example');
-    expect(result.stdout).toContain('nextjs: yes');
+    expect(result.stdout).toContain('Project: Next.js +');
+    expect(result.stdout).toContain('✓ auth');
     expect(result.stdout).toContain('file .env.example -> env');
     expect(result.stdout).toContain('file src/auth.ts -> auth');
     expect(result.stdout).toContain('dependency next-auth -> auth');

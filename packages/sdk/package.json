@@ -1,5 +1,5 @@
 {
-  "name": "@kiln/capability-sdk",
+  "name": "@kiln-cli/capability-sdk",
   "version": "0.1.0",
   "description": "Public contract for writing third-party kiln capability plugins",
   "license": "MIT",
@@ -23,8 +23,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "@kiln/core": "workspace:*",
-    "@kiln/transform-engine": "workspace:*",
+    "@kiln-cli/core": "workspace:*",
+    "@kiln-cli/transform-engine": "workspace:*",
     "@types/node": "^25.9.1"
   },
   "scripts": {

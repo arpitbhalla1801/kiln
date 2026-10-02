@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { extractInstallDependencies } from '../src/install.js';
-import type { TransformPipeline } from '@kiln/transform-engine';
+import type { TransformPipeline } from '@kiln-cli/transform-engine';
 
 describe('extractInstallDependencies', () => {
   test('collects dependencies and devDependencies separately', () => {
