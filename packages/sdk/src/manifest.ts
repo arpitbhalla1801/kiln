@@ -39,7 +39,10 @@ export interface CapabilityManifest {
   id: string;
   name?: string;
   version: string;
+  /** Capabilities that must be installed first ("requires"). */
   dependencies: string[];
+  /** Optional partners this capability adapts to when present; never blocks an add. */
+  enhances?: string[];
   adapters?: string[];
   transforms?: string[];
   transformDefinitions?: Transform[];
