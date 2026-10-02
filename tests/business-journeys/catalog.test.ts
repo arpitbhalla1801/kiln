@@ -13,6 +13,7 @@ describe('business journey catalog', () => {
     const catalog = JSON.parse(readFileSync(join(dir, 'catalog.json'), 'utf8')) as Catalog;
     const ids = catalog.journeys.flatMap((journey) => journey.cases.map((testCase) => testCase.id));
     expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
 
     const sources = ['cli-contract.test.ts', 'new-project-journey.test.ts', 'upgrade-compat.test.ts', 'plugin-journey.test.ts']
       .map((fileName) => readFileSync(join(dir, fileName), 'utf8'))
