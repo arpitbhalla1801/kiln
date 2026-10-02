@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import './helpers/no-install.js';
 import { runAdd } from '../src/commands/add.js';
 import { runInit } from '../src/commands/init.js';
 
