@@ -2,8 +2,8 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { OwnershipTracker } from '@kiln/core';
-import { TransformApplier, VirtualFilesystem } from '@kiln/transform-engine';
+import { OwnershipTracker } from '@kiln-cli/core';
+import { TransformApplier, VirtualFilesystem } from '@kiln-cli/transform-engine';
 import { AuthCapability, buildAuthFilePaths } from '../src/capability.js';
 import { validateAuthOwnership } from '../src/validation.js';
 
@@ -93,7 +93,7 @@ describe('AuthCapability', () => {
     });
     const applier = new TransformApplier();
 
-    const { EnvCapability } = await import('@kiln/env-capability');
+    const { EnvCapability } = await import('@kiln-cli/env-capability');
     const envCapability = new EnvCapability();
     const envPlan = await envCapability.planAdd(root, {
       variables: { DATABASE_URL: 'postgres://localhost:5432/app' },

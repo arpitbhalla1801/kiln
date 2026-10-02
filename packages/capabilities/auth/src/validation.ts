@@ -2,7 +2,7 @@ import {
   formatOwnershipConflict,
   OwnershipRegistration,
   OwnershipTracker,
-} from '@kiln/core';
+} from '@kiln-cli/core';
 import {
   AUTH_CAPABILITY_ID,
   AUTH_PRISMA_ADAPTER_PACKAGE,

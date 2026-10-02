@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/env-capability';
+﻿export const name = '@kiln-cli/env-capability';
 
 export {
   EnvCapability,

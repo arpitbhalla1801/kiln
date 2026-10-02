@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/project-model';
+﻿export const name = '@kiln-cli/project-model';
 
 export * from './types.js';
 export * from './ownership.js';

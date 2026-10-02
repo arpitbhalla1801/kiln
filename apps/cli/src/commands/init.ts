@@ -1,8 +1,8 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
-import { detectNextJs, detectPackageManager } from '@kiln/node-adapter';
-import { EXTERNAL_OWNER, OwnershipTracker } from '@kiln/core';
-import { saveOwnershipTracker } from '@kiln/project-model';
+import { detectNextJs, detectPackageManager } from '@kiln-cli/node-adapter';
+import { EXTERNAL_OWNER, OwnershipTracker } from '@kiln-cli/core';
+import { saveOwnershipTracker } from '@kiln-cli/project-model';
 import { validateProjectName } from '../validation/project-name.js';
 import { ensureTargetAvailable } from '../project.js';
 

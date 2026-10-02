@@ -6,11 +6,11 @@ import {
   LockfileStore,
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
-} from '@kiln/project-model';
-import { buildEnvRemovalTransforms, GITIGNORE_ENV_LOCAL_KEY } from '@kiln/env-capability';
-import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
-import { createTransformPipeline, TransformEngine } from '@kiln/transform-engine';
-import type { OwnershipSnapshot } from '@kiln/core';
+} from '@kiln-cli/project-model';
+import { buildEnvRemovalTransforms, GITIGNORE_ENV_LOCAL_KEY } from '@kiln-cli/env-capability';
+import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
+import { createTransformPipeline, TransformEngine } from '@kiln-cli/transform-engine';
+import type { OwnershipSnapshot } from '@kiln-cli/core';
 import { formatTransformPlan } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';

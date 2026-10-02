@@ -11,11 +11,11 @@ import {
   mergeUnique,
   OwnershipTracker,
   readPackageJson,
-} from '@kiln/core';
+} from '@kiln-cli/core';
 import type { Capability } from '@kiln-cli/capability-sdk';
 import { DB_MANIFEST } from './manifest-data.js';
-import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
-import { createTransformPipeline, type TransformPipeline } from '@kiln/transform-engine';
+import { EnvCapability, type EnvVariableMap } from '@kiln-cli/env-capability';
+import { createTransformPipeline, type TransformPipeline } from '@kiln-cli/transform-engine';
 import {
   createAuthAwareSchemaPrismaContent,
   createDbClientContent,
@@ -35,7 +35,7 @@ import { buildDbOwnershipRegistrations, type DbClaims, validateDbOwnership } fro
 
 const DB_SOURCE_ROOT_MARKERS = ['app', 'pages'];
 
-// Mirrors @kiln/auth-capability's NEXT_AUTH_PACKAGE -- not imported directly,
+// Mirrors @kiln-cli/auth-capability's NEXT_AUTH_PACKAGE -- not imported directly,
 // to avoid a circular workspace dependency between the two capabilities.
 const NEXT_AUTH_PACKAGE = 'next-auth';
 

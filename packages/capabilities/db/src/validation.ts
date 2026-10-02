@@ -2,7 +2,7 @@ import {
   formatOwnershipConflict,
   OwnershipRegistration,
   OwnershipTracker,
-} from '@kiln/core';
+} from '@kiln-cli/core';
 import {
   DB_CAPABILITY_ID,
   DB_SCRIPTS,

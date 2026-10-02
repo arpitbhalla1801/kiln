@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { PLUGIN_CONFIG_FILE } from '@kiln/project-model';
+import { PLUGIN_CONFIG_FILE } from '@kiln-cli/project-model';
 import { runAdd } from '../src/commands/add.js';
 import { runPlanAdd } from '../src/commands/plan.js';
 import { runRemove } from '../src/commands/remove.js';

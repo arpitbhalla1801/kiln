@@ -1,6 +1,6 @@
-import type { Capability, OwnershipRegistration } from '@kiln/core';
-import type { TransformPipeline } from '@kiln/transform-engine';
-import type { EnvCapabilityPlan } from '@kiln/env-capability';
+import type { Capability, OwnershipRegistration } from '@kiln-cli/core';
+import type { TransformPipeline } from '@kiln-cli/transform-engine';
+import type { EnvCapabilityPlan } from '@kiln-cli/env-capability';
 
 export const DB_CAPABILITY_ID = 'db';
 export const PRISMA_CLIENT_PACKAGE = '@prisma/client';
@@ -19,7 +19,7 @@ export interface DbFilePaths {
 }
 
 export interface DbCapabilityPlanOptions {
-  tracker?: import('@kiln/core').OwnershipTracker;
+  tracker?: import('@kiln-cli/core').OwnershipTracker;
   envExamplePath?: string;
   envExampleExists?: boolean;
   envLocalExists?: boolean;

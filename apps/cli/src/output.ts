@@ -1,4 +1,4 @@
-import type { FileOperation, TransformPlan } from '@kiln/transform-engine';
+import type { FileOperation, TransformPlan } from '@kiln-cli/transform-engine';
 
 export interface CliOptions {
   dryRun: boolean;

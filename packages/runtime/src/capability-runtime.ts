@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { AuthCapability } from '@kiln/auth-capability';
+import { AuthCapability } from '@kiln-cli/auth-capability';
 import type {
   Capability as PluginCapability,
   CapabilityPlanOptions,
@@ -15,11 +15,11 @@ import {
   ProjectState,
   ValidationRunner,
   withActiveAdapters,
-} from '@kiln/core';
-import { DbCapability } from '@kiln/db-capability';
-import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
-import { NodeAdapter } from '@kiln/node-adapter';
-import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
+} from '@kiln-cli/core';
+import { DbCapability } from '@kiln-cli/db-capability';
+import { EnvCapability, type EnvVariableMap } from '@kiln-cli/env-capability';
+import { NodeAdapter } from '@kiln-cli/node-adapter';
+import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln-cli/planner';
 import {
   FileHashStore,
   hashContent,
@@ -30,8 +30,8 @@ import {
   PluginConfigStore,
   saveOwnershipTracker,
   type KilnLockfile,
-} from '@kiln/project-model';
-import { TransformEngine } from '@kiln/transform-engine';
+} from '@kiln-cli/project-model';
+import { TransformEngine } from '@kiln-cli/transform-engine';
 import { CAPABILITY_REGISTRY, registerCapability } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
 import { loadPlugins as loadPluginModules, type PluginLoadResult } from './plugin-loader.js';

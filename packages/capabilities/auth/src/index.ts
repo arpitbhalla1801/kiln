@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/auth-capability';
+﻿export const name = '@kiln-cli/auth-capability';
 
 export {
   AuthCapability,

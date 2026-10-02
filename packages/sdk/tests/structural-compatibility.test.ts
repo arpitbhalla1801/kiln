@@ -1,13 +1,13 @@
 /**
  * Proves the SDK's structural types are actually satisfied by kiln's real
- * classes/objects -- not just plausible-looking duplicates. @kiln/core and
- * @kiln/transform-engine are devDependencies here ONLY, for this
+ * classes/objects -- not just plausible-looking duplicates. @kiln-cli/core and
+ * @kiln-cli/transform-engine are devDependencies here ONLY, for this
  * compile-time/runtime check; they are never part of the published
  * package (see package.json's `files` list).
  */
 import { describe, expect, test } from 'bun:test';
-import { OwnershipTracker as RealOwnershipTracker } from '@kiln/core';
-import { createTransformPipeline as createRealTransformPipeline } from '@kiln/transform-engine';
+import { OwnershipTracker as RealOwnershipTracker } from '@kiln-cli/core';
+import { createTransformPipeline as createRealTransformPipeline } from '@kiln-cli/transform-engine';
 import type { OwnershipTracker } from '../src/ownership.js';
 import type { TransformPipeline } from '../src/transforms.js';
 

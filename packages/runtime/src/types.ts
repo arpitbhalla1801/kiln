@@ -1,8 +1,8 @@
-import type { LifecycleContext } from '@kiln/core';
-import type { EnvVariableMap } from '@kiln/env-capability';
-import type { ProjectInspection } from '@kiln/node-adapter';
-import type { CapabilityExecutionPlan } from '@kiln/planner';
-import type { TransformPlan } from '@kiln/transform-engine';
+import type { LifecycleContext } from '@kiln-cli/core';
+import type { EnvVariableMap } from '@kiln-cli/env-capability';
+import type { ProjectInspection } from '@kiln-cli/node-adapter';
+import type { CapabilityExecutionPlan } from '@kiln-cli/planner';
+import type { TransformPlan } from '@kiln-cli/transform-engine';
 import type { InstallDependencies } from './install.js';
 
 export interface RuntimeOptions {

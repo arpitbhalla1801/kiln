@@ -70,15 +70,15 @@ line is a real constraint found by reading the code, not an assumption.
 
 | Decision | Choice | Why |
 |---|---|---|
-| Where does the public plugin contract live? | New, independently-versioned `@kiln-cli/capability-sdk` package | Lets `@kiln/core` evolve freely without ever breaking a published plugin. The cost is one more package to maintain and release — accepted deliberately. |
+| Where does the public plugin contract live? | New, independently-versioned `@kiln-cli/capability-sdk` package | Lets `@kiln-cli/core` evolve freely without ever breaking a published plugin. The cost is one more package to maintain and release — accepted deliberately. |
 | Plugin discovery | Explicit opt-in only, via a project-root `kiln.plugins.json` | No naming-convention auto-discovery. Auto-loading anything matching a pattern like `kiln-capability-*` is a typosquat vector (`kiln-capability-atuh`) executed silently at `add` time with full filesystem-write access. |
 | Plugin resolution rule | Must be a **direct** dependency in the target project's own `package.json` | No walk-up/transitive resolution. Most auditable option; keeps "what can run" traceable to one file a human already reviews. |
 | Version trust | **Exact version pin** in `kiln.plugins.json`, not a semver range | Never silently upgrade trust. The cost (bump the pin by hand on every plugin update) is intentional friction, not an oversight. |
 | Sandboxing | None in 2.0.0 | A real sandbox (not Node's `vm`, which is trivially escapable) is a multi-month effort for a single maintainer and still wouldn't stop a plugin from requesting arbitrary installs. Shipping "no sandbox, documented loudly" beats shipping a sandbox that implies safety it doesn't provide. |
-| New transform kinds via plugins | Not allowed — the six `TypedTransform` variants stay closed | They're the auditable choke point every capability's filesystem/package.json mutations pass through. A genuinely new primitive ships as a first-party 7th variant in `@kiln/transform-engine`, never something a plugin registers at runtime. |
+| New transform kinds via plugins | Not allowed — the six `TypedTransform` variants stay closed | They're the auditable choke point every capability's filesystem/package.json mutations pass through. A genuinely new primitive ships as a first-party 7th variant in `@kiln-cli/transform-engine`, never something a plugin registers at runtime. |
 | SDK compatibility check | Exact-major-number gate only, no semver-range solver | One maintainer, one SDK. A range solver is solving a problem that doesn't exist yet at this project's scale. |
-| SDK's dependency on `@kiln/core` | None — structural interfaces, not imports | `@kiln/core` is `private: true`, never published. A published `@kiln-cli/capability-sdk` can't depend on an unpublished workspace package. A plugin only ever *receives* an `OwnershipTracker` instance kiln constructs — it never imports or constructs one itself — so the SDK declares the same method surface as a structural interface. Kiln's real class satisfies it automatically (TypeScript structural typing), with zero runtime coupling. |
-| SDK's dependency on `@kiln/transform-engine` | None — same structural approach | Also `private: true`. But `TransformPipeline` is just `TypedTransform[]`, plain data — a plugin never needs `createTransformPipeline()` the function, only the six transform *shapes*, which the SDK declares as structural interfaces. Proven with a real test (`packages/sdk/tests/structural-compatibility.test.ts`) that a real transform-engine-built pipeline satisfies the SDK's type, using `@kiln/core`/`@kiln/transform-engine` as `devDependencies` only (never shipped — see `package.json`'s `files` list). |
+| SDK's dependency on `@kiln-cli/core` | None — structural interfaces, not imports | `@kiln-cli/core` is `private: true`, never published. A published `@kiln-cli/capability-sdk` can't depend on an unpublished workspace package. A plugin only ever *receives* an `OwnershipTracker` instance kiln constructs — it never imports or constructs one itself — so the SDK declares the same method surface as a structural interface. Kiln's real class satisfies it automatically (TypeScript structural typing), with zero runtime coupling. |
+| SDK's dependency on `@kiln-cli/transform-engine` | None — same structural approach | Also `private: true`. But `TransformPipeline` is just `TypedTransform[]`, plain data — a plugin never needs `createTransformPipeline()` the function, only the six transform *shapes*, which the SDK declares as structural interfaces. Proven with a real test (`packages/sdk/tests/structural-compatibility.test.ts`) that a real transform-engine-built pipeline satisfies the SDK's type, using `@kiln-cli/core`/`@kiln-cli/transform-engine` as `devDependencies` only (never shipped — see `package.json`'s `files` list). |
 | `registerOwnership` in the `Capability` interface | Dropped entirely | It's dead code in the real execution path — `plan-executor.ts` only ever consumes `plan.ownershipRegistrations` and `plan.capability`, never a capability's own `registerOwnership` method. It exists only as test-setup convenience in the first-party packages, and its signature genuinely diverges across all three (different second-argument shapes each). Formalizing a fourth divergent signature for a method nothing in production calls wasn't worth it. |
 | Lockfile provenance | Reuse the *existing* optional `resolved`/`integrity` fields on `CapabilityVersion` | No schema change needed. Built-ins keep `resolved: "capability:${id}@${version}"`; plugins get `resolved: "npm:<package>@<version>"`. |
 
@@ -91,7 +91,7 @@ reality, not the plan as originally written.
 | Phase | What | Issues | Status |
 |---|---|---|---|
 | 0 | Groundwork bugfixes — removed dead manifest `hooks`/`validations`; documented + tested the `file-modify` manifest-level alias | #97, #98 | done |
-| 1 | Formalize the `Capability` contract — new `@kiln-cli/capability-sdk` package (skeleton done, no `@kiln/core`/`@kiln/transform-engine` dependency — see decisions above), retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use (done), define the interface (done — no `registerOwnership`, see decisions above), migrate all three built-ins to implement it (done) | #99 ✅, #100 ✅, #101 ✅, #102 ✅ | done |
+| 1 | Formalize the `Capability` contract — new `@kiln-cli/capability-sdk` package (skeleton done, no `@kiln-cli/core`/`@kiln-cli/transform-engine` dependency — see decisions above), retrofit `EnvCapability.planAdd` to the options-bag shape Auth/Db already use (done), define the interface (done — no `registerOwnership`, see decisions above), migrate all three built-ins to implement it (done) | #99 ✅, #100 ✅, #101 ✅, #102 ✅ | done |
 | 2 | Generalize runtime dispatch (built-ins only, no dynamic loading yet) — `registerCapability()` (done), open `SupportedCapabilityId` (done), collapse `CapabilityRuntime`'s validation-accessor lookup into one map (done), generic `addCapability()` (done) | #103 ✅, #104 ✅, #105 ✅ | done |
 | 3 | Dynamic loading + trust model — the risky phase, gets extra scrutiny — `kiln.plugins.json` trust config schema/loader (done), `plugin-loader.ts` dynamic import from project node_modules + `CapabilityRuntime.loadPlugins()` (done), safe-failure isolation + adversarial tests (done), SDK-major-version compatibility gate (done), lockfile provenance (`npm:<package>@<version>`) for plugin-loaded capabilities (done), `SECURITY.md` plugin threat model + adversarial ownership-conflict test (done) | #106 ✅, #107 ✅, #108 ✅, #109 ✅, #110 ✅, #111 ✅ | done |
 | 4 | Versioning/compatibility contract (docs + release process, no new runtime code) — stable-vs-internal SDK surface documented, release-process rule added (done) | #112 ✅ | done |
@@ -141,8 +141,8 @@ Docs-only phase, no runtime code. Full write-up lives in
   variants) and follows semver on `@kiln-cli/capability-sdk`'s own version.
 - Everything else — `TransformApplier`, `ValidationRunner` internals,
   anything in `packages/runtime` not re-exported by the SDK — is
-  explicitly unsupported for a plugin to depend on, since `@kiln/core`
-  and `@kiln/transform-engine` are `private: true` and never published.
+  explicitly unsupported for a plugin to depend on, since `@kiln-cli/core`
+  and `@kiln-cli/transform-engine` are `private: true` and never published.
 - Release rule (in [CONTRIBUTING.md](../CONTRIBUTING.md)): any change to
   an SDK-re-exported type is an `@kiln-cli/capability-sdk` major bump,
   independent of whatever `@kiln-cli/kiln`'s own version is doing.
@@ -166,7 +166,7 @@ Docs-only phase, no runtime code. Full write-up lives in
    kinds.** Rejected: the six variants are the auditable choke point every
    capability's filesystem/package.json mutations pass through. New
    primitives are a first-party, reviewed addition to
-   `@kiln/transform-engine`, never a plugin-supplied one.
+   `@kiln-cli/transform-engine`, never a plugin-supplied one.
 
 ## Verification checklist (re-run per phase, not just at the end)
 

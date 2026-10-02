@@ -1,11 +1,11 @@
 {
-  "name": "@kiln/node-adapter",
+  "name": "@kiln-cli/node-adapter",
   "version": "2.0.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@kiln/core": "workspace:*"
+    "@kiln-cli/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

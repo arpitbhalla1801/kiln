@@ -1,4 +1,4 @@
-import type { EnvVariableDefinition } from '@kiln/transform-engine';
+import type { EnvVariableDefinition } from '@kiln-cli/transform-engine';
 
 export const ENV_CAPABILITY_ID = 'env';
 export const DEFAULT_ENV_EXAMPLE_PATH = '.env.example';
@@ -13,7 +13,7 @@ export interface EnvVariableInput {
 
 export interface EnvCapabilityPlanOptions {
   variables: EnvVariableMap;
-  tracker?: import('@kiln/core').OwnershipTracker;
+  tracker?: import('@kiln-cli/core').OwnershipTracker;
   envExamplePath?: string;
   envExampleExists?: boolean;
   ownerCapabilityId?: string;
@@ -22,9 +22,9 @@ export interface EnvCapabilityPlanOptions {
 }
 
 export interface EnvCapabilityPlan {
-  transforms: import('@kiln/transform-engine').TransformPipeline;
-  capability: import('@kiln/core').Capability;
-  ownershipRegistrations: import('@kiln/core').OwnershipRegistration[];
+  transforms: import('@kiln-cli/transform-engine').TransformPipeline;
+  capability: import('@kiln-cli/core').Capability;
+  ownershipRegistrations: import('@kiln-cli/core').OwnershipRegistration[];
 }
 
 export type EnvVariableMap = Record<string, string | EnvVariableDefinition>;

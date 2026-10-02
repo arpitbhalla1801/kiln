@@ -1,5 +1,5 @@
 {
-  "name": "@kiln/project-model",
+  "name": "@kiln-cli/project-model",
   "version": "2.0.0",
   "private": true,
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     }
   },
   "dependencies": {
-    "@kiln/core": "workspace:*"
+    "@kiln-cli/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

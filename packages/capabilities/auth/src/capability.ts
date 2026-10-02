@@ -11,7 +11,7 @@ import {
   loadManifestFromObject,
   mergeUnique,
   OwnershipTracker,
-} from '@kiln/core';
+} from '@kiln-cli/core';
 import type { Capability } from '@kiln-cli/capability-sdk';
 import { AUTH_MANIFEST } from './manifest-data.js';
 import {
@@ -19,11 +19,11 @@ import {
   DEFAULT_ENV_LOCAL_PATH,
   EnvCapability,
   type EnvVariableMap,
-} from '@kiln/env-capability';
+} from '@kiln-cli/env-capability';
 import {
   createTransformPipeline,
   type TransformPipeline,
-} from '@kiln/transform-engine';
+} from '@kiln-cli/transform-engine';
 import {
   buildProviderMergePatch,
   createAuthConfigContent,
@@ -50,7 +50,7 @@ import { resolveProvider } from './providers.js';
 
 const AUTH_SOURCE_ROOT_MARKERS = ['app', 'pages', 'auth.ts'];
 
-// Mirrors @kiln/db-capability's PRISMA_CLIENT_PACKAGE -- not imported directly,
+// Mirrors @kiln-cli/db-capability's PRISMA_CLIENT_PACKAGE -- not imported directly,
 // to avoid a circular workspace dependency between the two capabilities.
 const PRISMA_CLIENT_PACKAGE = '@prisma/client';
 // Both capabilities place their file at `${sourceRoot}/auth.ts` and

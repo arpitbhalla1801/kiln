@@ -1,6 +1,6 @@
-import { LockfileStore, OwnershipMetadataStore } from '@kiln/project-model';
-import { NodeAdapter } from '@kiln/node-adapter';
-import { SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
+import { LockfileStore, OwnershipMetadataStore } from '@kiln-cli/project-model';
+import { NodeAdapter } from '@kiln-cli/node-adapter';
+import { SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
 import { collectChecks } from '../health.js';
 import { resolveProjectRoot } from '../project.js';
 import type { CliOptions } from '../output.js';
