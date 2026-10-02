@@ -12,7 +12,7 @@ import {
   mergeUnique,
   OwnershipTracker,
 } from '@kiln/core';
-import type { Capability } from '@kiln/capability-sdk';
+import type { Capability } from '@kiln-cli/capability-sdk';
 import { AUTH_MANIFEST } from './manifest-data.js';
 import {
   buildEnvRemovalTransforms,

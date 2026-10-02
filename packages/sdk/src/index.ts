@@ -1,5 +1,5 @@
 /**
- * @kiln/capability-sdk
+ * @kiln-cli/capability-sdk
  *
  * The public, independently-versioned contract for writing a third-party
  * kiln capability plugin. See docs/plugin-architecture.md in the kiln repo

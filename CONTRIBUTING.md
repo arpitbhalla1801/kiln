@@ -65,9 +65,11 @@ git history:
 3. Run `bun run build`, `bun run test:unit`, and `bun run test:business-journeys` before opening a PR.
 4. Keep PRs focused — one fix or feature per PR is much easier to review than a bundle of unrelated changes.
 
-## Releasing `@kiln/capability-sdk`
+## Releasing `@kiln-cli/capability-sdk`
 
-`@kiln/capability-sdk` is independently versioned from `@kiln-cli/kiln` — a plugin author pins against the SDK's own major version, not kiln's. Any change to a type re-exported from `packages/sdk/src/index.ts` (see [packages/sdk/README.md](packages/sdk/README.md) for exactly which types that covers) requires an `@kiln/capability-sdk` major version bump, regardless of what `@kiln-cli/kiln`'s own version is doing at the time. Kiln's own version can bump freely without touching the SDK's; the two are unrelated release trains that happen to ship from the same repo.
+`@kiln-cli/capability-sdk` is independently versioned from `@kiln-cli/kiln` — a plugin author pins against the SDK's own major version, not kiln's. Any change to a type re-exported from `packages/sdk/src/index.ts` (see [packages/sdk/README.md](packages/sdk/README.md) for exactly which types that covers) requires an `@kiln-cli/capability-sdk` major version bump, regardless of what `@kiln-cli/kiln`'s own version is doing at the time. Kiln's own version can bump freely without touching the SDK's; the two are unrelated release trains that happen to ship from the same repo.
+
+To release it, bump `packages/sdk/package.json` and push a `sdk-vX.Y.Z` tag; `v*` tags publish `@kiln-cli/kiln` only.
 
 ## Commit style
 

@@ -12,7 +12,7 @@ import {
   OwnershipTracker,
   readPackageJson,
 } from '@kiln/core';
-import type { Capability } from '@kiln/capability-sdk';
+import type { Capability } from '@kiln-cli/capability-sdk';
 import { DB_MANIFEST } from './manifest-data.js';
 import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
 import { createTransformPipeline, type TransformPipeline } from '@kiln/transform-engine';

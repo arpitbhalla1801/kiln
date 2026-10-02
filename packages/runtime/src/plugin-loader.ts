@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { SDK_VERSION, type Capability } from '@kiln/capability-sdk';
+import { SDK_VERSION, type Capability } from '@kiln-cli/capability-sdk';
 import type { PluginConfigEntry } from '@kiln/project-model';
 
 const KILN_SDK_MAJOR = extractMajorVersion(SDK_VERSION);
@@ -63,14 +63,14 @@ export async function loadPlugin(
   if (declaredSdkMajor === undefined) {
     return skip(
       entry,
-      `'${entry.package}' does not declare a '@kiln/capability-sdk' dependency, so kiln can't verify it targets a compatible SDK major version`
+      `'${entry.package}' does not declare a '@kiln-cli/capability-sdk' dependency, so kiln can't verify it targets a compatible SDK major version`
     );
   }
 
   if (declaredSdkMajor !== KILN_SDK_MAJOR) {
     return skip(
       entry,
-      `'${entry.package}' targets @kiln/capability-sdk v${declaredSdkMajor}, but this kiln build uses v${KILN_SDK_MAJOR}. Upgrade the plugin to target v${KILN_SDK_MAJOR}, or upgrade kiln if you need v${declaredSdkMajor} support.`
+      `'${entry.package}' targets @kiln-cli/capability-sdk v${declaredSdkMajor}, but this kiln build uses v${KILN_SDK_MAJOR}. Upgrade the plugin to target v${KILN_SDK_MAJOR}, or upgrade kiln if you need v${declaredSdkMajor} support.`
     );
   }
 
@@ -257,9 +257,9 @@ async function getDeclaredSdkRange(packageDir: string): Promise<string | undefin
     };
 
     return (
-      packageJson.peerDependencies?.['@kiln/capability-sdk'] ??
-      packageJson.dependencies?.['@kiln/capability-sdk'] ??
-      packageJson.devDependencies?.['@kiln/capability-sdk']
+      packageJson.peerDependencies?.['@kiln-cli/capability-sdk'] ??
+      packageJson.dependencies?.['@kiln-cli/capability-sdk'] ??
+      packageJson.devDependencies?.['@kiln-cli/capability-sdk']
     );
   } catch {
     return undefined;

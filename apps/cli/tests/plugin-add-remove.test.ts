@@ -65,7 +65,7 @@ async function createProjectWithPlugin(): Promise<string> {
       version: VERSION,
       type: 'module',
       main: 'index.mjs',
-      dependencies: { '@kiln/capability-sdk': '^0.1.0' },
+      dependencies: { '@kiln-cli/capability-sdk': '^0.1.0' },
     })
   );
   await writeFile(join(packageDir, 'index.mjs'), CAPABILITY_MODULE);

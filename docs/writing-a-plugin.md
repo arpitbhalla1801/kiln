@@ -1,7 +1,7 @@
 # Writing a kiln capability plugin
 
 A plugin is an npm package that implements the `Capability` interface from
-`@kiln/capability-sdk`. `kiln add <id>` runs its `planAdd`, applies the
+`@kiln-cli/capability-sdk`. `kiln add <id>` runs its `planAdd`, applies the
 transforms it returns, and records what it owns. `kiln remove <id>` takes that
 back. For the design and trust model, see
 [plugin-architecture.md](plugin-architecture.md).
@@ -58,7 +58,7 @@ must not write files, because kiln also runs it for `--dry-run` and
 `kiln plan`. Read the project through `rootPath` when the plan depends on
 what is already there.
 
-Full types: `node_modules/@kiln/capability-sdk/dist/index.d.ts`.
+Full types: `node_modules/@kiln-cli/capability-sdk/dist/index.d.ts`.
 
 ## Transforms
 
@@ -121,7 +121,7 @@ kiln loads a plugin only if all of these hold:
 
 1. it is a **direct** dependency in the project's own `package.json`
 2. `kiln.plugins.json` pins its **exact** installed version: `{ "plugins": [{ "package": "kiln-capability-chat", "version": "0.1.0" }] }`
-3. its `package.json` depends on `@kiln/capability-sdk` with the same major version as kiln's
+3. its `package.json` depends on `@kiln-cli/capability-sdk` with the same major version as kiln's
 
 A plugin that fails any check is skipped with a message. `kiln plugins verify`
 checks the pins without running plugin code.

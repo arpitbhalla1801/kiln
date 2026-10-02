@@ -3,9 +3,17 @@ name: Publish to npm
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # @kiln-cli/kiln
+      - 'sdk-v*' # @kiln-cli/capability-sdk
   workflow_dispatch:
     inputs:
+      package:
+        description: 'Package to publish'
+        type: choice
+        options:
+          - cli
+          - sdk
+        default: cli
       bootstrap:
         description: 'First publish of a brand-new package (npm stage publish 404s until a package exists at all -- use direct npm publish just this once, then switch back)'
         type: boolean
@@ -14,6 +22,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      PACKAGE_DIR: ${{ (startsWith(github.ref_name, 'sdk-v') || inputs.package == 'sdk') && 'packages/sdk' || 'apps/cli' }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -29,15 +39,15 @@ jobs:
         run: bun install
       - name: Build
         run: bun run build
-      - name: Publish @kiln-cli/kiln directly (bootstrap only)
+      - name: Publish ${{ env.PACKAGE_DIR }} directly (bootstrap only)
         if: ${{ inputs.bootstrap }}
         run: npm publish --access public
-        working-directory: apps/cli
+        working-directory: ${{ env.PACKAGE_DIR }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Stage @kiln-cli/kiln for publish
+      - name: Stage ${{ env.PACKAGE_DIR }} for publish
         if: ${{ !inputs.bootstrap }}
         run: npm stage publish --access public
-        working-directory: apps/cli
+        working-directory: ${{ env.PACKAGE_DIR }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

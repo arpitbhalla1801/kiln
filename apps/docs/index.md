@@ -22,14 +22,14 @@ features:
   - title: Env capability
     details: Scaffold .env.local from .env.example, grouped by capability.
   - title: Plugin architecture
-    details: Extend kiln with third-party capabilities via the @kiln/capability-sdk.
+    details: Extend kiln with third-party capabilities via the @kiln-cli/capability-sdk.
 ---
 
 ## What kiln does
 
 kiln is a capability-based CLI for Bun and Next.js projects. Instead of hand-wiring auth, environment variables, and plugins into every new app, kiln scaffolds each capability with a single command and tracks which files it generated so upgrades stay predictable.
 
-A capability-based CLI means each feature — auth, env, plugins — is an isolated, composable unit you opt into. Run `kiln add auth` to wire up next-auth with a provider of your choice, `kiln add env` to generate a `.env.local` from your `.env.example`, or `kiln init-plugin` to scaffold a third-party capability using the `@kiln/capability-sdk`. Built for Bun and Next.js, kiln keeps generated code idiomatic to both.
+A capability-based CLI means each feature — auth, env, plugins — is an isolated, composable unit you opt into. Run `kiln add auth` to wire up next-auth with a provider of your choice, `kiln add env` to generate a `.env.local` from your `.env.example`, or `kiln init-plugin` to scaffold a third-party capability using the `@kiln-cli/capability-sdk`. Built for Bun and Next.js, kiln keeps generated code idiomatic to both.
 
 ## Install
 
