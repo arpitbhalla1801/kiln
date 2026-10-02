@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { CapabilityRuntime } from '../src/capability-runtime.js';
-import { PLUGIN_CONFIG_FILE } from '@kiln/project-model';
+import { PLUGIN_CONFIG_FILE } from '@kiln-cli/project-model';
 
 const tempRoots: string[] = [];
 

@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SDK_VERSION, type Capability } from '@kiln-cli/capability-sdk';
-import type { PluginConfigEntry } from '@kiln/project-model';
+import type { PluginConfigEntry } from '@kiln-cli/project-model';
 
 const KILN_SDK_MAJOR = extractMajorVersion(SDK_VERSION);
 

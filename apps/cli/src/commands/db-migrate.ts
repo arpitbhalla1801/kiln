@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { spawnSafely } from '@kiln/node-adapter';
+import { spawnSafely } from '@kiln-cli/node-adapter';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 

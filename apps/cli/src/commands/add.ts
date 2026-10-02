@@ -1,6 +1,6 @@
-import { detectNextJs } from '@kiln/node-adapter';
-import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln/runtime';
-import type { EnvVariableMap } from '@kiln/env-capability';
+import { detectNextJs } from '@kiln-cli/node-adapter';
+import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
+import type { EnvVariableMap } from '@kiln-cli/env-capability';
 import { formatCapabilityResult } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';

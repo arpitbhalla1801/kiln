@@ -1,5 +1,5 @@
 {
-  "name": "@kiln/db-capability",
+  "name": "@kiln-cli/db-capability",
   "version": "2.0.0",
   "private": true,
   "type": "module",
@@ -7,9 +7,9 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@kiln-cli/capability-sdk": "workspace:*",
-    "@kiln/core": "workspace:*",
-    "@kiln/env-capability": "workspace:*",
-    "@kiln/transform-engine": "workspace:*"
+    "@kiln-cli/core": "workspace:*",
+    "@kiln-cli/env-capability": "workspace:*",
+    "@kiln-cli/transform-engine": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

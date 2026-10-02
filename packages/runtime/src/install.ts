@@ -1,4 +1,4 @@
-import type { TransformPipeline } from '@kiln/transform-engine';
+import type { TransformPipeline } from '@kiln-cli/transform-engine';
 
 export interface InstallDependencies {
   dependencies: Record<string, string>;

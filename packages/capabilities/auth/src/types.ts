@@ -1,6 +1,6 @@
-import type { Capability, OwnershipRegistration } from '@kiln/core';
-import type { TransformPipeline } from '@kiln/transform-engine';
-import type { EnvCapabilityPlan, EnvVariableMap } from '@kiln/env-capability';
+import type { Capability, OwnershipRegistration } from '@kiln-cli/core';
+import type { TransformPipeline } from '@kiln-cli/transform-engine';
+import type { EnvCapabilityPlan, EnvVariableMap } from '@kiln-cli/env-capability';
 
 export const AUTH_CAPABILITY_ID = 'auth';
 export const NEXT_AUTH_PACKAGE = 'next-auth';
@@ -15,7 +15,7 @@ export interface AuthFilePaths {
 }
 
 export interface AuthCapabilityPlanOptions {
-  tracker?: import('@kiln/core').OwnershipTracker;
+  tracker?: import('@kiln-cli/core').OwnershipTracker;
   envExamplePath?: string;
   envExampleExists?: boolean;
   envLocalExists?: boolean;

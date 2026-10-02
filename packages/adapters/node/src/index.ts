@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/node-adapter';
+﻿export const name = '@kiln-cli/node-adapter';
 
 export { NodeAdapter } from './adapter.js';
 export { detectNextJs } from './detection/nextjs.js';

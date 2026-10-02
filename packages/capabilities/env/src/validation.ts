@@ -2,7 +2,7 @@ import {
   formatOwnershipConflict,
   OwnershipRegistration,
   OwnershipTracker,
-} from '@kiln/core';
+} from '@kiln-cli/core';
 import { ENV_CAPABILITY_ID } from './types.js';
 import type { EnvVariableInput } from './types.js';
 

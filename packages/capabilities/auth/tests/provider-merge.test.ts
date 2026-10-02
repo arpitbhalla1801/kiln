@@ -2,8 +2,8 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { OwnershipTracker } from '@kiln/core';
-import { TransformApplier, VirtualFilesystem } from '@kiln/transform-engine';
+import { OwnershipTracker } from '@kiln-cli/core';
+import { TransformApplier, VirtualFilesystem } from '@kiln-cli/transform-engine';
 import { AuthCapability, buildAuthFilePaths } from '../src/capability.js';
 import { createAuthConfigContent } from '../src/templates.js';
 

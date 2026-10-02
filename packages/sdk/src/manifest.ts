@@ -1,6 +1,6 @@
 /**
- * Structural mirror of @kiln/core's manifest and resolved-capability
- * shapes. Zero runtime dependency on @kiln/core, same reasoning as
+ * Structural mirror of @kiln-cli/core's manifest and resolved-capability
+ * shapes. Zero runtime dependency on @kiln-cli/core, same reasoning as
  * ownership.ts. Keep in sync with packages/core/src/models.ts.
  *
  * Note: hooks and validations are deliberately not part of this shape.

@@ -1,4 +1,4 @@
-export const name = '@kiln/runtime';
+export const name = '@kiln-cli/runtime';
 
 export {
   CapabilityRuntime,

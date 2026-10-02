@@ -25,13 +25,13 @@
       },
       "devDependencies": {
         "@kiln-cli/capability-sdk": "workspace:*",
-        "@kiln/core": "workspace:*",
-        "@kiln/env-capability": "workspace:*",
-        "@kiln/node-adapter": "workspace:*",
-        "@kiln/planner": "workspace:*",
-        "@kiln/project-model": "workspace:*",
-        "@kiln/runtime": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/env-capability": "workspace:*",
+        "@kiln-cli/node-adapter": "workspace:*",
+        "@kiln-cli/planner": "workspace:*",
+        "@kiln-cli/project-model": "workspace:*",
+        "@kiln-cli/runtime": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
         "@types/node": "^25.9.1",
         "esbuild": "^0.28.2",
         "shx": "^0.4.0",
@@ -61,95 +61,95 @@
       },
     },
     "packages/adapters/node": {
-      "name": "@kiln/node-adapter",
+      "name": "@kiln-cli/node-adapter",
       "version": "2.0.0",
       "dependencies": {
-        "@kiln/core": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
       },
     },
     "packages/capabilities/auth": {
-      "name": "@kiln/auth-capability",
+      "name": "@kiln-cli/auth-capability",
       "version": "2.0.0",
       "dependencies": {
         "@kiln-cli/capability-sdk": "workspace:*",
-        "@kiln/core": "workspace:*",
-        "@kiln/env-capability": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/env-capability": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
       },
     },
     "packages/capabilities/db": {
-      "name": "@kiln/db-capability",
+      "name": "@kiln-cli/db-capability",
       "version": "2.0.0",
       "dependencies": {
         "@kiln-cli/capability-sdk": "workspace:*",
-        "@kiln/core": "workspace:*",
-        "@kiln/env-capability": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/env-capability": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
       },
     },
     "packages/capabilities/env": {
-      "name": "@kiln/env-capability",
+      "name": "@kiln-cli/env-capability",
       "version": "2.0.0",
       "dependencies": {
         "@kiln-cli/capability-sdk": "workspace:*",
-        "@kiln/core": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
       },
     },
     "packages/core": {
-      "name": "@kiln/core",
+      "name": "@kiln-cli/core",
       "version": "2.0.0",
       "devDependencies": {
         "@types/node": "^25.9.1",
       },
     },
     "packages/planner": {
-      "name": "@kiln/planner",
+      "name": "@kiln-cli/planner",
       "version": "2.0.0",
       "dependencies": {
-        "@kiln/core": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
       },
       "devDependencies": {
-        "@kiln/auth-capability": "workspace:*",
+        "@kiln-cli/auth-capability": "workspace:*",
         "@types/node": "^25.9.1",
       },
     },
     "packages/project-model": {
-      "name": "@kiln/project-model",
+      "name": "@kiln-cli/project-model",
       "version": "2.0.0",
       "dependencies": {
-        "@kiln/core": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
       },
     },
     "packages/runtime": {
-      "name": "@kiln/runtime",
+      "name": "@kiln-cli/runtime",
       "version": "2.0.0",
       "dependencies": {
         "@kiln-cli/capability-sdk": "workspace:*",
-        "@kiln/auth-capability": "workspace:*",
-        "@kiln/core": "workspace:*",
-        "@kiln/db-capability": "workspace:*",
-        "@kiln/env-capability": "workspace:*",
-        "@kiln/node-adapter": "workspace:*",
-        "@kiln/planner": "workspace:*",
-        "@kiln/project-model": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/auth-capability": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/db-capability": "workspace:*",
+        "@kiln-cli/env-capability": "workspace:*",
+        "@kiln-cli/node-adapter": "workspace:*",
+        "@kiln-cli/planner": "workspace:*",
+        "@kiln-cli/project-model": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
@@ -159,16 +159,16 @@
       "name": "@kiln-cli/capability-sdk",
       "version": "0.1.0",
       "devDependencies": {
-        "@kiln/core": "workspace:*",
-        "@kiln/transform-engine": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
+        "@kiln-cli/transform-engine": "workspace:*",
         "@types/node": "^25.9.1",
       },
     },
     "packages/transform-engine": {
-      "name": "@kiln/transform-engine",
+      "name": "@kiln-cli/transform-engine",
       "version": "2.0.0",
       "dependencies": {
-        "@kiln/core": "workspace:*",
+        "@kiln-cli/core": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
@@ -377,23 +377,23 @@
 
     "@kiln-cli/kiln": ["@kiln-cli/kiln@workspace:apps/cli"],
 
-    "@kiln/auth-capability": ["@kiln/auth-capability@workspace:packages/capabilities/auth"],
+    "@kiln-cli/auth-capability": ["@kiln-cli/auth-capability@workspace:packages/capabilities/auth"],
 
-    "@kiln/core": ["@kiln/core@workspace:packages/core"],
+    "@kiln-cli/core": ["@kiln-cli/core@workspace:packages/core"],
 
-    "@kiln/db-capability": ["@kiln/db-capability@workspace:packages/capabilities/db"],
+    "@kiln-cli/db-capability": ["@kiln-cli/db-capability@workspace:packages/capabilities/db"],
 
-    "@kiln/env-capability": ["@kiln/env-capability@workspace:packages/capabilities/env"],
+    "@kiln-cli/env-capability": ["@kiln-cli/env-capability@workspace:packages/capabilities/env"],
 
-    "@kiln/node-adapter": ["@kiln/node-adapter@workspace:packages/adapters/node"],
+    "@kiln-cli/node-adapter": ["@kiln-cli/node-adapter@workspace:packages/adapters/node"],
 
-    "@kiln/planner": ["@kiln/planner@workspace:packages/planner"],
+    "@kiln-cli/planner": ["@kiln-cli/planner@workspace:packages/planner"],
 
-    "@kiln/project-model": ["@kiln/project-model@workspace:packages/project-model"],
+    "@kiln-cli/project-model": ["@kiln-cli/project-model@workspace:packages/project-model"],
 
-    "@kiln/runtime": ["@kiln/runtime@workspace:packages/runtime"],
+    "@kiln-cli/runtime": ["@kiln-cli/runtime@workspace:packages/runtime"],
 
-    "@kiln/transform-engine": ["@kiln/transform-engine@workspace:packages/transform-engine"],
+    "@kiln-cli/transform-engine": ["@kiln-cli/transform-engine@workspace:packages/transform-engine"],
 
     "@napi-rs/lzma-linux-x64-gnu": ["@napi-rs/lzma-linux-x64-gnu@1.5.1", "", { "os": "linux", "cpu": "x64" }, "sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ=="],
 

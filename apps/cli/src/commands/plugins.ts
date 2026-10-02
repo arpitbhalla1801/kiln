@@ -1,5 +1,5 @@
-import { checkPluginPins, loadPlugins } from '@kiln/runtime';
-import { PluginConfigStore } from '@kiln/project-model';
+import { checkPluginPins, loadPlugins } from '@kiln-cli/runtime';
+import { PluginConfigStore } from '@kiln-cli/project-model';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 

@@ -1,13 +1,13 @@
 /**
- * Structural mirror of @kiln/core's ownership tracking types.
+ * Structural mirror of @kiln-cli/core's ownership tracking types.
  *
- * @kiln/core is a private, unpublished workspace package. A plugin never
+ * @kiln-cli/core is a private, unpublished workspace package. A plugin never
  * imports or constructs an OwnershipTracker itself -- kiln's runtime
  * constructs one and hands a plugin an instance via
  * CapabilityPlanOptions.tracker. Declaring the same method surface here as
  * a structural interface means kiln's real OwnershipTracker class
  * satisfies it automatically (TypeScript types are structural, not
- * nominal), with zero runtime coupling to @kiln/core. Keep these shapes in
+ * nominal), with zero runtime coupling to @kiln-cli/core. Keep these shapes in
  * sync with packages/core/src/ownership.ts and ownership-types.ts.
  */
 

@@ -1,4 +1,4 @@
-import type { CapabilityId, FileOwnership } from '@kiln/core';
+import type { CapabilityId, FileOwnership } from '@kiln-cli/core';
 
 /** Relative or absolute path to a project file. */
 export type ProjectFilePath = string;

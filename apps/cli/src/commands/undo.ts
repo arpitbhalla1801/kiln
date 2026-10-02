@@ -1,14 +1,14 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
-import { LOCKFILES } from '@kiln/node-adapter';
+import { LOCKFILES } from '@kiln-cli/node-adapter';
 import {
   FILE_HASHES_FILE,
   KILN_DIRECTORY,
   LOCKFILE_FILE,
   OWNERSHIP_METADATA_FILE,
-} from '@kiln/project-model';
-import { onBeforePersist } from '@kiln/transform-engine';
+} from '@kiln-cli/project-model';
+import { onBeforePersist } from '@kiln-cli/transform-engine';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 

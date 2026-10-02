@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { connect } from 'node:net';
 import { join } from 'node:path';
-import { NodeAdapter, spawnSafely } from '@kiln/node-adapter';
-import { OwnershipMetadataStore } from '@kiln/project-model';
+import { NodeAdapter, spawnSafely } from '@kiln-cli/node-adapter';
+import { OwnershipMetadataStore } from '@kiln-cli/project-model';
 import { resolveProjectRoot } from './project.js';
 import type { CliOptions } from './output.js';
 import { expectsNextJsProject } from './validation/nextjs-project.js';

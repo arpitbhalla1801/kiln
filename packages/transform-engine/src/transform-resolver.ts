@@ -1,4 +1,4 @@
-import type { Transform } from '@kiln/core';
+import type { Transform } from '@kiln-cli/core';
 import {
   envMutation,
   fileCreate,

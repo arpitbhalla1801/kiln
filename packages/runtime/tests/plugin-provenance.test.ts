@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { LockfileStore, PLUGIN_CONFIG_FILE } from '@kiln/project-model';
+import { LockfileStore, PLUGIN_CONFIG_FILE } from '@kiln-cli/project-model';
 import { CapabilityRuntime } from '../src/capability-runtime.js';
 
 const tempRoots: string[] = [];

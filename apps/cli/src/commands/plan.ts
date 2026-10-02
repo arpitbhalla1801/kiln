@@ -1,6 +1,6 @@
-import { createCapabilityRuntime } from '@kiln/runtime';
-import type { CapabilityPlanResult } from '@kiln/runtime';
-import type { EnvVariableMap } from '@kiln/env-capability';
+import { createCapabilityRuntime } from '@kiln-cli/runtime';
+import type { CapabilityPlanResult } from '@kiln-cli/runtime';
+import type { EnvVariableMap } from '@kiln-cli/env-capability';
 import { assertCapabilityPrerequisites, resolveEnvVariables } from './add.js';
 import { formatResolvedDependencies, formatTransformPlan } from '../output.js';
 import type { CliOptions } from '../output.js';

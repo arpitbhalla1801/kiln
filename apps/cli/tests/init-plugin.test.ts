@@ -28,7 +28,7 @@ describe('kiln init-plugin', () => {
     const packageJson = JSON.parse(await readFile(join(pluginDir, 'package.json'), 'utf8'));
     expect(packageJson.name).toBe('kiln-capability-stripe');
     expect(packageJson.dependencies['@kiln-cli/capability-sdk']).toBeDefined();
-    expect(packageJson.dependencies['@kiln/core']).toBeUndefined();
+    expect(packageJson.dependencies['@kiln-cli/core']).toBeUndefined();
 
     const manifest = JSON.parse(await readFile(join(pluginDir, 'kiln.manifest.json'), 'utf8'));
     expect(manifest.id).toBe('stripe');

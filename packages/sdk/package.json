@@ -23,8 +23,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "@kiln/core": "workspace:*",
-    "@kiln/transform-engine": "workspace:*",
+    "@kiln-cli/core": "workspace:*",
+    "@kiln-cli/transform-engine": "workspace:*",
     "@types/node": "^25.9.1"
   },
   "scripts": {
