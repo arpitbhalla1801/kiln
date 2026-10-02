@@ -1,7 +1,8 @@
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { PLUGIN_CONFIG_FILE } from '@kiln-cli/project-model';
 import { runAdd } from '../src/commands/add.js';
 import { runInit } from '../src/commands/init.js';
 import { runInspect } from '../src/commands/inspect.js';
@@ -69,5 +70,42 @@ describe('kiln inspect', () => {
 
     expect(output).toContain('✗ env');
     expect(output).toContain('Last operation: none');
+  }, 60000);
+
+  test('lists a trusted plugin capability that has not been added yet', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'kiln-inspect-'));
+    tempRoots.push(root);
+    await runInit(root, 'demo-app');
+    const packageDir = join(root, 'node_modules', 'kiln-capability-gizmo');
+    await mkdir(packageDir, { recursive: true });
+    await writeFile(
+      join(packageDir, 'package.json'),
+      JSON.stringify({
+        name: 'kiln-capability-gizmo',
+        version: '1.0.0',
+        type: 'module',
+        main: 'index.mjs',
+        dependencies: { '@kiln-cli/capability-sdk': '^0.1.0' },
+      })
+    );
+    await writeFile(
+      join(packageDir, 'index.mjs'),
+      `export default {
+        id: 'gizmo',
+        async getManifest() { return { id: 'gizmo', version: '1.0.0', dependencies: [] }; },
+        async getCapability() { return { id: 'gizmo', version: '1.0.0', dependencies: [] }; },
+        async planAdd() { return { transforms: [], capability: { id: 'gizmo', version: '1.0.0', dependencies: [] }, ownershipRegistrations: [] }; },
+      };`
+    );
+    const pkgPath = join(root, 'package.json');
+    const pkg = JSON.parse(await readFile(pkgPath, 'utf8'));
+    pkg.dependencies = { ...pkg.dependencies, 'kiln-capability-gizmo': '1.0.0' };
+    await writeFile(pkgPath, JSON.stringify(pkg));
+    await writeFile(
+      join(root, PLUGIN_CONFIG_FILE),
+      JSON.stringify({ plugins: [{ package: 'kiln-capability-gizmo', version: '1.0.0' }] })
+    );
+
+    expect(await inspectOutput(root)).toContain('✗ gizmo');
   }, 60000);
 });
