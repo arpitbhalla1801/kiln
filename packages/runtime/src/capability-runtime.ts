@@ -4,7 +4,7 @@ import { AuthCapability } from '@kiln/auth-capability';
 import type {
   Capability as PluginCapability,
   CapabilityPlanOptions,
-} from '@kiln/capability-sdk';
+} from '@kiln-cli/capability-sdk';
 import {
   type Capability,
   createEmptyProjectState,

@@ -39,7 +39,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@kiln/capability-sdk": "workspace:*",
+    "@kiln-cli/capability-sdk": "workspace:*",
     "@kiln/core": "workspace:*",
     "@kiln/env-capability": "workspace:*",
     "@kiln/node-adapter": "workspace:*",

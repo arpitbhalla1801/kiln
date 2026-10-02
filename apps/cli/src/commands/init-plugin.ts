@@ -71,7 +71,7 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     types: 'dist/index.d.ts',
     files: ['dist'],
     dependencies: {
-      '@kiln/capability-sdk': SDK_VERSION_RANGE,
+      '@kiln-cli/capability-sdk': SDK_VERSION_RANGE,
     },
     devDependencies: {
       '@types/node': '^25.9.1',
@@ -112,12 +112,12 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     },
   };
 
-  const manifestData = `import type { CapabilityManifest } from '@kiln/capability-sdk';
+  const manifestData = `import type { CapabilityManifest } from '@kiln-cli/capability-sdk';
 
 export const ${constPrefix}_MANIFEST: CapabilityManifest = ${JSON.stringify(manifest, null, 2)};
 `;
 
-  const types = `import type { CapabilityPlan, CapabilityPlanOptions } from '@kiln/capability-sdk';
+  const types = `import type { CapabilityPlan, CapabilityPlanOptions } from '@kiln-cli/capability-sdk';
 
 export const ${constPrefix}_CAPABILITY_ID = '${capabilityId}';
 export const ${constPrefix}_MODULE_PATH = '${modulePath}';
@@ -145,7 +145,7 @@ export const ${camelName}Config = { apiKey: env.${apiKeyVar} };
 }
 `;
 
-  const validation = `import type { OwnershipRegistration } from '@kiln/capability-sdk';
+  const validation = `import type { OwnershipRegistration } from '@kiln-cli/capability-sdk';
 import {
   ${constPrefix}_API_KEY,
   ${constPrefix}_CAPABILITY_ID,
@@ -183,7 +183,7 @@ import type {
   CapabilityManifest,
   ResolvedCapability,
   TypedTransform,
-} from '@kiln/capability-sdk';
+} from '@kiln-cli/capability-sdk';
 import { ${constPrefix}_MANIFEST } from './manifest-data.js';
 import { create${pascalName}Module } from './templates.js';
 import {
@@ -373,7 +373,7 @@ To upgrade: release a new version, install it in the project, bump the pin. Kiln
 
 - Writing a plugin (transforms, ownership, remove, options, testing, distribution): ${DOCS_BASE}/writing-a-plugin.md
 - Design and trust model: ${DOCS_BASE}/plugin-architecture.md
-- SDK types: \`node_modules/@kiln/capability-sdk/dist/index.d.ts\`
+- SDK types: \`node_modules/@kiln-cli/capability-sdk/dist/index.d.ts\`
 `;
 
   return {

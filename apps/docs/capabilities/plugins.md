@@ -1,7 +1,7 @@
 # Plugins
 
 kiln 2.0.0 introduces a third-party capability plugin architecture. A plugin implements
-the `Capability` interface from `@kiln/capability-sdk` and registers itself so
+the `Capability` interface from `@kiln-cli/capability-sdk` and registers itself so
 `kiln add <capability>` can dispatch to it the same way it dispatches to built-in
 `env`/`auth` capabilities.
 

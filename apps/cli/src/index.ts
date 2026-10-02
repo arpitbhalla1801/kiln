@@ -114,7 +114,7 @@ function printHelp(topic?: string): void {
     if (command === 'init-plugin') {
       console.log('Usage: kiln init-plugin <name>');
       console.log(
-        'Scaffolds a kiln-capability-<name> package wired against @kiln/capability-sdk.'
+        'Scaffolds a kiln-capability-<name> package wired against @kiln-cli/capability-sdk.'
       );
     }
 

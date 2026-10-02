@@ -32,7 +32,7 @@ async function createTempProject(): Promise<string> {
       version: '1.4.2',
       type: 'module',
       main: 'index.mjs',
-      dependencies: { '@kiln/capability-sdk': '^0.1.0' },
+      dependencies: { '@kiln-cli/capability-sdk': '^0.1.0' },
     })
   );
   await writeFile(

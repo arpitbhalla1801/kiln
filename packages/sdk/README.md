@@ -1,10 +1,10 @@
-# @kiln/capability-sdk
+# @kiln-cli/capability-sdk
 
 The public, independently-versioned contract for writing a third-party kiln capability plugin. See [docs/plugin-architecture.md](../../docs/plugin-architecture.md) in the kiln repo for the full design and the reasoning behind it.
 
 ## Stable surface
 
-Everything re-exported from `src/index.ts` is stable to build a plugin against, and follows semver on this package's own version — a breaking change to any of it is an `@kiln/capability-sdk` major bump, independent of `@kiln-cli/kiln`'s own version:
+Everything re-exported from `src/index.ts` is stable to build a plugin against, and follows semver on this package's own version — a breaking change to any of it is an `@kiln-cli/capability-sdk` major bump, independent of `@kiln-cli/kiln`'s own version:
 
 - **`Capability`** — the interface every plugin implements (`id`, `getManifest`, `getCapability`, `planAdd`).
 - **`CapabilityPlanOptions`, `CapabilityPlan`** — the base shape of `planAdd`'s options and return value.
@@ -24,4 +24,4 @@ If your plugin needs something from this list, it's a sign the SDK is missing a 
 
 ## Why this package has no runtime dependencies
 
-`@kiln/core` and `@kiln/transform-engine` are both `private: true`, unpublished workspace packages — a published `@kiln/capability-sdk` can't depend on either at runtime. Where a plugin needs to work with something kiln constructs and hands it (an `OwnershipTracker` instance), or with something a plugin builds itself as plain data (a `TransformPipeline`, which is just `TypedTransform[]`), this SDK declares the shape as a structural interface instead of importing the concrete implementation. Kiln's real classes and objects satisfy these types automatically, because TypeScript types are structural, not nominal — proven with a real test (`tests/structural-compatibility.test.ts`) using both private packages as `devDependencies` only.
+`@kiln/core` and `@kiln/transform-engine` are both `private: true`, unpublished workspace packages — a published `@kiln-cli/capability-sdk` can't depend on either at runtime. Where a plugin needs to work with something kiln constructs and hands it (an `OwnershipTracker` instance), or with something a plugin builds itself as plain data (a `TransformPipeline`, which is just `TypedTransform[]`), this SDK declares the shape as a structural interface instead of importing the concrete implementation. Kiln's real classes and objects satisfy these types automatically, because TypeScript types are structural, not nominal — proven with a real test (`tests/structural-compatibility.test.ts`) using both private packages as `devDependencies` only.
