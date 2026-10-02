@@ -1,6 +1,6 @@
 import { LockfileStore, OwnershipMetadataStore } from '@kiln-cli/project-model';
 import { NodeAdapter } from '@kiln-cli/node-adapter';
-import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
+import { capabilityLinks, createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
 import { collectChecks } from '../health.js';
 import { resolveProjectRoot } from '../project.js';
 import type { CliOptions } from '../output.js';
@@ -37,6 +37,9 @@ export async function runInspect(options: CliOptions): Promise<void> {
 
   console.log(`Project: ${framework} + ${packageManager}`);
   console.log(`Capabilities: ${capabilityIds.map((id) => `${installed.has(id) ? '✓' : '✗'} ${id}`).join('  ')}`);
+  for (const line of linkLines(capabilityIds.filter((id) => installed.has(id)), installed)) {
+    console.log(line);
+  }
   console.log(`Managed files: ${ownership?.files.length ?? 0}`);
   console.log(`Dependencies added: ${dependencies.length > 0 ? dependencies.join(', ') : 'none'}`);
   console.log(`Last operation: ${lastOperation ? `${lastOperation.id}@${lastOperation.version}` : 'none'}`);
@@ -58,6 +61,25 @@ export async function runInspect(options: CliOptions): Promise<void> {
       console.log(`  env ${entry.name} -> ${entry.ownerCapabilityId}`);
     }
   }
+}
+
+/** Requires and enhances under each installed capability that has any; a missing requirement is marked. */
+function linkLines(installedIds: string[], installed: Set<string>): string[] {
+  const lines: string[] = [];
+  for (const id of installedIds) {
+    const { requires, enhances } = capabilityLinks(id);
+    if (requires.length === 0 && enhances.length === 0) {
+      continue;
+    }
+    lines.push(`  ${id}`);
+    for (const required of requires) {
+      lines.push(`    requires ${installed.has(required) ? '✓' : '✗ missing:'} ${required}`);
+    }
+    for (const partner of enhances) {
+      lines.push(`    enhances ${installed.has(partner) ? '✓' : '-'} ${partner}`);
+    }
+  }
+  return lines.length > 0 ? ['Capability links:', ...lines] : [];
 }
 
 function statusLine(failures: number, warnings: number): string {
