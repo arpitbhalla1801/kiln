@@ -5,15 +5,19 @@
     "version": "0.0.0"
   },
   "snapshot": {
-    "timestamp": "2026-09-12T11:56:08.107Z",
-    "engineVersion": "1.0.0",
+    "timestamp": "2026-09-27T10:22:49.369Z",
+    "engineVersion": "2.0.0",
     "capabilities": [
       {
         "id": "auth",
         "version": "1.0.0",
         "resolved": "capability:auth@1.0.0",
-        "dependencies": {}
+        "dependencies": {},
+        "providers": [
+          "credentials"
+        ]
       }
-    ]
+    ],
+    "lastCapability": "auth"
   }
 }

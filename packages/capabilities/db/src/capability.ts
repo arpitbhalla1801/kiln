@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   type Capability as ResolvedCapability,
@@ -10,12 +11,16 @@ import {
   mergeUnique,
   OwnershipTracker,
   readPackageJson,
-} from '@kiln/core';
-import type { Capability } from '@kiln/capability-sdk';
+} from '@kiln-cli/core';
+import type { Capability } from '@kiln-cli/capability-sdk';
 import { DB_MANIFEST } from './manifest-data.js';
-import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
-import { createTransformPipeline, type TransformPipeline } from '@kiln/transform-engine';
-import { createDbClientContent, createSchemaPrismaContent } from './templates.js';
+import { EnvCapability, type EnvVariableMap } from '@kiln-cli/env-capability';
+import { createTransformPipeline, type TransformPipeline } from '@kiln-cli/transform-engine';
+import {
+  createAuthAwareSchemaPrismaContent,
+  createDbClientContent,
+  createSchemaPrismaContent,
+} from './templates.js';
 import {
   DB_CAPABILITY_ID,
   DB_SCRIPTS,
@@ -29,6 +34,10 @@ import {
 import { buildDbOwnershipRegistrations, type DbClaims, validateDbOwnership } from './validation.js';
 
 const DB_SOURCE_ROOT_MARKERS = ['app', 'pages'];
+
+// Mirrors @kiln-cli/auth-capability's NEXT_AUTH_PACKAGE -- not imported directly,
+// to avoid a circular workspace dependency between the two capabilities.
+const NEXT_AUTH_PACKAGE = 'next-auth';
 
 const DB_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },
@@ -76,6 +85,10 @@ export class DbCapability implements Capability {
       (await hasDependency(rootPath, PRISMA_CLIENT_PACKAGE));
     const existingScripts = options.existingScripts ?? (await readExistingScripts(rootPath));
     const clientVersion = options.clientVersion ?? (await readClientVersion(rootPath));
+    const authPresent = options.authPresent ?? (await hasDependency(rootPath, NEXT_AUTH_PACKAGE));
+    const schemaFileContent = schemaFileExists
+      ? options.schemaFileContent ?? (await readFile(join(rootPath, paths.schemaFile), 'utf8').catch(() => undefined))
+      : undefined;
 
     const dbTransforms = buildDbTransforms(
       paths,
@@ -84,7 +97,9 @@ export class DbCapability implements Capability {
       clientFileExists,
       clientInstalled,
       existingScripts,
-      clientVersion
+      clientVersion,
+      authPresent,
+      schemaFileContent
     );
 
     const envPlan = await this.envCapability.planAdd(rootPath, {
@@ -152,7 +167,9 @@ export function buildDbTransforms(
   clientFileExists: boolean,
   clientInstalled = prismaInstalled,
   existingScripts: Record<string, string> = {},
-  clientVersion?: string
+  clientVersion?: string,
+  authPresent = false,
+  currentSchemaContent?: string
 ): TransformPipeline {
   const builder = createTransformPipeline();
   // The CLI must match an already-installed client's version, or the two disagree.
@@ -173,8 +190,17 @@ export function buildDbTransforms(
     builder.fileCreate(
       `${DB_CAPABILITY_ID}-create-schema`,
       paths.schemaFile,
-      createSchemaPrismaContent(),
+      authPresent ? createAuthAwareSchemaPrismaContent() : createSchemaPrismaContent(),
       'Create Prisma schema'
+    );
+  } else if (authPresent && currentSchemaContent === createSchemaPrismaContent()) {
+    // auth was added after db: the schema is still kiln's plain, unedited
+    // version, so it's safe to regenerate with the Auth.js adapter's models.
+    builder.fileCreate(
+      `${DB_CAPABILITY_ID}-add-auth-models`,
+      paths.schemaFile,
+      createAuthAwareSchemaPrismaContent(),
+      'Add Auth.js models to Prisma schema'
     );
   }
 

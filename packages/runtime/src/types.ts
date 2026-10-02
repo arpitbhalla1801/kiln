@@ -1,8 +1,8 @@
-import type { LifecycleContext } from '@kiln/core';
-import type { EnvVariableMap } from '@kiln/env-capability';
-import type { ProjectInspection } from '@kiln/node-adapter';
-import type { CapabilityExecutionPlan } from '@kiln/planner';
-import type { TransformPlan } from '@kiln/transform-engine';
+import type { LifecycleContext } from '@kiln-cli/core';
+import type { EnvVariableMap } from '@kiln-cli/env-capability';
+import type { ProjectInspection } from '@kiln-cli/node-adapter';
+import type { CapabilityExecutionPlan } from '@kiln-cli/planner';
+import type { TransformPlan } from '@kiln-cli/transform-engine';
 import type { InstallDependencies } from './install.js';
 
 export interface RuntimeOptions {
@@ -21,6 +21,17 @@ export interface RuntimeExecutionResult {
   capabilityPlan: CapabilityExecutionPlan;
   /** Owned files kiln left alone because the user edited them since kiln wrote them. */
   warnings: string[];
+}
+
+export interface CapabilityPlanResult {
+  capabilityId: string;
+  inspection: ProjectInspection;
+  /** Human-readable ownership conflicts; non-empty means `preview` is absent and nothing else was computed. */
+  conflicts: string[];
+  /** `<resourceType> <resourceKey> -> <capabilityId>` lines for resources this add would newly claim. */
+  ownershipUpdates: string[];
+  preview: TransformPlan | undefined;
+  resolvedDependencies: Map<string, string>;
 }
 
 export interface KilnRuntimeContext extends LifecycleContext {

@@ -15,8 +15,8 @@ describe('auth provider registry', () => {
     expect(() => resolveProvider('discord')).toThrow(/github, google, credentials/);
   });
 
-  test('credentials provider declares no env vars', () => {
-    expect(AUTH_PROVIDERS.credentials.envVars).toEqual([]);
+  test('credentials provider declares its demo credential env vars', () => {
+    expect(AUTH_PROVIDERS.credentials.envVars).toEqual(['AUTH_DEMO_EMAIL', 'AUTH_DEMO_PASSWORD']);
   });
 
   test('oauth providers declare id/secret env vars', () => {
@@ -71,8 +71,12 @@ describe('buildAuthEnvVars', () => {
     expect(Object.keys(envVars)).toEqual(['AUTH_SECRET', 'AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET']);
   });
 
-  test('credentials provider contributes no extra env vars', () => {
-    expect(Object.keys(buildAuthEnvVars(['credentials']))).toEqual(['AUTH_SECRET']);
+  test('credentials provider contributes its demo credential env vars', () => {
+    expect(Object.keys(buildAuthEnvVars(['credentials']))).toEqual([
+      'AUTH_SECRET',
+      'AUTH_DEMO_EMAIL',
+      'AUTH_DEMO_PASSWORD',
+    ]);
   });
 
   test('multiple providers union their env vars, unaffected by generateSecret', () => {

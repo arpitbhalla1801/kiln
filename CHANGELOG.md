@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.1.0
+
+### Features
+
+- Third-party capabilities load from `kiln.plugins.json` in `add`, `plan add`, `remove` and `inspect`
+- The plugin SDK is published as `@kiln-cli/capability-sdk`; `kiln init-plugin` scaffolds a capability against it
+- `kiln undo` reverses the last `add`, `remove` or `env remove`
+- `kiln plan add` prints a symbol summary, `--json` output, and reports ownership conflicts instead of throwing
+- `kiln inspect` is a project summary with capabilities, managed files, last operation and health status
+- `kiln add auth` ships a working credentials provider and route handler, and uses the Auth.js Prisma adapter when `db` is present
+
+### Fixes
+
+- Re-adding `auth` with fewer providers removes the dropped providers' env vars and releases their ownership
+- Plugins load under node: kiln imports the plugin's main file
+
+### Breaking
+
+- Plugins depend on `@kiln-cli/capability-sdk`, not `@kiln/capability-sdk`
+
 ## 2.0.0
 
 ### Breaking

@@ -1,0 +1,4 @@
+{
+  "src/app/api/auth/[...nextauth]/route.ts": "4d9cdb0387220da5591efd3e54fd3e0b6086a11a1becef8c8d016dd1710cbbf5",
+  "src/auth.ts": "188a72964ce2c38e0bcda1ea54999ae668022b823533ef367502f3c20c48866e"
+}

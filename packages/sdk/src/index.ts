@@ -1,12 +1,12 @@
 /**
- * @kiln/capability-sdk
+ * @kiln-cli/capability-sdk
  *
  * The public, independently-versioned contract for writing a third-party
  * kiln capability plugin. See docs/plugin-architecture.md in the kiln repo
  * for the full design and the reasoning behind it.
  *
  * Design note: this package intentionally has no runtime dependency on
- * @kiln/core or @kiln/transform-engine, both private, unpublished
+ * @kiln-cli/core or @kiln-cli/transform-engine, both private, unpublished
  * workspace packages. Kiln's own internals are free to change without
  * ever breaking a published plugin. Where a plugin needs to work with
  * something kiln constructs and hands it (an ownership tracker), or

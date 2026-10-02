@@ -8,6 +8,6 @@ Closes #<!-- issue number -->
 
 - [ ] `bun run build` succeeds
 - [ ] `bun run test:unit` passes
-- [ ] `bun run test:post-deploy` passes (if this touches CLI behavior)
+- [ ] `bun run test:business-journeys` passes (if this touches CLI behavior)
 - [ ] Added/updated tests for the change
 - [ ] Updated docs (README/CONTRIBUTING) if user-facing behavior changed

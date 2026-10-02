@@ -1,7 +1,7 @@
 # Plugins
 
 kiln 2.0.0 introduces a third-party capability plugin architecture. A plugin implements
-the `Capability` interface from `@kiln/capability-sdk` and registers itself so
+the `Capability` interface from `@kiln-cli/capability-sdk` and registers itself so
 `kiln add <capability>` can dispatch to it the same way it dispatches to built-in
 `env`/`auth` capabilities.
 
@@ -20,8 +20,7 @@ kiln plugins list      # list installed plugin capabilities
 kiln plugins verify    # verify installed plugin version pins
 ```
 
-## Reference plugin
+## Writing a plugin
 
-See the reference "hello world" plugin linked from
-[CONTRIBUTING.md](https://github.com/arpitbhalla1801/kiln/blob/main/CONTRIBUTING.md)
-for a full worked example: capability definition, `planAdd`, and lockfile round-trip.
+[docs/writing-a-plugin.md](https://github.com/arpitbhalla1801/kiln/blob/main/docs/writing-a-plugin.md)
+covers transforms, ownership and remove, options, testing, distribution and trust.

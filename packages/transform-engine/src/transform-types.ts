@@ -1,4 +1,4 @@
-import type { TransformId, TransformType } from '@kiln/core';
+import type { TransformId, TransformType } from '@kiln-cli/core';
 
 export interface TransformBase {
   id: TransformId;

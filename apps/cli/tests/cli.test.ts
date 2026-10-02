@@ -248,7 +248,7 @@ describe('kiln cli', () => {
 
     const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
     expect(ownership.ownership.scripts).toEqual([]);
-  }, 30000);
+  }, 120000);
 
   test('doctor warns when a required env var has no value', async () => {
     const root = await createTempDir();

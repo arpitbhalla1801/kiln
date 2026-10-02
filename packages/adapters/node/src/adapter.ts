@@ -1,7 +1,7 @@
 import { access } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AdapterContract } from '@kiln/core';
+import type { AdapterContract } from '@kiln-cli/core';
 import { detectNextJs } from './detection/nextjs.js';
 import { detectLockfile, detectPackageManager } from './detection/package-manager.js';
 import { packageManagerAdd, runPackageManagerScript } from './package-manager/bun.js';

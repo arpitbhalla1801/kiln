@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { LockfileStore, PLUGIN_CONFIG_FILE } from '@kiln/project-model';
+import { LockfileStore, PLUGIN_CONFIG_FILE } from '@kiln-cli/project-model';
 import { CapabilityRuntime } from '../src/capability-runtime.js';
 
 const tempRoots: string[] = [];
@@ -32,7 +32,7 @@ async function createTempProject(): Promise<string> {
       version: '1.4.2',
       type: 'module',
       main: 'index.mjs',
-      dependencies: { '@kiln/capability-sdk': '^0.1.0' },
+      dependencies: { '@kiln-cli/capability-sdk': '^0.1.0' },
     })
   );
   await writeFile(

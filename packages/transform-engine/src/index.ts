@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/transform-engine';
+﻿export const name = '@kiln-cli/transform-engine';
 
 export * from './types.js';
 export * from './vfs.js';

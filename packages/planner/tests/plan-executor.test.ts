@@ -2,9 +2,9 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { OwnershipTracker } from '@kiln/core';
-import { TransformEngine, VirtualFilesystem } from '@kiln/transform-engine';
-import { AuthCapability } from '@kiln/auth-capability';
+import { OwnershipTracker } from '@kiln-cli/core';
+import { TransformEngine, VirtualFilesystem } from '@kiln-cli/transform-engine';
+import { AuthCapability } from '@kiln-cli/auth-capability';
 import { createPlanExecutor } from '../src/plan-executor.js';
 
 const tempRoots: string[] = [];

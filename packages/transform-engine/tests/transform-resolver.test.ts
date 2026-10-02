@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { resolveTypedTransform } from '../src/transform-resolver.js';
-import type { Transform } from '@kiln/core';
+import type { Transform } from '@kiln-cli/core';
 
 describe('resolveTypedTransform', () => {
   test('resolves manifest-style env mutation transforms', () => {

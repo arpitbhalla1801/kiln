@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import type { NodeAdapterRuntime } from '@kiln/node-adapter';
+import type { NodeAdapterRuntime } from '@kiln-cli/node-adapter';
 import { CapabilityRuntime } from '../src/capability-runtime.js';
 
 const tempRoots: string[] = [];
@@ -90,7 +90,7 @@ describe('CapabilityRuntime', () => {
       runScript: async () => ({ exitCode: 0, stdout: '', stderr: '' }),
     };
 
-    const runtime = new CapabilityRuntime({ adapter: adapter as import('@kiln/node-adapter').NodeAdapter });
+    const runtime = new CapabilityRuntime({ adapter: adapter as import('@kiln-cli/node-adapter').NodeAdapter });
     await runtime.addAuth({ cwd: root, dryRun: false });
 
     expect(installCalls).toEqual([{ 'next-auth': '^5.0.0-beta.32' }]);
@@ -147,7 +147,7 @@ describe('CapabilityRuntime', () => {
     } as any;
 
     const runtime = new CapabilityRuntime({
-      adapter: adapter as import('@kiln/node-adapter').NodeAdapter,
+      adapter: adapter as import('@kiln-cli/node-adapter').NodeAdapter,
       authCapability: fakeAuthCapability,
     });
     await runtime.addAuth({ cwd: root, dryRun: false });

@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { PLUGIN_CONFIG_FILE } from '@kiln/project-model';
+import { PLUGIN_CONFIG_FILE } from '@kiln-cli/project-model';
 import { runPluginsList, runPluginsVerify } from '../src/commands/plugins.js';
 
 const tempRoots: string[] = [];
@@ -22,7 +22,7 @@ async function installFakePackage(
       version,
       type: 'module',
       main: 'index.mjs',
-      dependencies: { '@kiln/capability-sdk': '^0.1.0' },
+      dependencies: { '@kiln-cli/capability-sdk': '^0.1.0' },
     })
   );
   await writeFile(join(packageDir, 'index.mjs'), indexContent);

@@ -2,9 +2,9 @@ import {
   loadOwnershipTracker,
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
-} from '@kiln/project-model';
-import { buildEnvRemovalTransforms } from '@kiln/env-capability';
-import { TransformEngine } from '@kiln/transform-engine';
+} from '@kiln-cli/project-model';
+import { buildEnvRemovalTransforms } from '@kiln-cli/env-capability';
+import { TransformEngine } from '@kiln-cli/transform-engine';
 import { formatTransformPlan } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';

@@ -1,4 +1,4 @@
-export const name = '@kiln/runtime';
+export const name = '@kiln-cli/runtime';
 
 export {
   CapabilityRuntime,
@@ -22,6 +22,7 @@ export {
   type CapabilityRegistryEntry,
 } from './capability-registry.js';
 export type {
+  CapabilityPlanResult,
   KilnRuntimeContext,
   RuntimeExecutionResult,
   RuntimeOptions,

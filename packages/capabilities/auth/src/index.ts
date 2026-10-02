@@ -1,4 +1,4 @@
-﻿export const name = '@kiln/auth-capability';
+﻿export const name = '@kiln-cli/auth-capability';
 
 export {
   AuthCapability,
@@ -15,9 +15,12 @@ export {
   createMiddlewareContent,
   createRouteHandlerContent,
   resolveAuthImportPath,
+  type AuthAdapterOptions,
 } from './templates.js';
 export {
   AUTH_CAPABILITY_ID,
+  AUTH_PRISMA_ADAPTER_PACKAGE,
+  AUTH_PRISMA_ADAPTER_VERSION,
   NEXT_AUTH_PACKAGE,
   NEXT_AUTH_VERSION,
   type AuthCapabilityPlan,

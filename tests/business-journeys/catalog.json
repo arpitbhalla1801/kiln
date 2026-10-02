@@ -1,7 +1,7 @@
 {
-  "suite": "kiln-post-deploy",
+  "suite": "kiln-business-journeys",
   "purpose": "Business-level smoke tests for each kiln version upgrade. Run after build, before publishing or tagging a release.",
-  "command": "bun run test:post-deploy",
+  "command": "bun run test:business-journeys",
   "journeys": [
     {
       "id": "cli-contract",
@@ -103,6 +103,18 @@
       ]
     },
     {
+      "id": "edit-then-reapply",
+      "title": "A developer's hand-edits to a kiln-owned file survive a re-apply",
+      "businessValue": "Ownership tracking is the moat: kiln never clobbers work a developer did after kiln wrote the file, even across a second install of the same capability.",
+      "cases": [
+        {
+          "id": "PD-24",
+          "name": "hand-edited auth file survives add auth twice and the app still builds",
+          "severity": "blocker"
+        }
+      ]
+    },
+    {
       "id": "upgrade-compat",
       "title": "Existing kiln projects keep working",
       "businessValue": "Teams already using kiln can upgrade the CLI without rewriting their apps.",
@@ -125,6 +137,43 @@
         {
           "id": "PD-23",
           "name": "re-applying auth on example is idempotent",
+          "severity": "major"
+        }
+      ]
+    },
+    {
+      "id": "plugin-journey",
+      "title": "Third-party plugins work from npm",
+      "businessValue": "A plugin author can scaffold, install and ship a capability without kiln's source tree.",
+      "cases": [
+        {
+          "id": "PD-25",
+          "name": "init-plugin output installs from npm and builds",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-26",
+          "name": "plugin packs and installs into a fresh app",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-27",
+          "name": "plugins verify accepts the pinned version",
+          "severity": "major"
+        },
+        {
+          "id": "PD-28",
+          "name": "plan add previews the plugin and writes nothing",
+          "severity": "major"
+        },
+        {
+          "id": "PD-29",
+          "name": "add writes plugin files, inspect shows it installed",
+          "severity": "blocker"
+        },
+        {
+          "id": "PD-30",
+          "name": "remove takes plugin files back out",
           "severity": "major"
         }
       ]

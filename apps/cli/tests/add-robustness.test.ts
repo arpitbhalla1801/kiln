@@ -146,4 +146,21 @@ describe('add robustness', () => {
 
     expect(await read(root, 'src/middleware.ts')).toBe(original);
   }, 60000);
+
+  test('dropping a provider removes its env vars and releases their ownership', async () => {
+    const root = await createProject();
+    await capture(() => runAdd('auth', { cwd: root, dryRun: false }, {}, ['github', 'google']));
+    await capture(() => runAdd('auth', { cwd: root, dryRun: false }, {}, ['github']));
+
+    for (const file of ['.env.example', '.env.local']) {
+      const content = await read(root, file);
+      expect(content).not.toContain('AUTH_GOOGLE_');
+      expect(content).toContain('AUTH_GITHUB_ID');
+    }
+    const ownedVars = JSON.parse(await read(root, '.kiln/ownership.json')).ownership.envVars.map(
+      (entry: { name: string }) => entry.name
+    );
+    expect(ownedVars).not.toContain('AUTH_GOOGLE_ID');
+    expect(ownedVars).toContain('AUTH_GITHUB_ID');
+  }, 60000);
 });

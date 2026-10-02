@@ -1,2 +1,2 @@
-﻿export const name = '@kiln/planner';
+﻿export const name = '@kiln-cli/planner';
 export * from './plan-executor.js';

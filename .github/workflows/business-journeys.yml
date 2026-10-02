@@ -1,4 +1,4 @@
-name: Post-deploy upgrade smoke
+name: Business Journey Tests
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  post-deploy:
+  business-journeys:
     strategy:
       fail-fast: false
       matrix:
@@ -27,5 +27,5 @@ jobs:
         run: bun run build
       - name: Unit tests
         run: bun test apps packages
-      - name: Post-deploy upgrade journeys
-        run: bun run test:post-deploy
+      - name: Business journey tests
+        run: bun run test:business-journeys

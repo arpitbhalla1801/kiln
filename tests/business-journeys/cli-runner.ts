@@ -20,7 +20,7 @@ export function assertBuiltCli(): void {
     accessSync(cliBin);
   } catch {
     throw new Error(
-      `Built kiln CLI not found at ${cliBin}. Run \`bun run build\` before post-deploy tests.`
+      `Built kiln CLI not found at ${cliBin}. Run \`bun run build\` before business journey tests.`
     );
   }
 }

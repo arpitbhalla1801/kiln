@@ -1,44 +1,54 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { AuthCapability } from '@kiln/auth-capability';
+import { AuthCapability } from '@kiln-cli/auth-capability';
 import type {
   Capability as PluginCapability,
   CapabilityPlanOptions,
-} from '@kiln/capability-sdk';
+} from '@kiln-cli/capability-sdk';
 import {
   type Capability,
   createEmptyProjectState,
   LifecycleExecutor,
   LifecycleHooks,
+  type OwnershipRegistration,
   OwnershipTracker,
   ProjectState,
   ValidationRunner,
   withActiveAdapters,
-} from '@kiln/core';
-import { DbCapability } from '@kiln/db-capability';
-import { EnvCapability, type EnvVariableMap } from '@kiln/env-capability';
-import { NodeAdapter } from '@kiln/node-adapter';
-import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln/planner';
+} from '@kiln-cli/core';
+import { DbCapability } from '@kiln-cli/db-capability';
+import { EnvCapability, type EnvVariableMap } from '@kiln-cli/env-capability';
+import { NodeAdapter } from '@kiln-cli/node-adapter';
+import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln-cli/planner';
 import {
   FileHashStore,
   hashContent,
   loadOwnershipTracker,
   LockfileStore,
+  ownershipMetadataFromSnapshot,
+  OwnershipMetadataStore,
   PluginConfigStore,
   saveOwnershipTracker,
   type KilnLockfile,
-} from '@kiln/project-model';
-import { TransformEngine } from '@kiln/transform-engine';
+} from '@kiln-cli/project-model';
+import { TransformEngine } from '@kiln-cli/transform-engine';
 import { CAPABILITY_REGISTRY, registerCapability } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
 import { loadPlugins as loadPluginModules, type PluginLoadResult } from './plugin-loader.js';
 import pkg from '../package.json' with { type: 'json' };
 import type {
+  CapabilityPlanResult,
   KilnRuntimeContext,
   RuntimeExecutionResult,
   RuntimeOptions,
   SupportedCapabilityId,
 } from './types.js';
+
+// Built-in capability pairs that adjust their own output based on the other's
+// presence (auth wires the Prisma adapter when db is present; db adds Auth.js
+// models when auth is present). A small, explicit exception to the runtime
+// otherwise not knowing about specific capability ids.
+const CROSS_CAPABILITY_SIBLINGS: Record<string, string> = { auth: 'db', db: 'auth' };
 
 export interface CapabilityRuntimeOptions {
   adapter?: NodeAdapter;
@@ -132,7 +142,102 @@ export class CapabilityRuntime {
     };
     const capabilityPlan = await capability.planAdd(rootPath, planOptions);
 
-    return this.executeCapabilityPlan(id, rootPath, capabilityPlan, options);
+    const result = await this.executeCapabilityPlan(id, rootPath, capabilityPlan, options);
+
+    // auth and db each notice the other's presence on their OWN next add (e.g. auth
+    // wires the Prisma adapter once @prisma/client is a dependency), but nothing
+    // re-triggers that add automatically. So a single `kiln add auth` (or `add db`)
+    // fully wires both sides in one command regardless of which was added first,
+    // re-run the sibling here if it's already installed.
+    const siblingId = CROSS_CAPABILITY_SIBLINGS[id];
+    if (siblingId && !options.dryRun && !options.skipSiblingRefresh && this.capabilities.has(siblingId)) {
+      const updatedLockfile = await LockfileStore.load(rootPath);
+      const siblingPresent =
+        updatedLockfile?.snapshot.capabilities.some((entry) => entry.id === siblingId) ?? false;
+      if (siblingPresent) {
+        await this.addCapability(siblingId, { ...options, skipSiblingRefresh: true });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Preview of `addCapability` for `kiln plan`: reports ownership conflicts as
+   * data instead of throwing, and never installs or writes. Always dry-run.
+   */
+  async planCapability(
+    id: string,
+    options: RuntimeOptions & Record<string, unknown> = {}
+  ): Promise<CapabilityPlanResult> {
+    const capability = this.capabilities.get(id);
+    if (!capability) {
+      throw new Error(`Unknown capability: '${id}'`);
+    }
+
+    const rootPath = options.cwd ?? process.cwd();
+    const tracker = await loadOwnershipTracker(rootPath);
+    const lockfile = await LockfileStore.load(rootPath);
+    const existingProviders =
+      lockfile?.snapshot.capabilities.find((entry) => entry.id === id)?.providers ?? [];
+
+    const planOptions: CapabilityPlanOptions & Record<string, unknown> = {
+      ...options,
+      tracker,
+      existingProviders,
+    };
+
+    // Every built-in capability's own planAdd already validates ownership and
+    // throws a formatOwnershipConflict message on conflict (see each
+    // capability's validation.ts). That is the actual source of truth for
+    // conflicts -- catch it here instead of re-deriving conflicts ourselves,
+    // so plan and add can never disagree about what counts as a conflict.
+    let capabilityPlan: CapabilityExecutionPlan;
+    try {
+      capabilityPlan = await capability.planAdd(rootPath, planOptions);
+    } catch (error) {
+      return {
+        capabilityId: id,
+        inspection: await this.adapter.inspect(rootPath),
+        conflicts: [error instanceof Error ? error.message : String(error)],
+        ownershipUpdates: [],
+        preview: undefined,
+        resolvedDependencies: new Map(),
+      };
+    }
+
+    let result: RuntimeExecutionResult;
+    try {
+      result = await this.executeCapabilityPlan(id as SupportedCapabilityId, rootPath, capabilityPlan, {
+        ...options,
+        dryRun: true,
+      });
+    } catch (error) {
+      return {
+        capabilityId: id,
+        inspection: await this.adapter.inspect(rootPath),
+        conflicts: [error instanceof Error ? error.message : String(error)],
+        ownershipUpdates: [],
+        preview: undefined,
+        resolvedDependencies: new Map(),
+      };
+    }
+
+    const ownershipUpdates = buildOwnershipRegistrations(capabilityPlan.capability)
+      .filter((registration) => tracker.getOwner(registration.resourceType, registration.resourceKey) !== registration.ownerCapabilityId)
+      .map(
+        (registration) =>
+          `${registration.resourceType} ${registration.resourceKey} -> ${registration.ownerCapabilityId}`
+      );
+
+    return {
+      capabilityId: id,
+      inspection: result.inspection,
+      conflicts: [],
+      ownershipUpdates,
+      preview: result.preview,
+      resolvedDependencies: result.resolvedDependencies,
+    };
   }
 
   /** @deprecated use addCapability('env', { ...options, variables }) */
@@ -296,7 +401,27 @@ export class CapabilityRuntime {
         throw new Error('Ownership tracker missing during finalize');
       }
 
-      await saveOwnershipTracker(tracker, context.rootPath);
+      // A var this capability's plan removes (e.g. a dropped auth provider's) stops being owned.
+      const capabilityId = context.capabilityPlan?.capability.id;
+      const released = new Set(
+        (context.capabilityPlan?.transforms ?? []).flatMap((transform) =>
+          transform.type === 'env-mutation' ? transform.removeVariables ?? [] : []
+        )
+      );
+      if (released.size > 0) {
+        const snapshot = tracker.toSnapshot();
+        await OwnershipMetadataStore.save(
+          ownershipMetadataFromSnapshot({
+            ...snapshot,
+            envVars: snapshot.envVars.filter(
+              (entry) => !(released.has(entry.name) && entry.ownerCapabilityId === capabilityId)
+            ),
+          }),
+          context.rootPath
+        );
+      } else {
+        await saveOwnershipTracker(tracker, context.rootPath);
+      }
 
       // Remember what kiln wrote so `kiln remove` can keep files the user has since edited.
       // Hash from disk, not plan content: env merges extend a file after it is created, and a
@@ -356,6 +481,7 @@ export class CapabilityRuntime {
         capabilities: [...otherCapabilities, entry],
         timestamp: new Date().toISOString(),
         engineVersion: pkg.version,
+        lastCapability: capability.id,
       },
     };
 
@@ -408,6 +534,29 @@ export class CapabilityRuntime {
 
     return [...dependencies, capability];
   }
+}
+
+/** Registrations `registerCapabilityOwnership` would make, built read-only for conflict detection. */
+function buildOwnershipRegistrations(capability: Capability): OwnershipRegistration[] {
+  const registrations: OwnershipRegistration[] = [];
+
+  for (const filePath of capability.files ?? []) {
+    registrations.push({ resourceType: 'file', resourceKey: filePath, ownerCapabilityId: capability.id });
+  }
+  for (const name of capability.ownedDependencies ?? []) {
+    registrations.push({ resourceType: 'dependency', resourceKey: name, ownerCapabilityId: capability.id });
+  }
+  for (const name of capability.ownedScripts ?? []) {
+    registrations.push({ resourceType: 'script', resourceKey: name, ownerCapabilityId: capability.id });
+  }
+  for (const name of capability.ownedEnvVars ?? []) {
+    registrations.push({ resourceType: 'envVar', resourceKey: name, ownerCapabilityId: capability.id });
+  }
+  for (const key of capability.ownedMetadata ?? []) {
+    registrations.push({ resourceType: 'metadata', resourceKey: key, ownerCapabilityId: capability.id });
+  }
+
+  return registrations;
 }
 
 /** Owned files that differ from what kiln last wrote and that this run leaves untouched. */

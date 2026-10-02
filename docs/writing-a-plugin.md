@@ -1,243 +1,147 @@
-# Writing a third-party kiln capability plugin: hello world
+# Writing a kiln capability plugin
 
-This walks through the smallest possible kiln plugin end to end — a capability
-called `hello-world` that creates one file, `hello-world.txt`, when a project
-runs `kiln add hello-world`. Everything here is copy-pasteable; the fastest
-path is actually to run:
+A plugin is an npm package that implements the `Capability` interface from
+`@kiln-cli/capability-sdk`. `kiln add <id>` runs its `planAdd`, applies the
+transforms it returns, and records what it owns. `kiln remove <id>` takes that
+back. For the design and trust model, see
+[plugin-architecture.md](plugin-architecture.md).
+
+## Start
 
 ```bash
-kiln init-plugin hello-world
+kiln init-plugin chat
+cd kiln-capability-chat
+bun install
+bun run build
+bun test
 ```
 
-which generates exactly the file tree below. This doc explains what that
-scaffold contains and why, for when you want to write one by hand or
-understand what the generator produced.
+The scaffold is a working capability, not a stub. `kiln add chat`:
 
-See [docs/plugin-architecture.md](plugin-architecture.md) for the full design
-and trust model this plugin has to satisfy.
+- creates `src/lib/chat.ts`
+- adds the `zod` dependency and a `chat:check` script
+- adds `CHAT_API_KEY` to `.env.example` as a placeholder, and to `.env.local` with the `--var` value
+- adds `.env.local` to `.gitignore`
 
-## File tree
+`kiln remove chat` undoes all of it except the `.gitignore` line. Replace
+the file, dependency, script and variable with what your capability needs.
 
-```
-kiln-capability-hello-world/
-├── package.json
-├── tsconfig.json
-├── kiln.manifest.json
-├── README.md
-├── src/
-│   ├── manifest-data.ts
-│   ├── types.ts
-│   ├── templates.ts
-│   ├── validation.ts
-│   ├── capability.ts
-│   └── index.ts
-└── tests/
-    └── capability.test.ts
-```
+| File | What it holds |
+|---|---|
+| `src/capability.ts` | `Capability` implementation, `planAdd` |
+| `src/types.ts` | ids, paths, deps, scripts, the options type |
+| `src/templates.ts` | content of generated files |
+| `src/validation.ts` | ownership claims |
+| `src/manifest-data.ts`, `kiln.manifest.json` | id, version, declared ownership |
+| `src/index.ts` | default export kiln loads |
 
-## `package.json`
+## The contract
 
-Depends only on `@kiln/capability-sdk` — never `@kiln/core` or
-`@kiln/transform-engine`, which are private, unpublished workspace packages
-kiln itself uses internally:
+```ts
+interface Capability {
+  readonly id: string;
+  getManifest(): Promise<CapabilityManifest>;
+  getCapability(): Promise<ResolvedCapability>;
+  planAdd(rootPath: string, options: CapabilityPlanOptions): Promise<CapabilityPlan>;
+}
 
-```json
-{
-  "name": "kiln-capability-hello-world",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": ["dist"],
-  "dependencies": {
-    "@kiln/capability-sdk": "^0.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^25.9.1",
-    "typescript": "^5.6.0"
-  },
-  "scripts": {
-    "build": "tsc -b --force",
-    "test": "bun test tests"
-  }
+interface CapabilityPlan {
+  transforms: TypedTransform[];
+  capability: ResolvedCapability;
+  ownershipRegistrations: OwnershipRegistration[];
 }
 ```
 
-## `kiln.manifest.json`
+The file named by the package's `main` field must default-export an
+instance, or export it under the name `capability`. `planAdd` only plans. It
+must not write files, because kiln also runs it for `--dry-run` and
+`kiln plan`. Read the project through `rootPath` when the plan depends on
+what is already there.
 
-Declares the capability's identity and what it owns. `ownership.files`
-matters: it's what lets kiln's `OwnershipTracker` reject a different
-capability trying to claim the same file later.
+Full types: `node_modules/@kiln-cli/capability-sdk/dist/index.d.ts`.
 
-```json
-{
-  "id": "hello-world",
-  "name": "HelloWorld",
-  "version": "0.1.0",
-  "dependencies": [],
-  "ownership": {
-    "files": ["hello-world.txt"]
-  }
-}
-```
+## Transforms
 
-## `src/manifest-data.ts`
+A plugin composes these six kinds. It can't register new kinds.
 
-The same manifest, as a typed constant a plugin's `getManifest()` returns:
+| `type` | Fields | Use |
+|---|---|---|
+| `file-create` | `filePath`, `content` | New file. Overwrites if the file exists, so check `rootPath` first. |
+| `file-patch` | `filePath`, `search`, `replace` | Edit an existing file. No-op if `replace` is already present. Fails if neither `search` nor `replace` is found. |
+| `file-delete` | `filePath` | Delete a file. |
+| `json-mutation` | `filePath`, `path`, `value`, `operation: 'set' \| 'delete'` | Edit a JSON file other than `package.json`. |
+| `package-json-mutation` | `dependencies`, `devDependencies`, `scripts`, `remove*` | Deps are installed after apply. Existing key order is kept. |
+| `env-mutation` | `filePath`, `variables`, `section`, `preserveExistingValues`, `removeVariables` | Add or remove env vars. Each `variables` value is a string or `{ value, example, required }`. |
 
-```ts
-import type { CapabilityManifest } from '@kiln/capability-sdk';
+Every transform also needs a unique `id`.
 
-export const HELLO_WORLD_MANIFEST: CapabilityManifest = {
-  id: 'hello-world',
-  name: 'HelloWorld',
-  version: '0.1.0',
-  dependencies: [],
-  ownership: {
-    files: ['hello-world.txt'],
-  },
-};
-```
+## Ownership and remove
 
-## `src/types.ts`
+`ownershipRegistrations` is what kiln records in `.kiln/ownership.json`. Two
+capabilities can't claim the same resource. `kiln remove <id>` then:
 
-Extend the SDK's base plan/options types here once this capability needs
-fields of its own (see `packages/capabilities/auth/src/types.ts` in the kiln
-repo for what that looks like at a larger scale — providers, extra env vars,
-etc.). Hello world needs none of that:
+- deletes owned files, but keeps a file the user edited and warns about it
+- removes owned dependencies and scripts from `package.json`
+- removes owned env vars from `.env.example` and `.env.local`
+- refuses, unless `--force` is passed, when remaining code still imports a file or dependency it would remove
 
-```ts
-import type { CapabilityPlan, CapabilityPlanOptions } from '@kiln/capability-sdk';
+Anything you don't claim stays after remove. In particular, `file-patch`
+edits to files you don't own are not reverted. Plugins have no `planRemove`
+hook, so design your patches so the leftover is harmless, or tell users to
+revert them by hand.
 
-export const HELLO_WORLD_CAPABILITY_ID = 'hello-world';
+Resource types: `file`, `dependency`, `script`, `envVar`, `metadata`.
 
-export type HelloWorldCapabilityPlanOptions = CapabilityPlanOptions;
-export type HelloWorldCapabilityPlan = CapabilityPlan;
-```
+## Options
 
-## `src/templates.ts`
+`planAdd` receives the CLI options plus what kiln computes:
 
-The actual file content this capability creates:
+- `variables`: `--var KEY=VALUE` pairs
+- `providers`: `--provider` values
+- `envExamplePath`: where the project keeps its example env file
+- `tracker`: the current ownership state
 
-```ts
-export function createHelloWorldFileContent(): string {
-  return 'Hello from the hello-world capability!\n';
-}
-```
+Extend `CapabilityPlanOptions` in `types.ts` for the fields you read. See
+`ChatCapabilityPlanOptions` in the scaffold.
 
-## `src/validation.ts`
+## Rules
 
-What this capability's `planAdd` will register with the shared
-`OwnershipTracker` — this is the part that's structurally enforced against
-collisions with other capabilities, first-party or plugin:
+- **Secrets:** never put a `--var` value in `.env.example`, because it is committed. Put a placeholder there and the value in `.env.local`, and make sure `.gitignore` covers `.env.local`. The scaffold does all three.
+- **Re-running:** `kiln add` can run again on the same project. Skip `file-create` when the file already exists, and use `preserveExistingValues: true` on env vars.
+- **Databases:** there is no migration transform. Ship schema as your own files and tell users to run `kiln db migrate`. Don't `file-patch` a schema the `db` capability owns.
 
-```ts
-import type { OwnershipRegistration } from '@kiln/capability-sdk';
-import { HELLO_WORLD_CAPABILITY_ID } from './types.js';
+## Testing
 
-export function buildHelloWorldOwnershipRegistrations(): OwnershipRegistration[] {
-  return [
-    {
-      resourceType: 'file',
-      resourceKey: 'hello-world.txt',
-      ownerCapabilityId: HELLO_WORLD_CAPABILITY_ID,
-    },
-  ];
-}
-```
+- **Unit:** call `planAdd` on a temp dir and assert on transforms and ownership. The scaffold's `tests/capability.test.ts` does this, including the secret rule and re-running.
+- **End to end:** install the built plugin in a scratch Next.js app (see below), then run `kiln add <id> --dry-run`, `kiln add <id>`, `kiln inspect` and `kiln remove <id>`.
 
-## `src/capability.ts`
+## Distribution
 
-The `Capability` implementation itself. `planAdd` returns one `file-create`
-transform — a plugin composes kiln's six closed transform kinds, it never
-invents a new one. Note there's no `createTransformPipeline()` builder here:
-that helper lives in the private `@kiln/transform-engine` package, so a
-plugin constructs the transform objects directly instead:
+kiln loads a plugin only if all of these hold:
 
-```ts
-import type {
-  Capability,
-  CapabilityManifest,
-  ResolvedCapability,
-} from '@kiln/capability-sdk';
-import { HELLO_WORLD_MANIFEST } from './manifest-data.js';
-import { createHelloWorldFileContent } from './templates.js';
-import {
-  HELLO_WORLD_CAPABILITY_ID,
-  type HelloWorldCapabilityPlan,
-  type HelloWorldCapabilityPlanOptions,
-} from './types.js';
-import { buildHelloWorldOwnershipRegistrations } from './validation.js';
+1. it is a **direct** dependency in the project's own `package.json`
+2. `kiln.plugins.json` pins its **exact** installed version: `{ "plugins": [{ "package": "kiln-capability-chat", "version": "0.1.0" }] }`
+3. its `package.json` depends on `@kiln-cli/capability-sdk` with the same major version as kiln's
 
-export class HelloWorldCapability implements Capability {
-  readonly id = HELLO_WORLD_CAPABILITY_ID;
+A plugin that fails any check is skipped with a message. `kiln plugins verify`
+checks the pins without running plugin code.
 
-  async getManifest(): Promise<CapabilityManifest> {
-    return HELLO_WORLD_MANIFEST;
-  }
+| Source | In the project |
+|---|---|
+| npm | `npm install kiln-capability-chat@0.1.0` |
+| private registry | same, after configuring the registry in the project's `.npmrc` |
+| local path, for development | `npm install ../kiln-capability-chat`. This links it, so run `bun run build` in the plugin to pick up changes. |
+| git or monorepo workspace | any spec your package manager supports, as long as the installed version matches the pin |
 
-  async getCapability(): Promise<ResolvedCapability> {
-    const manifest = await this.getManifest();
-    return {
-      id: manifest.id,
-      name: manifest.name,
-      version: manifest.version,
-      dependencies: [...manifest.dependencies],
-      files: manifest.ownership?.files ? [...manifest.ownership.files] : undefined,
-    };
-  }
+- **Upgrading:** release a new version, install it, and bump the pin in `kiln.plugins.json`.
+- **Revoking:** delete the entry from `kiln.plugins.json`. kiln stops loading the plugin even while it is still installed. Run `kiln remove <id>` first to undo what it added.
 
-  async planAdd(
-    _rootPath: string,
-    _options: HelloWorldCapabilityPlanOptions
-  ): Promise<HelloWorldCapabilityPlan> {
-    return {
-      transforms: [
-        {
-          id: `${HELLO_WORLD_CAPABILITY_ID}-create`,
-          type: 'file-create',
-          filePath: 'hello-world.txt',
-          content: createHelloWorldFileContent(),
-          description: 'Create hello-world.txt',
-        },
-      ],
-      capability: await this.getCapability(),
-      ownershipRegistrations: buildHelloWorldOwnershipRegistrations(),
-    };
-  }
-}
+## Trust
 
-export default new HelloWorldCapability();
-```
-
-## `src/index.ts`
-
-kiln's loader looks for a default export (or a named `capability` export)
-implementing `Capability` — export both a default instance and the class:
-
-```ts
-export { HelloWorldCapability, default } from './capability.js';
-export * from './types.js';
-```
-
-## Loading it in a project
-
-1. Publish `kiln-capability-hello-world` (or `bun link` it locally for testing).
-2. In the **target project**, add it as a direct dependency:
-   ```bash
-   npm install kiln-capability-hello-world@0.1.0
-   ```
-3. In that project's `kiln.plugins.json`, pin the exact installed version:
-   ```json
-   { "plugins": [{ "package": "kiln-capability-hello-world", "version": "0.1.0" }] }
-   ```
-4. Run `kiln add hello-world`. Kiln loads the plugin, checks it's a direct
-   dependency with a matching version pin and a compatible SDK major
-   (rejecting it with a clear message otherwise — see
-   `packages/runtime/src/plugin-loader.ts`), and creates `hello-world.txt`.
-
-That's the whole loop. For what happens when a plugin is broken instead of
-well-formed — throws in its constructor, throws in `getManifest()`, targets
-the wrong SDK major — see the "Third-party capability plugins" section of
-[SECURITY.md](../SECURITY.md) and the adversarial tests in
-`packages/runtime/tests/plugin-safety.test.ts`.
+A plugin is ordinary code running with your user's permissions during
+`kiln add`, `plan` and `remove`. kiln doesn't sandbox it. The trust checks are
+the direct dependency, the exact pin and the SDK major. Ownership conflicts
+stop a plugin from taking over another capability's files. Review a plugin's
+source before pinning it, the same as any dependency. Details are in
+[SECURITY.md](../SECURITY.md) and
+[plugin-architecture.md](plugin-architecture.md).

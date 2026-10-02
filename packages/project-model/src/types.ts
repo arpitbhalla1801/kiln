@@ -1,4 +1,4 @@
-import type { CapabilityId, FileOwnership } from '@kiln/core';
+import type { CapabilityId, FileOwnership } from '@kiln-cli/core';
 
 /** Relative or absolute path to a project file. */
 export type ProjectFilePath = string;
@@ -96,6 +96,8 @@ export interface InstallSnapshot {
   capabilities: CapabilityVersion[];
   timestamp: string;
   engineVersion: string;
+  /** Id of the capability most recently added; `capabilities` is sorted, so order is not recency. */
+  lastCapability?: string;
 }
 
 /** Kiln lockfile format for installed capability snapshots. */

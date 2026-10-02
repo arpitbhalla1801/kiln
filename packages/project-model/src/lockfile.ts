@@ -29,6 +29,7 @@ export class LockfileManager {
         timestamp: lockfile.snapshot.timestamp,
         engineVersion: lockfile.snapshot.engineVersion,
         capabilities: sortedCapabilities,
+        ...(lockfile.snapshot.lastCapability ? { lastCapability: lockfile.snapshot.lastCapability } : {}),
       }
     };
 

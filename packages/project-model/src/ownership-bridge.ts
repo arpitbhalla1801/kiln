@@ -1,5 +1,5 @@
-import { OwnershipTracker } from '@kiln/core';
-import type { OwnershipSnapshot } from '@kiln/core';
+import { OwnershipTracker } from '@kiln-cli/core';
+import type { OwnershipSnapshot } from '@kiln-cli/core';
 import { OwnershipMetadataStore } from './ownership-storage.js';
 import type { OwnershipMetadata } from './types.js';
 

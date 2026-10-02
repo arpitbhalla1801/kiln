@@ -2,10 +2,10 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { capabilityFromManifest } from '@kiln/core';
-import type { Capability, CapabilityPlan, CapabilityPlanOptions } from '@kiln/capability-sdk';
-import { createCapabilityRuntime, registerCapability } from '@kiln/runtime';
-import { createTransformPipeline } from '@kiln/transform-engine';
+import { capabilityFromManifest } from '@kiln-cli/core';
+import type { Capability, CapabilityPlan, CapabilityPlanOptions } from '@kiln-cli/capability-sdk';
+import { createCapabilityRuntime, registerCapability } from '@kiln-cli/runtime';
+import { createTransformPipeline } from '@kiln-cli/transform-engine';
 import { runRemove } from '../src/commands/remove.js';
 
 const tempRoots: string[] = [];

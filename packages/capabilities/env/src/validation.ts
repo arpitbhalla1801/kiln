@@ -2,7 +2,8 @@ import {
   formatOwnershipConflict,
   OwnershipRegistration,
   OwnershipTracker,
-} from '@kiln/core';
+} from '@kiln-cli/core';
+import { ENV_CAPABILITY_ID } from './types.js';
 import type { EnvVariableInput } from './types.js';
 
 const ENV_VAR_NAME_PATTERN = /^[A-Z][A-Z0-9_]*$/;
@@ -21,8 +22,12 @@ export function buildOwnershipRegistrations(
   ownerCapabilityId: string,
   claimFile = true
 ): OwnershipRegistration[] {
+  // .env.example is a shared baseline file that every env/auth/db-style capability
+  // writes variables into -- ownership of the FILE stays with 'env' regardless of
+  // which capability happens to create it first, so a later capability's own
+  // variables aren't blocked by a conflict against the caller that created it.
   const registrations: OwnershipRegistration[] = claimFile
-    ? [{ resourceType: 'file', resourceKey: envExamplePath, ownerCapabilityId }]
+    ? [{ resourceType: 'file', resourceKey: envExamplePath, ownerCapabilityId: ENV_CAPABILITY_ID }]
     : [];
 
   for (const variable of variables) {

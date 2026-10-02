@@ -9,13 +9,13 @@ import {
   loadManifestFromObject,
   mergeUnique,
   OwnershipTracker,
-} from '@kiln/core';
-import type { Capability } from '@kiln/capability-sdk';
+} from '@kiln-cli/core';
+import type { Capability } from '@kiln-cli/capability-sdk';
 import { ENV_MANIFEST } from './manifest-data.js';
 import {
   createTransformPipeline,
   type TransformPipeline,
-} from '@kiln/transform-engine';
+} from '@kiln-cli/transform-engine';
 import {
   ENV_CAPABILITY_ID,
   DEFAULT_ENV_EXAMPLE_PATH,

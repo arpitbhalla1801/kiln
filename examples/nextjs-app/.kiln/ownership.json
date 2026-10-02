@@ -7,6 +7,10 @@
         "ownerCapabilityId": "env"
       },
       {
+        "filePath": "src/app/api/auth/[...nextauth]/route.ts",
+        "ownerCapabilityId": "auth"
+      },
+      {
         "filePath": "src/auth.ts",
         "ownerCapabilityId": "auth"
       },
@@ -23,6 +27,14 @@
     ],
     "scripts": [],
     "envVars": [
+      {
+        "name": "AUTH_DEMO_EMAIL",
+        "ownerCapabilityId": "auth"
+      },
+      {
+        "name": "AUTH_DEMO_PASSWORD",
+        "ownerCapabilityId": "auth"
+      },
       {
         "name": "AUTH_SECRET",
         "ownerCapabilityId": "env"

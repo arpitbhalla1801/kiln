@@ -20,7 +20,7 @@ import {
 
 describe('core shared types', () => {
   test('exports all required shared types from package entry', () => {
-    expect(core.name).toBe('@kiln/core');
+    expect(core.name).toBe('@kiln-cli/core');
     expect(core.TRANSFORM_TYPES).toEqual(TRANSFORM_TYPES);
     expect(core.createEmptyProjectState).toBe(createEmptyProjectState);
   });

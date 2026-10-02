@@ -8,7 +8,7 @@ import {
   OWNERSHIP_METADATA_FILE,
 } from '../src/ownership-storage.js';
 import { loadOwnershipTracker, saveOwnershipTracker } from '../src/ownership-bridge.js';
-import { OwnershipTracker } from '@kiln/core';
+import { OwnershipTracker } from '@kiln-cli/core';
 import type { OwnershipMetadata } from '../src/types.js';
 
 describe('OwnershipMetadataStore', () => {
