@@ -1,6 +1,7 @@
 export const name = '@kiln-cli/runtime';
 
 export {
+  capabilityLinks,
   CapabilityRuntime,
   createCapabilityRuntime,
   type CapabilityRuntimeOptions,

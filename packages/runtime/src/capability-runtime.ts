@@ -572,6 +572,11 @@ export class CapabilityRuntime {
   }
 }
 
+/** What `id` requires (without the ones it provisions itself) and what it enhances, for display. */
+export function capabilityLinks(id: string): { requires: string[]; enhances: string[] } {
+  return { requires: requiredIds(id), enhances: CAPABILITY_REGISTRY[id]?.enhances ?? [] };
+}
+
 /** `id`'s requires, minus the ones it provisions itself. */
 function requiredIds(id: string): string[] {
   return (CAPABILITY_REGISTRY[id]?.dependencies ?? []).filter(
