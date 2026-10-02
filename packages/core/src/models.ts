@@ -81,6 +81,8 @@ export interface CapabilityManifest {
   name?: string;
   version: string;
   dependencies: CapabilityId[];
+  /** Optional partners this capability adapts to when present; never blocks an add. */
+  enhances?: CapabilityId[];
   adapters?: AdapterId[];
   transforms?: TransformId[];
   transformDefinitions?: Transform[];

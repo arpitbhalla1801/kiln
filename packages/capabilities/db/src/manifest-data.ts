@@ -11,6 +11,7 @@ export const DB_MANIFEST = {
   name: 'Database (Prisma)',
   version: '1.0.0',
   dependencies: ['env'],
+  enhances: ['auth'],
   adapters: ['node-adapter'],
   ownership: {
     files: [],

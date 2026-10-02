@@ -11,6 +11,7 @@ export const AUTH_MANIFEST = {
   name: 'Authentication',
   version: '1.0.0',
   dependencies: ['env'],
+  enhances: ['db'],
   adapters: ['node-adapter'],
   ownership: {
     files: [],
