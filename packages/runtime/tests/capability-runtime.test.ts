@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { NodeAdapterRuntime } from '@kiln-cli/node-adapter';
+import { LockfileStore } from '@kiln-cli/project-model';
 import { CapabilityRuntime } from '../src/capability-runtime.js';
 
 const tempRoots: string[] = [];
@@ -94,6 +95,40 @@ describe('CapabilityRuntime', () => {
     await runtime.addAuth({ cwd: root, dryRun: false });
 
     expect(installCalls).toEqual([{ 'next-auth': '^5.0.0-beta.32' }]);
+  });
+
+  test('a failed install rejects with the package manager error and records no lockfile', async () => {
+    const root = await createTempProject();
+
+    const adapter: NodeAdapterRuntime = {
+      id: 'node-adapter',
+      version: '1.0.0',
+      provides: ['package-manager'],
+      inspect: async (rootPath) => ({
+        rootPath,
+        packageManager: { kind: 'bun', installed: true },
+        nextjs: { detected: false, typescript: false },
+        filesystem: { packageJson: true, nodeModules: false },
+        hasPackageJson: true,
+        hasTypeScript: false,
+        packageName: 'demo-app',
+        packageVersion: '1.0.0',
+      }),
+      getFilesystemExpectations: async () => ({
+        packageJson: true,
+        nodeModules: false,
+      }),
+      installDependencies: async () => ({ exitCode: 1, stdout: '', stderr: 'ETARGET no matching version' }),
+      removeDependencies: async () => ({ exitCode: 0, stdout: '', stderr: '' }),
+      runScript: async () => ({ exitCode: 0, stdout: '', stderr: '' }),
+    };
+
+    const runtime = new CapabilityRuntime({ adapter: adapter as import('@kiln-cli/node-adapter').NodeAdapter });
+
+    await expect(runtime.addAuth({ cwd: root, dryRun: false })).rejects.toThrow(
+      'Dependency install failed: ETARGET no matching version'
+    );
+    expect(await LockfileStore.load(root)).toBeUndefined();
   });
 
   test('installs devDependencies with a separate --dev call, not merged into the prod install', async () => {
