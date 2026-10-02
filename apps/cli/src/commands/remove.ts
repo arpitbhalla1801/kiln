@@ -21,12 +21,28 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
   // Ownership-driven, so remove needs no capability instance -- but a
   // third-party capability isn't in SUPPORTED_CAPABILITY_IDS until its
   // kiln.plugins.json entry is loaded and registered.
-  await createCapabilityRuntime().loadPlugins(rootPath);
+  const runtime = createCapabilityRuntime();
+  await runtime.loadPlugins(rootPath);
 
   if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {
     throw new Error(
       `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITY_IDS.join(', ')}`
     );
+  }
+
+  // An installed capability that requires this one would be left broken; same --force escape as the import check below.
+  const dependents = await runtime.findInstalledDependents(capabilityId, rootPath);
+  if (dependents.length > 0) {
+    const reasons = dependents.map(
+      (dependent) => `${dependent} requires ${capabilityId}. Remove ${dependent} first.`
+    );
+    console.log(reasons.join('\n'));
+
+    if (!options.dryRun && !options.force) {
+      throw new Error(
+        `Refusing to remove '${capabilityId}': ${reasons.join(' ')} Re-run with --force to remove anyway.`
+      );
+    }
   }
   const tracker = await loadOwnershipTracker(rootPath);
   const snapshot = tracker.toSnapshot();

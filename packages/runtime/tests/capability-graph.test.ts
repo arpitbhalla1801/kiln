@@ -119,6 +119,24 @@ describe('capability links: requires and enhances', () => {
     expect(planned).toEqual(['gt-base', 'gt-invites']);
   });
 
+  test('findInstalledDependents lists installed capabilities that require the target', async () => {
+    registerCapability('gt-core', []);
+    registerCapability('gt-feature', ['gt-core']);
+    registerCapability('gt-uninstalled', ['gt-core']);
+    const runtime = new CapabilityRuntime();
+    const root = await createProject(['gt-core', 'gt-feature']);
+
+    expect(await runtime.findInstalledDependents('gt-core', root)).toEqual(['gt-feature']);
+    expect(await runtime.findInstalledDependents('gt-feature', root)).toEqual([]);
+  });
+
+  test('env is not reported as required by auth or db, which provision it themselves', async () => {
+    const runtime = new CapabilityRuntime();
+    const root = await createProject(['env', 'auth', 'db']);
+
+    expect(await runtime.findInstalledDependents('env', root)).toEqual([]);
+  });
+
   test('does not re-plan an enhancer that is not installed', async () => {
     registerCapability('gt-base2', []);
     registerCapability('gt-invites2', [], ['gt-base2']);

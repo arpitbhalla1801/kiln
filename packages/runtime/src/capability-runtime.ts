@@ -289,11 +289,15 @@ export class CapabilityRuntime {
     return new Set(lockfile?.snapshot.capabilities.map((entry) => entry.id) ?? []);
   }
 
+  /** Installed capabilities that require `id`, i.e. the ones that must be removed before it. */
+  async findInstalledDependents(id: string, rootPath: string): Promise<string[]> {
+    const installed = await this.installedIds(rootPath);
+    return [...installed].filter((installedId) => requiredIds(installedId).includes(id));
+  }
+
   /** Required capabilities of `id` that the project's lockfile does not list as installed. */
   private async findMissingRequires(id: string, rootPath: string): Promise<string[]> {
-    const required = (CAPABILITY_REGISTRY[id]?.dependencies ?? []).filter(
-      (dependency) => !SELF_PROVISIONED_REQUIRES[id]?.includes(dependency)
-    );
+    const required = requiredIds(id);
     if (required.length === 0) {
       return [];
     }
@@ -566,6 +570,13 @@ export class CapabilityRuntime {
 
     return [...dependencies, capability];
   }
+}
+
+/** `id`'s requires, minus the ones it provisions itself. */
+function requiredIds(id: string): string[] {
+  return (CAPABILITY_REGISTRY[id]?.dependencies ?? []).filter(
+    (dependency) => !SELF_PROVISIONED_REQUIRES[id]?.includes(dependency)
+  );
 }
 
 function formatMissingRequires(id: string, missing: string[]): string {
