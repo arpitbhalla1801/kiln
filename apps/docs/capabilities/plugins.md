@@ -1,3 +1,8 @@
+---
+title: Plugins
+description: Build and register third-party capability plugins for kiln using the capability SDK.
+---
+
 # Plugins
 
 kiln 2.0.0 introduces a third-party capability plugin architecture. A plugin implements

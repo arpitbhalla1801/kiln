@@ -1,3 +1,8 @@
+---
+title: Auth capability
+description: Scaffold next-auth into your project with kiln, including provider config and env vars.
+---
+
 # Auth capability
 
 ```bash
