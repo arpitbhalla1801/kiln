@@ -1,3 +1,8 @@
+---
+title: Env capability
+description: Scaffold .env.local from .env.example with kiln, grouped by capability section.
+---
+
 # Env capability
 
 ```bash

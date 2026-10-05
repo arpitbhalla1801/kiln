@@ -1,3 +1,8 @@
+---
+title: Installation
+description: Install kiln from npm or build it from source.
+---
+
 # Installation
 
 ## From npm

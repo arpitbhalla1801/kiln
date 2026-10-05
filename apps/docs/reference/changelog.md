@@ -1,3 +1,8 @@
+---
+title: Changelog
+description: Release history for kiln.
+---
+
 # Changelog
 
 Full changelog lives in the repo:

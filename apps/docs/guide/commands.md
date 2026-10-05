@@ -1,3 +1,8 @@
+---
+title: Commands
+description: Full list of kiln CLI commands, covering init, add, plugins, and more.
+---
+
 # Commands
 
 | Command | Description |
