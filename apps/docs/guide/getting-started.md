@@ -1,3 +1,8 @@
+---
+title: Getting Started
+description: Requirements and first steps to scaffold a project and add capabilities with kiln.
+---
+
 # Getting Started
 
 kiln is a capability-based CLI that scaffolds Bun-compatible Next.js projects and adds

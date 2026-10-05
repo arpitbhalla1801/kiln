@@ -1,3 +1,8 @@
+---
+title: Capabilities overview
+description: What a kiln capability is, built-in capabilities, and how third-party plugins register.
+---
+
 # Capabilities overview
 
 A capability is a self-contained unit of scaffolding kiln can add to a project: files it
