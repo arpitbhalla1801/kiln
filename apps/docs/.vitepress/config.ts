@@ -11,30 +11,29 @@ export default defineConfig({
   sitemap: {
     hostname: siteUrl,
   },
+  transformHead({ pageData, siteConfig }) {
+    const path = pageData.relativePath
+      .replace(/(^|\/)index\.md$/, "$1")
+      .replace(/\.md$/, "");
+    const canonicalUrl = new URL(path, siteUrl).href;
+    const pageTitle = pageData.title || siteConfig.site.title;
+    const pageDescription = pageData.description || siteConfig.site.description;
+
+    return [
+      ["link", { rel: "canonical", href: canonicalUrl }],
+      ["meta", { property: "og:url", content: canonicalUrl }],
+      ["meta", { property: "og:title", content: pageTitle }],
+      ["meta", { property: "og:description", content: pageDescription }],
+      ["meta", { name: "twitter:title", content: pageTitle }],
+      ["meta", { name: "twitter:description", content: pageDescription }],
+    ];
+  },
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/kiln/favicon.svg" }],
     ["link", { rel: "icon", type: "image/x-icon", href: "/kiln/favicon.ico" }],
     ["link", { rel: "apple-touch-icon", href: "/kiln/apple-touch-icon.png" }],
-    ["link", { rel: "canonical", href: siteUrl }],
     ["meta", { property: "og:type", content: "website" }],
-    ["meta", { property: "og:url", content: siteUrl }],
-    ["meta", { property: "og:title", content: "kiln — Capability-based CLI for Bun + Next.js" }],
-    [
-      "meta",
-      {
-        property: "og:description",
-        content: "CLI to scaffold auth, env, and plugin capabilities into your app",
-      },
-    ],
     ["meta", { name: "twitter:card", content: "summary" }],
-    ["meta", { name: "twitter:title", content: "kiln — Capability-based CLI for Bun + Next.js" }],
-    [
-      "meta",
-      {
-        name: "twitter:description",
-        content: "CLI to scaffold auth, env, and plugin capabilities into your app",
-      },
-    ],
     [
       "script",
       { type: "application/ld+json" },

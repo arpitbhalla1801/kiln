@@ -1,3 +1,8 @@
+---
+title: CLI reference
+description: Global flags and command reference for the kiln CLI.
+---
+
 # CLI reference
 
 Full command list: see [Commands](/guide/commands).
