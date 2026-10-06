@@ -32,7 +32,7 @@ import {
   type KilnLockfile,
 } from '@kiln-cli/project-model';
 import { TransformEngine } from '@kiln-cli/transform-engine';
-import { CAPABILITY_REGISTRY, registerCapability } from './capability-registry.js';
+import { CAPABILITY_REGISTRY, enhancersOf, registerCapability } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
 import { loadPlugins as loadPluginModules, type PluginLoadResult } from './plugin-loader.js';
 import pkg from '../package.json' with { type: 'json' };
@@ -44,11 +44,9 @@ import type {
   SupportedCapabilityId,
 } from './types.js';
 
-// Built-in capability pairs that adjust their own output based on the other's
-// presence (auth wires the Prisma adapter when db is present; db adds Auth.js
-// models when auth is present). A small, explicit exception to the runtime
-// otherwise not knowing about specific capability ids.
-const CROSS_CAPABILITY_SIBLINGS: Record<string, string> = { auth: 'db', db: 'auth' };
+// auth and db fold env's plan into their own planAdd, so a missing `env` install
+// never blocks them. Any other capability must have its requires installed.
+const SELF_PROVISIONED_REQUIRES: Record<string, string[]> = { auth: ['env'], db: ['env'] };
 
 export interface CapabilityRuntimeOptions {
   adapter?: NodeAdapter;
@@ -104,7 +102,8 @@ export class CapabilityRuntime {
 
     for (const result of results) {
       if (result.capability) {
-        registerCapability(result.capability.id);
+        const manifest = await result.capability.getManifest();
+        registerCapability(result.capability.id, manifest.dependencies, manifest.enhances);
         this.capabilities.set(result.capability.id, result.capability);
         this.pluginProvenance.set(result.capability.id, result.entry.package);
       } else {
@@ -130,6 +129,11 @@ export class CapabilityRuntime {
     }
 
     const rootPath = options.cwd ?? process.cwd();
+    const missing = await this.findMissingRequires(id, rootPath);
+    if (missing.length > 0) {
+      throw new Error(formatMissingRequires(id, missing));
+    }
+
     const tracker = await loadOwnershipTracker(rootPath);
     const lockfile = await LockfileStore.load(rootPath);
     const existingProviders =
@@ -144,18 +148,16 @@ export class CapabilityRuntime {
 
     const result = await this.executeCapabilityPlan(id, rootPath, capabilityPlan, options);
 
-    // auth and db each notice the other's presence on their OWN next add (e.g. auth
-    // wires the Prisma adapter once @prisma/client is a dependency), but nothing
-    // re-triggers that add automatically. So a single `kiln add auth` (or `add db`)
-    // fully wires both sides in one command regardless of which was added first,
-    // re-run the sibling here if it's already installed.
-    const siblingId = CROSS_CAPABILITY_SIBLINGS[id];
-    if (siblingId && !options.dryRun && !options.skipSiblingRefresh && this.capabilities.has(siblingId)) {
-      const updatedLockfile = await LockfileStore.load(rootPath);
-      const siblingPresent =
-        updatedLockfile?.snapshot.capabilities.some((entry) => entry.id === siblingId) ?? false;
-      if (siblingPresent) {
-        await this.addCapability(siblingId, { ...options, skipSiblingRefresh: true });
+    // A capability that `enhances` this one (e.g. db enhances auth) adapts its own output
+    // to this one's presence on ITS next add, but nothing re-triggers that add. So after
+    // adding X, re-run planAdd for every installed capability that enhances X, giving a
+    // single `kiln add` the fully wired result regardless of add order.
+    if (!options.dryRun && !options.skipSiblingRefresh) {
+      const installed = await this.installedIds(rootPath);
+      for (const enhancerId of enhancersOf(id)) {
+        if (this.capabilities.has(enhancerId) && installed.has(enhancerId)) {
+          await this.addCapability(enhancerId, { ...options, skipSiblingRefresh: true });
+        }
       }
     }
 
@@ -176,6 +178,19 @@ export class CapabilityRuntime {
     }
 
     const rootPath = options.cwd ?? process.cwd();
+
+    const missing = await this.findMissingRequires(id, rootPath);
+    if (missing.length > 0) {
+      return {
+        capabilityId: id,
+        inspection: await this.adapter.inspect(rootPath),
+        conflicts: [formatMissingRequires(id, missing)],
+        ownershipUpdates: [],
+        preview: undefined,
+        resolvedDependencies: new Map(),
+      };
+    }
+
     const tracker = await loadOwnershipTracker(rootPath);
     const lockfile = await LockfileStore.load(rootPath);
     const existingProviders =
@@ -267,6 +282,27 @@ export class CapabilityRuntime {
       ...options,
       ...(payload ? { variables: payload } : {}),
     });
+  }
+
+  private async installedIds(rootPath: string): Promise<Set<string>> {
+    const lockfile = await LockfileStore.load(rootPath);
+    return new Set(lockfile?.snapshot.capabilities.map((entry) => entry.id) ?? []);
+  }
+
+  /** Installed capabilities that require `id`, i.e. the ones that must be removed before it. */
+  async findInstalledDependents(id: string, rootPath: string): Promise<string[]> {
+    const installed = await this.installedIds(rootPath);
+    return [...installed].filter((installedId) => requiredIds(installedId).includes(id));
+  }
+
+  /** Required capabilities of `id` that the project's lockfile does not list as installed. */
+  private async findMissingRequires(id: string, rootPath: string): Promise<string[]> {
+    const required = requiredIds(id);
+    if (required.length === 0) {
+      return [];
+    }
+    const installed = await this.installedIds(rootPath);
+    return required.filter((dependency) => !installed.has(dependency));
   }
 
   private async executeCapabilityPlan(
@@ -534,6 +570,23 @@ export class CapabilityRuntime {
 
     return [...dependencies, capability];
   }
+}
+
+/** What `id` requires (without the ones it provisions itself) and what it enhances, for display. */
+export function capabilityLinks(id: string): { requires: string[]; enhances: string[] } {
+  return { requires: requiredIds(id), enhances: CAPABILITY_REGISTRY[id]?.enhances ?? [] };
+}
+
+/** `id`'s requires, minus the ones it provisions itself. */
+function requiredIds(id: string): string[] {
+  return (CAPABILITY_REGISTRY[id]?.dependencies ?? []).filter(
+    (dependency) => !SELF_PROVISIONED_REQUIRES[id]?.includes(dependency)
+  );
+}
+
+function formatMissingRequires(id: string, missing: string[]): string {
+  const commands = missing.map((dependency) => `kiln add ${dependency}`).join(' and ');
+  return `add ${id} requires ${missing.join(', ')}. Run ${commands} first.`;
 }
 
 /** Registrations `registerCapabilityOwnership` would make, built read-only for conflict detection. */
