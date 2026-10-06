@@ -23,6 +23,7 @@ export function validateManifest(manifest: CapabilityManifest): void {
   readRequiredString(record, 'id');
   readRequiredString(record, 'version');
   readStringArray(record, 'dependencies', true);
+  readOptionalStringArray(record, 'enhances');
   readOptionalStringArray(record, 'adapters');
   readOptionalStringArray(record, 'transforms');
   validateTransformDefinitions(manifest.transformDefinitions);
@@ -44,6 +45,7 @@ export function loadManifestFromObject(raw: unknown): CapabilityManifest {
     version: readRequiredString(raw, 'version'),
     dependencies: readStringArray(raw, 'dependencies', true),
     name: readOptionalString(raw, 'name'),
+    enhances: readOptionalStringArray(raw, 'enhances'),
     adapters: readOptionalStringArray(raw, 'adapters'),
     transforms: readOptionalStringArray(raw, 'transforms'),
     transformDefinitions: readTransformDefinitions(raw),
