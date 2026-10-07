@@ -7,6 +7,8 @@ import { parseEnvVariables, parseProviders, runAdd } from '../src/commands/add.j
 import { runInit } from '../src/commands/init.js';
 import { runDoctor } from '../src/commands/doctor.js';
 import { runRemove } from '../src/commands/remove.js';
+import { runPlanAdd } from '../src/commands/plan.js';
+import { runEnvRemove } from '../src/commands/env-remove.js';
 import { formatTransformPlan } from '../src/output.js';
 
 const tempRoots: string[] = [];
@@ -48,6 +50,27 @@ describe('kiln cli', () => {
     const projectDir = join(parent, 'existing-app');
     await runInit(projectDir, 'existing-app');
     await expect(runInit(projectDir, 'existing-app')).rejects.toThrow('already exists and is not empty');
+  });
+
+  test('create tolerates a directory containing only innocuous clone artifacts', async () => {
+    const parent = await createTempDir();
+    const projectDir = join(parent, 'cloned-app');
+    await mkdir(join(projectDir, '.git'), { recursive: true });
+    await writeFile(join(projectDir, 'README.md'), '# cloned-app\n', 'utf8');
+
+    await runInit(projectDir, 'cloned-app');
+
+    const packageJson = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8'));
+    expect(packageJson.name).toBe('cloned-app');
+  });
+
+  test('create still refuses a directory with a real conflicting file alongside innocuous ones', async () => {
+    const parent = await createTempDir();
+    const projectDir = join(parent, 'half-cloned-app');
+    await mkdir(join(projectDir, '.git'), { recursive: true });
+    await writeFile(join(projectDir, 'package.json'), '{}', 'utf8');
+
+    await expect(runInit(projectDir, 'half-cloned-app')).rejects.toThrow('already exists and is not empty');
   });
 
   test('create scaffolds a buildable Next.js project', async () => {
@@ -161,6 +184,73 @@ describe('kiln cli', () => {
     const envExample = await readFile(join(root, '.env.example'), 'utf8');
     expect(envExample).toContain('DATABASE_URL=');
     expect(envExample).toContain('AUTH_SECRET=');
+  }, 30000);
+
+  test('add db then add env does not throw an ownership conflict over DATABASE_URL', async () => {
+    const root = await createTempDir();
+    await runInit(root, 'demo-app');
+    await runAdd('db', { cwd: root, dryRun: false });
+
+    await expect(runAdd('env', { cwd: root, dryRun: false })).resolves.toBeUndefined();
+
+    const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
+    const databaseUrlOwner = ownership.ownership.envVars.find(
+      (entry: { name: string }) => entry.name === 'DATABASE_URL'
+    );
+    expect(databaseUrlOwner?.ownerCapabilityId).toBe('db');
+  }, 30000);
+
+  test('add env then add db then remove env leaves DATABASE_URL owned by db, not deleted', async () => {
+    const root = await createTempDir();
+    await runInit(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+    await runAdd('db', { cwd: root, dryRun: false });
+
+    await runRemove('env', { cwd: root, dryRun: false });
+
+    const envExample = await readFile(join(root, '.env.example'), 'utf8');
+    expect(envExample).toContain('DATABASE_URL=');
+
+    const ownership = JSON.parse(await readFile(join(root, '.kiln/ownership.json'), 'utf8'));
+    const databaseUrlOwner = ownership.ownership.envVars.find(
+      (entry: { name: string }) => entry.name === 'DATABASE_URL'
+    );
+    expect(databaseUrlOwner?.ownerCapabilityId).toBe('db');
+  }, 30000);
+
+  test('plan add db surfaces the DATABASE_URL ownership claim', async () => {
+    const root = await createTempDir();
+    await runInit(root, 'demo-app');
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message: string) => logs.push(message);
+
+    try {
+      await runPlanAdd('db', { cwd: root, dryRun: true });
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(logs.join('\n')).toContain('envVar DATABASE_URL -> db');
+  });
+
+  test('env remove warns when the var is owned by another capability', async () => {
+    const root = await createTempDir();
+    await runInit(root, 'demo-app');
+    await runAdd('db', { cwd: root, dryRun: false });
+
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (message: string) => warnings.push(message);
+
+    try {
+      await runEnvRemove(['DATABASE_URL'], { cwd: root, dryRun: false });
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(warnings.join('\n')).toContain("'DATABASE_URL' is managed by the 'db' capability");
   }, 30000);
 
   test('re-running add env reports no changes when already applied', async () => {
