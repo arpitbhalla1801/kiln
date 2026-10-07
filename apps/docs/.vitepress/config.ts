@@ -1,10 +1,11 @@
-import { defineConfig } from "vitepress";
+import { defineConfig, type HeadConfig } from "vitepress";
 
 const siteUrl = "https://arpitbhalla1801.github.io/kiln/";
 
 export default defineConfig({
   title: "kiln — Capability-based CLI for Bun + Next.js",
-  description: "CLI to scaffold auth, env, and plugin capabilities into your app",
+  description:
+    "kiln is a capability-based CLI that scaffolds auth, env, and plugin capabilities into Bun and Next.js apps, tracking file ownership so upgrades stay safe and predictable.",
   lang: "en-US",
   base: "/kiln/",
   cleanUrls: true,
@@ -19,7 +20,7 @@ export default defineConfig({
     const pageTitle = pageData.title || siteConfig.site.title;
     const pageDescription = pageData.description || siteConfig.site.description;
 
-    return [
+    const head: HeadConfig[] = [
       ["link", { rel: "canonical", href: canonicalUrl }],
       ["meta", { property: "og:url", content: canonicalUrl }],
       ["meta", { property: "og:title", content: pageTitle }],
@@ -27,6 +28,36 @@ export default defineConfig({
       ["meta", { name: "twitter:title", content: pageTitle }],
       ["meta", { name: "twitter:description", content: pageDescription }],
     ];
+
+    const segments = path.split("/").filter(Boolean);
+    if (segments.length > 0) {
+      const crumbs = [{ name: "kiln", url: siteUrl }];
+      let accPath = "";
+      for (const segment of segments) {
+        accPath += `${segment}/`;
+        const name = segment
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        crumbs.push({ name, url: new URL(accPath, siteUrl).href });
+      }
+
+      head.push([
+        "script",
+        { type: "application/ld+json" },
+        JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: crumbs.map((crumb, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: crumb.name,
+            item: crumb.url,
+          })),
+        }),
+      ]);
+    }
+
+    return head;
   },
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/kiln/favicon.svg" }],
@@ -41,7 +72,8 @@ export default defineConfig({
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         name: "kiln",
-        description: "CLI to scaffold auth, env, and plugin capabilities into your app",
+        description:
+          "kiln is a capability-based CLI that scaffolds auth, env, and plugin capabilities into Bun and Next.js apps, tracking file ownership so upgrades stay safe and predictable.",
         applicationCategory: "DeveloperApplication",
         operatingSystem: "Cross-platform",
         url: siteUrl,
