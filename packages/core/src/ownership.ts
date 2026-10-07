@@ -10,6 +10,12 @@ import {
 
 type OwnershipMap = Map<string, CapabilityId>;
 
+// Mirrors @kiln-cli/env-capability's ENV_CAPABILITY_ID. Core can't import that package (it
+// depends on core), so the id is duplicated here as the one case this generic tracker needs
+// to know about: env is the shared baseline for envVars, so a specific capability (db, auth)
+// may take over a var env claimed first without that counting as an ownership conflict.
+const ENV_BASELINE_OWNER = 'env';
+
 /** Tracks capability ownership across files, dependencies, scripts, env vars, and metadata. */
 export class OwnershipTracker {
   private files: OwnershipMap;
@@ -52,6 +58,11 @@ export class OwnershipTracker {
     const existingOwner = map.get(registration.resourceKey);
 
     if (existingOwner !== undefined && existingOwner !== registration.ownerCapabilityId) {
+      if (registration.resourceType === 'envVar' && existingOwner === ENV_BASELINE_OWNER) {
+        map.set(registration.resourceKey, registration.ownerCapabilityId);
+        return null;
+      }
+
       return {
         resourceType: registration.resourceType,
         resourceKey: registration.resourceKey,
@@ -173,7 +184,11 @@ export class OwnershipTracker {
     const map = this.getMap(registration.resourceType);
     const existingOwner = map.get(registration.resourceKey);
 
-    if (existingOwner !== undefined && existingOwner !== registration.ownerCapabilityId) {
+    if (
+      existingOwner !== undefined &&
+      existingOwner !== registration.ownerCapabilityId &&
+      !(registration.resourceType === 'envVar' && existingOwner === ENV_BASELINE_OWNER)
+    ) {
       return {
         resourceType: registration.resourceType,
         resourceKey: registration.resourceKey,
