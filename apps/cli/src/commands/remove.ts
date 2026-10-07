@@ -7,7 +7,13 @@ import {
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
 } from '@kiln-cli/project-model';
-import { buildEnvRemovalTransforms, GITIGNORE_ENV_LOCAL_KEY } from '@kiln-cli/env-capability';
+import {
+  buildEnvRemovalTransforms,
+  DEFAULT_ENV_EXAMPLE_PATH,
+  DEFAULT_ENV_LOCAL_PATH,
+  ENV_CAPABILITY_ID,
+  GITIGNORE_ENV_LOCAL_KEY,
+} from '@kiln-cli/env-capability';
 import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
 import { createTransformPipeline, TransformEngine } from '@kiln-cli/transform-engine';
 import type { OwnershipSnapshot } from '@kiln-cli/core';
@@ -70,10 +76,22 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
     return;
   }
 
-  const { deletable, edited } = await partitionEditedFiles(
+  const { deletable: deletableCandidates, edited } = await partitionEditedFiles(
     rootPath,
     ownedFiles.map((entry) => entry.filePath)
   );
+
+  // .env.example/.env.local are shared across capabilities but always file-owned by 'env'
+  // (see env-capability's buildOwnershipRegistrations). Deleting them while another
+  // capability still owns env vars inside them would wipe that capability's values too.
+  const sharedEnvFiles = new Set([DEFAULT_ENV_EXAMPLE_PATH, DEFAULT_ENV_LOCAL_PATH]);
+  const otherCapabilityOwnsEnvVars = snapshot.envVars.some(
+    (entry) => entry.ownerCapabilityId !== capabilityId
+  );
+  const deletable =
+    capabilityId === ENV_CAPABILITY_ID && otherCapabilityOwnsEnvVars
+      ? deletableCandidates.filter((filePath) => !sharedEnvFiles.has(filePath))
+      : deletableCandidates;
 
   const ownedScriptNames = new Set(ownedScripts.map((entry) => entry.name));
   const keptScripts = Object.fromEntries(

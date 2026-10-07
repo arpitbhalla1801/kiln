@@ -10,7 +10,6 @@ import {
   createEmptyProjectState,
   LifecycleExecutor,
   LifecycleHooks,
-  type OwnershipRegistration,
   OwnershipTracker,
   ProjectState,
   ValidationRunner,
@@ -238,7 +237,7 @@ export class CapabilityRuntime {
       };
     }
 
-    const ownershipUpdates = buildOwnershipRegistrations(capabilityPlan.capability)
+    const ownershipUpdates = (capabilityPlan.ownershipRegistrations ?? [])
       .filter((registration) => tracker.getOwner(registration.resourceType, registration.resourceKey) !== registration.ownerCapabilityId)
       .map(
         (registration) =>
@@ -587,29 +586,6 @@ function requiredIds(id: string): string[] {
 function formatMissingRequires(id: string, missing: string[]): string {
   const commands = missing.map((dependency) => `kiln add ${dependency}`).join(' and ');
   return `add ${id} requires ${missing.join(', ')}. Run ${commands} first.`;
-}
-
-/** Registrations `registerCapabilityOwnership` would make, built read-only for conflict detection. */
-function buildOwnershipRegistrations(capability: Capability): OwnershipRegistration[] {
-  const registrations: OwnershipRegistration[] = [];
-
-  for (const filePath of capability.files ?? []) {
-    registrations.push({ resourceType: 'file', resourceKey: filePath, ownerCapabilityId: capability.id });
-  }
-  for (const name of capability.ownedDependencies ?? []) {
-    registrations.push({ resourceType: 'dependency', resourceKey: name, ownerCapabilityId: capability.id });
-  }
-  for (const name of capability.ownedScripts ?? []) {
-    registrations.push({ resourceType: 'script', resourceKey: name, ownerCapabilityId: capability.id });
-  }
-  for (const name of capability.ownedEnvVars ?? []) {
-    registrations.push({ resourceType: 'envVar', resourceKey: name, ownerCapabilityId: capability.id });
-  }
-  for (const key of capability.ownedMetadata ?? []) {
-    registrations.push({ resourceType: 'metadata', resourceKey: key, ownerCapabilityId: capability.id });
-  }
-
-  return registrations;
 }
 
 /** Owned files that differ from what kiln last wrote and that this run leaves untouched. */
