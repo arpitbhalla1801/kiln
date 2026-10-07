@@ -67,15 +67,21 @@ export class EnvCapability implements Capability {
       options.envExampleExists ?? (await fileExists(join(rootPath, envExamplePath)));
 
     // Claim only what this add creates, so `kiln remove` never deletes a user's own
-    // .env.example or variables that were defined before kiln touched them.
+    // .env.example or variables that were defined before kiln touched them. A specific
+    // capability (db, auth) may still take over a var the generic env baseline claimed
+    // first -- otherwise `kiln remove env` would later delete a var db actually depends
+    // on, since db never got a chance to record its own ownership of it.
     const existingKeys = new Set([
       ...(await readEnvKeys(join(rootPath, envExamplePath))),
       ...(await readEnvKeys(join(rootPath, DEFAULT_ENV_LOCAL_PATH))),
     ]);
-    const claimedVariables = variableInputs.filter(
-      (variable) =>
-        !existingKeys.has(variable.name) && tracker.getOwner('envVar', variable.name) === undefined
-    );
+    const claimedVariables = variableInputs.filter((variable) => {
+      const owner = tracker.getOwner('envVar', variable.name);
+      if (owner !== undefined) {
+        return owner === ENV_CAPABILITY_ID && ownerCapabilityId !== ENV_CAPABILITY_ID;
+      }
+      return !existingKeys.has(variable.name);
+    });
     const claimFile = !envExampleExists && tracker.getOwner('file', envExamplePath) === undefined;
 
     // The calling capability owns what it adds (auth owns AUTH_SECRET, db owns DATABASE_URL),
@@ -90,9 +96,16 @@ export class EnvCapability implements Capability {
         : []),
     ];
     // A resource owned by env or by this caller is fine (env is the shared baseline); one owned
-    // by any other capability is a conflict.
+    // by any other capability is a conflict for a specific owner (e.g. db, auth). The generic
+    // baseline claim (ownerCapabilityId === env, e.g. plain `kiln add env`) never conflicts on an
+    // envVar -- it just skips claiming what another capability already owns (see claimedVariables
+    // above). File-ownership conflicts (e.g. another capability already owns .env.example) still
+    // apply regardless of caller, since that's an actual clash over a resource, not a shared var.
     const conflicts = buildOwnershipRegistrations(variableInputs, envExamplePath, ownerCapabilityId).filter(
       (registration) => {
+        if (registration.resourceType === 'envVar' && ownerCapabilityId === ENV_CAPABILITY_ID) {
+          return false;
+        }
         const owner = tracker.getOwner(registration.resourceType, registration.resourceKey);
         return owner !== undefined && owner !== ENV_CAPABILITY_ID && owner !== ownerCapabilityId;
       }
