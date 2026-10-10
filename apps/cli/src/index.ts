@@ -30,7 +30,7 @@ const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
   add: 'Add a capability to a kiln project (env, auth, db).',
   remove: 'Remove a capability from a kiln project (env, auth, db).',
-  env: 'Manage individual environment variables.',
+  env: 'Remove individual environment variables (use `kiln add env --var` to set one).',
   db: 'Run database operations with the project env loaded.',
   inspect: 'Inspect the current kiln project.',
   doctor: 'Run environment checks for kiln.',
