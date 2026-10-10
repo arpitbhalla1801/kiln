@@ -103,6 +103,18 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     id: capabilityId,
     name: pascalName,
     version: '0.1.0',
+    description: `Adds ${capabilityId} to a Next.js project. Replace with what your capability does.`,
+    frameworks: ['nextjs'],
+    providers: [],
+    config: [
+      {
+        name: '--var',
+        description: `${apiKeyVar}=value written to .env.local.`,
+        required: false,
+      },
+    ],
+    operations: ['add', 'remove'],
+    verify: [{ command: 'npx tsc --noEmit', description: 'Type-check the generated module.' }],
     dependencies: [],
     ownership: {
       files: [modulePath],
@@ -112,9 +124,9 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     },
   };
 
-  const manifestData = `import type { CapabilityManifest } from '@kiln-cli/capability-sdk';
-
-export const ${constPrefix}_MANIFEST: CapabilityManifest = ${JSON.stringify(manifest, null, 2)};
+  // Deliberately not annotated as CapabilityManifest: an annotated literal fails to
+  // compile against an SDK release that predates the discovery fields.
+  const manifestData = `export const ${constPrefix}_MANIFEST = ${JSON.stringify(manifest, null, 2)};
 `;
 
   const types = `import type { CapabilityPlan, CapabilityPlanOptions } from '@kiln-cli/capability-sdk';
@@ -201,7 +213,7 @@ export class ${pascalName}Capability implements Capability {
   readonly id = ${constPrefix}_CAPABILITY_ID;
 
   async getManifest(): Promise<CapabilityManifest> {
-    return ${constPrefix}_MANIFEST;
+    return ${constPrefix}_MANIFEST as CapabilityManifest;
   }
 
   async getCapability(): Promise<ResolvedCapability> {

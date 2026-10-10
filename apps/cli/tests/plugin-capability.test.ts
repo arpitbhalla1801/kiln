@@ -33,6 +33,7 @@ class FakePluginCapability implements Capability {
     return {
       id: FAKE_PLUGIN_ID,
       version: '1.0.0',
+      description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], 
       dependencies: [],
     };
   }

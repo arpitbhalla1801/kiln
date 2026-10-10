@@ -41,7 +41,7 @@ async function createTempProject(): Promise<string> {
     export default {
       id: 'fake-plugin',
       async getManifest() {
-        return { id: 'fake-plugin', version: '1.4.2', dependencies: [] };
+        return { id: 'fake-plugin', version: '1.4.2', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] };
       },
       async getCapability() {
         return { id: 'fake-plugin', version: '1.4.2', dependencies: [] };
