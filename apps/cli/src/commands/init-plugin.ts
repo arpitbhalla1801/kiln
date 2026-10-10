@@ -103,6 +103,18 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     id: capabilityId,
     name: pascalName,
     version: '0.1.0',
+    description: `Adds ${capabilityId} to a Next.js project. Replace with what your capability does.`,
+    frameworks: ['nextjs'],
+    providers: [],
+    config: [
+      {
+        name: '--var',
+        description: `${apiKeyVar}=value written to .env.local.`,
+        required: false,
+      },
+    ],
+    operations: ['add', 'remove'],
+    verify: [{ command: 'npx tsc --noEmit', description: 'Type-check the generated module.' }],
     dependencies: [],
     ownership: {
       files: [modulePath],

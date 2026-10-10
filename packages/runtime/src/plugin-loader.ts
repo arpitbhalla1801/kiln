@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { validateManifest } from '@kiln-cli/core';
 import { SDK_VERSION, type Capability } from '@kiln-cli/capability-sdk';
 import type { PluginConfigEntry } from '@kiln-cli/project-model';
 
@@ -92,10 +93,15 @@ export async function loadPlugin(
 
   try {
     const manifest = await capability.getManifest();
-    if (typeof manifest?.id !== 'string' || typeof manifest?.version !== 'string') {
+    if (typeof manifest !== 'object' || manifest === null) {
+      return skip(entry, `'${entry.package}' returned a malformed manifest from getManifest()`);
+    }
+    try {
+      validateManifest(manifest);
+    } catch (error) {
       return skip(
         entry,
-        `'${entry.package}' returned a malformed manifest from getManifest() (missing id or version)`
+        `'${entry.package}' returned a malformed manifest from getManifest(): ${(error as Error).message}`
       );
     }
   } catch (error) {

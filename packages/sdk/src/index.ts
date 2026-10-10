@@ -22,7 +22,11 @@ export type { Capability } from './capability.js';
 export type { CapabilityPlan, CapabilityPlanOptions } from './plan.js';
 export type {
   CapabilityManifest,
+  CapabilityOperation,
+  ConfigOption,
   OwnershipDeclaration,
+  ProviderDeclaration,
+  VerifyStep,
   ResolvedCapability,
   Transform,
   TransformType,
