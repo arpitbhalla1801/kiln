@@ -183,6 +183,28 @@ export class AuthCapability implements Capability {
             .build()
         );
       }
+    } else if (authFileExists && !dbPresent) {
+      // db was removed, with no provider change in this same call: if the file is
+      // still kiln's db-wired version, it's safe to regenerate without the adapter.
+      // Mirrors the wiring branch above so `kiln remove db` leaves auth.ts working.
+      const currentAuthFileContent =
+        options.authFileContent ??
+        (await readFile(join(rootPath, paths.authFile), 'utf8').catch(() => undefined));
+      if (
+        currentAuthFileContent ===
+        createAuthConfigContent(existingProviders, { dbClientImportPath: DB_CLIENT_IMPORT_PATH })
+      ) {
+        authTransforms.push(
+          ...createTransformPipeline()
+            .fileCreate(
+              `${AUTH_CAPABILITY_ID}-remove-db-adapter`,
+              paths.authFile,
+              createAuthConfigContent(existingProviders),
+              'Unwire Prisma adapter from auth config'
+            )
+            .build()
+        );
+      }
     }
 
     const envPlan = await this.envCapability.planAdd(

@@ -85,6 +85,23 @@ describe('kiln remove safety', () => {
     expect(await exists(join(root, 'src/app/page.tsx'))).toBe(true);
   }, 60000);
 
+  test('remove db --force unwires the Prisma adapter from auth.ts instead of leaving a dead import', async () => {
+    const root = await projectWith('env');
+    await runAdd('auth', { cwd: root, dryRun: false }, {}, ['github']);
+    await runAdd('db', { cwd: root, dryRun: false });
+
+    const wiredAuth = await readFile(join(root, 'src/auth.ts'), 'utf8');
+    expect(wiredAuth).toContain("import { db } from \"./lib/db\"");
+    expect(wiredAuth).toContain('adapter: PrismaAdapter(db)');
+
+    await runRemove('db', { cwd: root, dryRun: false, force: true });
+
+    expect(await exists(join(root, 'src/lib/db.ts'))).toBe(false);
+    const unwiredAuth = await readFile(join(root, 'src/auth.ts'), 'utf8');
+    expect(unwiredAuth).not.toContain('PrismaAdapter');
+    expect(unwiredAuth).not.toContain('./lib/db');
+  }, 60000);
+
   test('remove db leaves migrations alone and says so', async () => {
     const root = await projectWith('env', 'db');
     await writeFile(join(root, 'prisma', 'migrations.keep'), 'x');
