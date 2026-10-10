@@ -92,7 +92,7 @@ describe('kiln inspect', () => {
       join(packageDir, 'index.mjs'),
       `export default {
         id: 'gizmo',
-        async getManifest() { return { id: 'gizmo', version: '1.0.0', dependencies: [] }; },
+        async getManifest() { return { id: 'gizmo', version: '1.0.0', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] }; },
         async getCapability() { return { id: 'gizmo', version: '1.0.0', dependencies: [] }; },
         async planAdd() { return { transforms: [], capability: { id: 'gizmo', version: '1.0.0', dependencies: [] }, ownershipRegistrations: [] }; },
       };`

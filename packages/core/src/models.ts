@@ -72,6 +72,28 @@ export interface OwnershipDeclaration {
   metadata?: string[];
 }
 
+/** A user-selectable variant of a capability, e.g. an auth provider. */
+export interface ProviderDeclaration {
+  id: string;
+  description: string;
+}
+
+/** One input `kiln add` accepts for a capability, e.g. `--var AUTH_SECRET=...`. */
+export interface ConfigOption {
+  name: string;
+  description: string;
+  required: boolean;
+}
+
+/** A command that confirms the capability works once added. Declared, not run by kiln yet. */
+export interface VerifyStep {
+  command: string;
+  description: string;
+}
+
+export const CAPABILITY_OPERATIONS = ['add', 'remove'] as const;
+export type CapabilityOperation = (typeof CAPABILITY_OPERATIONS)[number];
+
 /**
  * Planning-time capability declaration.
  * Transform references are IDs only; full definitions are resolved before execution.
@@ -80,6 +102,18 @@ export interface CapabilityManifest {
   id: CapabilityId;
   name?: string;
   version: string;
+  /** One agent-readable line: what adding this capability does for the project. */
+  description: string;
+  /** Frameworks it supports, e.g. `nextjs`. */
+  frameworks: string[];
+  /** Selectable variants; empty when the capability has none. */
+  providers: ProviderDeclaration[];
+  /** Inputs `kiln add` accepts; empty when it takes none. */
+  config: ConfigOption[];
+  /** Lifecycle operations kiln can run for it. */
+  operations: CapabilityOperation[];
+  /** Commands that confirm it works after `add`. */
+  verify: VerifyStep[];
   dependencies: CapabilityId[];
   /** Optional partners this capability adapts to when present; never blocks an add. */
   enhances?: CapabilityId[];

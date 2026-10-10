@@ -7,6 +7,7 @@ import type {
 } from '@kiln-cli/capability-sdk';
 import {
   type Capability,
+  type CapabilityManifest,
   createEmptyProjectState,
   LifecycleExecutor,
   LifecycleHooks,
@@ -34,6 +35,7 @@ import { TransformEngine } from '@kiln-cli/transform-engine';
 import { CAPABILITY_REGISTRY, enhancersOf, registerCapability } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
 import { loadPlugins as loadPluginModules, type PluginLoadResult } from './plugin-loader.js';
+import { isVerifiedPlugin, manifestSha256 } from './plugin-verification.js';
 import pkg from '../package.json' with { type: 'json' };
 import type {
   CapabilityPlanResult,
@@ -42,6 +44,17 @@ import type {
   RuntimeOptions,
   SupportedCapabilityId,
 } from './types.js';
+
+/** One registered capability as reported by `kiln capabilities`. */
+export interface CapabilityDescription {
+  id: string;
+  source: 'builtin' | 'plugin';
+  /** npm package the capability was loaded from; plugins only. */
+  package?: string;
+  verified: boolean;
+  manifestSha256: string;
+  manifest: CapabilityManifest;
+}
 
 // auth and db fold env's plan into their own planAdd, so a missing `env` install
 // never blocks them. Any other capability must have its requires installed.
@@ -63,6 +76,7 @@ export class CapabilityRuntime {
   private readonly dbCapability: DbCapability;
   private readonly capabilities: Map<string, PluginCapability>;
   private readonly pluginProvenance: Map<string, string> = new Map();
+  private readonly pluginVerified: Map<string, boolean> = new Map();
   private readonly lifecycleHooks: LifecycleHooks<KilnRuntimeContext>;
 
   constructor(options: CapabilityRuntimeOptions = {}) {
@@ -105,12 +119,38 @@ export class CapabilityRuntime {
         registerCapability(result.capability.id, manifest.dependencies, manifest.enhances);
         this.capabilities.set(result.capability.id, result.capability);
         this.pluginProvenance.set(result.capability.id, result.entry.package);
+        this.pluginVerified.set(
+          result.capability.id,
+          isVerifiedPlugin(result.entry.package, result.entry.version, manifest)
+        );
       } else {
         console.error(`kiln: skipping plugin '${result.entry.package}': ${result.reason}`);
       }
     }
 
     return results;
+  }
+
+  /**
+   * Every registered capability with its manifest, origin, and verification
+   * status. Built-ins are core-maintained, so always verified; a plugin is
+   * verified only when a maintainer reviewed this exact release and manifest.
+   */
+  async describeCapabilities(): Promise<CapabilityDescription[]> {
+    return Promise.all(
+      [...this.capabilities].map(async ([id, capability]) => {
+        const manifest = await capability.getManifest();
+        const packageName = this.pluginProvenance.get(id);
+        return {
+          id,
+          source: packageName === undefined ? ('builtin' as const) : ('plugin' as const),
+          package: packageName,
+          verified: packageName === undefined ? true : (this.pluginVerified.get(id) ?? false),
+          manifestSha256: manifestSha256(manifest),
+          manifest,
+        };
+      })
+    );
   }
 
   /** The npm package a registered capability id was loaded from, if any. */

@@ -33,7 +33,7 @@ const CAPABILITY_MODULE = `
 export default {
   id: '${CAPABILITY_ID}',
   async getManifest() {
-    return { id: '${CAPABILITY_ID}', version: '${VERSION}', dependencies: [] };
+    return { id: '${CAPABILITY_ID}', version: '${VERSION}', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] };
   },
   async getCapability() {
     return { id: '${CAPABILITY_ID}', version: '${VERSION}', dependencies: [], files: ['widget.txt'] };

@@ -22,6 +22,7 @@ describe('capability manifest format', () => {
         id: 'env',
         name: 'Environment Variables',
         version: '1.0.0',
+        description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], 
         dependencies: [],
         adapters: ['node-adapter'],
         transforms: ['env-example'],
@@ -48,6 +49,7 @@ describe('capability manifest format', () => {
     const manifest: CapabilityManifest = {
       id: 'env',
       version: '1.0.0',
+        description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], 
       dependencies: [],
       transformDefinitions: [
         { id: 'env-example', type: 'env-mutation', target: '.env.example' },
@@ -80,6 +82,7 @@ describe('capability manifest format', () => {
       loadManifestFromObject({
         id: 'env',
         version: '1.0.0',
+        description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], 
         dependencies: [],
         adapters: [123],
       })
@@ -90,10 +93,39 @@ describe('capability manifest format', () => {
     const manifest: CapabilityManifest = {
       id: 'core',
       version: '1.0.0',
+        description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], 
       dependencies: [],
     };
 
     validateManifest(manifest);
     expect(manifest.dependencies).toEqual([]);
+  });
+
+  test('requires the discovery metadata', () => {
+    const complete = {
+      id: 'env',
+      version: '1.0.0',
+      description: 'test',
+      frameworks: ['nextjs'],
+      providers: [],
+      config: [],
+      operations: ['add'],
+      verify: [],
+      dependencies: [],
+    };
+    expect(() => loadManifestFromObject(complete)).not.toThrow();
+
+    for (const field of ['description', 'frameworks', 'providers', 'config', 'operations', 'verify']) {
+      const { [field]: _omitted, ...incomplete } = complete as Record<string, unknown>;
+      expect(() => loadManifestFromObject(incomplete)).toThrow(new RegExp(field));
+    }
+
+    expect(() => loadManifestFromObject({ ...complete, operations: ['explode'] })).toThrow(
+      /operations/
+    );
+    expect(() => loadManifestFromObject({ ...complete, frameworks: [] })).toThrow(/frameworks/);
+    expect(() =>
+      loadManifestFromObject({ ...complete, config: [{ name: '--x', description: 'd' }] })
+    ).toThrow(/config\.required/);
   });
 });

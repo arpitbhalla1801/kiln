@@ -2,6 +2,21 @@
   "id": "auth",
   "name": "Authentication",
   "version": "1.0.0",
+  "description": "Adds Auth.js (next-auth) sign-in with selectable providers, middleware, and a route handler; uses the Prisma adapter when db is present.",
+  "frameworks": ["nextjs"],
+  "providers": [
+    { "id": "github", "description": "GitHub OAuth; needs AUTH_GITHUB_ID and AUTH_GITHUB_SECRET." },
+    { "id": "google", "description": "Google OAuth; needs AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET." },
+    { "id": "credentials", "description": "Demo email/password login; needs no external OAuth app." }
+  ],
+  "config": [
+    { "name": "--provider", "description": "Provider id to enable; repeat for several. Omit to leave providers unchanged.", "required": false },
+    { "name": "--var", "description": "KEY=value written to .env.local, e.g. AUTH_GITHUB_ID=....", "required": false }
+  ],
+  "operations": ["add", "remove"],
+  "verify": [
+    { "command": "npx tsc --noEmit", "description": "Type-check the generated auth.ts, middleware and route handler." }
+  ],
   "dependencies": ["env"],
   "enhances": ["db"],
   "adapters": ["node-adapter"],
