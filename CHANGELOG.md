@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.2.0
+
+### Features
+
+- Capabilities declare what they require and what they enhance. `add` stops on a missing requirement, `remove` refuses while an installed capability requires the target, and `inspect` shows both under each installed capability
+- `kiln capabilities list|show <id> [--json]` describes every capability: purpose, frameworks, providers, config, operations, verify commands, origin, trust status and installed state
+- Capability manifests require `description`, `frameworks`, `providers`, `config`, `operations` and `verify`; the SDK ships `capability.schema.json`
+- `--provider` is validated against the capability's manifest, for plugins as well as built-ins
+- `kiln doctor --verify` runs each installed capability's declared verify commands
+- `kiln add auth` re-plans when `db` is added, and `remove db` unwires the Prisma adapter from `auth.ts`
+
+### Fixes
+
+- `DATABASE_URL` ownership no longer deadlocks `env` and `db`; `plan` and `add` agree on ownership
+- `env remove` warns before stripping a variable another capability owns
+- `kiln init` accepts a target directory that only has `.git` or `README.md`
+- `remove db --force` no longer leaves a dead import behind
+
+### Breaking
+
+- A plugin whose manifest lacks the fields above is skipped, with the field name in the message. Plugins target `@kiln-cli/capability-sdk` 0.2.0
+- Third-party plugins load only when a kiln maintainer reviewed that exact release, or with `--allow-unverified`. An unreviewed plugin is skipped before its code is imported
+
+### Docs
+
+- `remove`, `undo`, `plan`, `env`, `db`, `init-plugin` and `init --existing` are documented, plus the plugin verification process
+
 ## 2.1.0
 
 ### Features
