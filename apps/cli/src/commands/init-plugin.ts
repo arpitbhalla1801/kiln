@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { validateProjectName } from '../validation/project-name.js';
 import { ensureTargetAvailable } from '../project.js';
 
-const SDK_VERSION_RANGE = '^0.1.0';
+const SDK_VERSION_RANGE = '^0.2.0';
 const SCHEMA_PATH = './node_modules/@kiln-cli/capability-sdk/capability.schema.json';
 const DOCS_BASE = 'https://github.com/arpitbhalla1801/kiln/blob/main/docs';
 
@@ -125,9 +125,9 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     },
   };
 
-  // Deliberately not annotated as CapabilityManifest: an annotated literal fails to
-  // compile against an SDK release that predates the discovery fields.
-  const manifestData = `export const ${constPrefix}_MANIFEST = ${JSON.stringify(manifest, null, 2)};
+  const manifestData = `import type { CapabilityManifest } from '@kiln-cli/capability-sdk';
+
+export const ${constPrefix}_MANIFEST: CapabilityManifest = ${JSON.stringify(manifest, null, 2)};
 `;
 
   const types = `import type { CapabilityPlan, CapabilityPlanOptions } from '@kiln-cli/capability-sdk';
@@ -214,7 +214,7 @@ export class ${pascalName}Capability implements Capability {
   readonly id = ${constPrefix}_CAPABILITY_ID;
 
   async getManifest(): Promise<CapabilityManifest> {
-    return ${constPrefix}_MANIFEST as CapabilityManifest;
+    return ${constPrefix}_MANIFEST;
   }
 
   async getCapability(): Promise<ResolvedCapability> {
