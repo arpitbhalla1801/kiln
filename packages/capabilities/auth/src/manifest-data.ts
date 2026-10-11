@@ -6,6 +6,8 @@
  * or __dirname-based path resolution, and no need to ship the .json file
  * alongside the bundle). Keep in sync with kiln.manifest.json.
  */
+import { AUTH_PROVIDERS } from './providers.js';
+
 export const AUTH_MANIFEST = {
   id: 'auth',
   name: 'Authentication',
@@ -13,11 +15,8 @@ export const AUTH_MANIFEST = {
   description:
     'Adds Auth.js (next-auth) sign-in with selectable providers, middleware, and a route handler; uses the Prisma adapter when db is present.',
   frameworks: ['nextjs'],
-  providers: [
-    { id: 'github', description: 'GitHub OAuth; needs AUTH_GITHUB_ID and AUTH_GITHUB_SECRET.' },
-    { id: 'google', description: 'Google OAuth; needs AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET.' },
-    { id: 'credentials', description: 'Demo email/password login; needs no external OAuth app.' },
-  ],
+  // One source of truth: the same table `--provider` is resolved against.
+  providers: Object.values(AUTH_PROVIDERS).map(({ id, description }) => ({ id, description })),
   config: [
     {
       name: '--provider',
