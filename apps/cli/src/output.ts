@@ -8,6 +8,8 @@ export interface CliOptions {
   json?: boolean;
   /** Load third-party plugins no maintainer has reviewed. */
   allowUnverified?: boolean;
+  /** `doctor` only: also run each installed capability's declared verify commands. */
+  verify?: boolean;
 }
 
 export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): string {

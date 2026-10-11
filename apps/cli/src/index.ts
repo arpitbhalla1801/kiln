@@ -34,7 +34,7 @@ const commands: Record<CommandName, string> = {
   env: 'Manage individual environment variables.',
   db: 'Run database operations with the project env loaded.',
   inspect: 'Inspect the current kiln project.',
-  doctor: 'Run environment checks for kiln.',
+  doctor: 'Run environment checks for kiln (--verify also runs capability verify commands).',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
   capabilities: 'List capabilities or show one capability\'s manifest (--json for agents).',
@@ -176,6 +176,7 @@ async function main(argv: string[]): Promise<void> {
     verbose: flags.includes('--verbose'),
     json: flags.includes('--json'),
     allowUnverified: flags.includes('--allow-unverified'),
+    verify: flags.includes('--verify'),
     cwd: process.cwd(),
   };
 

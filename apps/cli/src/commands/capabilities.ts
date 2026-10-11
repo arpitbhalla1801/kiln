@@ -28,7 +28,7 @@ async function describeAll(cwd: string, allowUnverified?: boolean): Promise<Capa
 }
 
 /** Same sources `kiln inspect` uses: the lockfile, plus whoever owns files, dependencies or env vars. */
-async function readInstalled(rootPath: string): Promise<Map<string, string | undefined>> {
+export async function readInstalled(rootPath: string): Promise<Map<string, string | undefined>> {
   const installed = new Map<string, string | undefined>();
 
   const lockCapabilities = (await LockfileStore.load(rootPath))?.snapshot?.capabilities ?? [];

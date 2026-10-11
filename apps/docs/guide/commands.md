@@ -17,6 +17,7 @@ description: Full list of kiln CLI commands, covering init, add, plugins, and mo
 | `kiln capabilities show <id> [--json]` | Show one capability's manifest: providers, config, operations, verify commands |
 | `kiln inspect` | Inspect project metadata and ownership |
 | `kiln doctor` | Run environment and project health checks |
+| `kiln doctor --verify` | Also run each installed capability's declared verify commands (add `--allow-unverified` to include plugins you enabled) |
 
 Global flags: `--dry-run`, `--help`, `--version`
 
