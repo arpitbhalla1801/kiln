@@ -219,6 +219,11 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
       );
       await LockfileStore.save(lockfile, rootPath);
     }
+
+    // Mirror addCapability's sibling-refresh: a capability that enhanced the one just
+    // removed (e.g. auth wiring a Prisma adapter when db was present) needs to re-plan
+    // now that it's gone, or it's left importing a file that no longer exists.
+    await runtime.reconcileEnhancers(capabilityId, rootPath);
   }
 }
 
