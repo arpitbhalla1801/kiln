@@ -2,7 +2,9 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { runAdd } from '../src/commands/add.js';
 import { runCapabilitiesList, runCapabilitiesShow } from '../src/commands/capabilities.js';
+import { runInit } from '../src/commands/init.js';
 
 const tempRoots: string[] = [];
 
@@ -46,6 +48,23 @@ describe('kiln capabilities', () => {
       expect(entry.frameworks).toEqual(['nextjs']);
     }
   });
+
+  test('list --json reports installed state and version from the project', async () => {
+    const root = await emptyDir();
+    await runInit(root, 'demo-app');
+    await runAdd('env', { cwd: root, dryRun: false });
+
+    const output = await capture(() => runCapabilitiesList({ cwd: root, json: true }));
+    const byId = Object.fromEntries(
+      (JSON.parse(output) as Array<{ id: string; installed: boolean; installedVersion?: string }>).map(
+        (entry) => [entry.id, entry]
+      )
+    );
+    expect(byId.env.installed).toBe(true);
+    expect(byId.env.installedVersion).toMatch(/^[0-9]+.[0-9]+.[0-9]+/);
+    expect(byId.db.installed).toBe(false);
+    expect(byId.auth.installed).toBe(false);
+  }, 60000);
 
   test('show --json returns the full manifest and its hash', async () => {
     const cwd = await emptyDir();
