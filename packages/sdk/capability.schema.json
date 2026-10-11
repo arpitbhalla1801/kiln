@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/arpitbhalla1801/kiln/blob/main/packages/sdk/capability.schema.json",
+  "title": "kiln capability manifest",
+  "description": "What getManifest() returns and kiln.manifest.json holds. kiln skips a plugin whose manifest fails this shape.",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "description",
+    "frameworks",
+    "providers",
+    "config",
+    "operations",
+    "verify",
+    "dependencies"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "minLength": 1, "description": "Capability id used by `kiln add <id>`." },
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One line: what adding this capability does for the project."
+    },
+    "frameworks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Supported frameworks, e.g. nextjs."
+    },
+    "providers": {
+      "type": "array",
+      "description": "Selectable variants passed with --provider. Empty when there are none.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "config": {
+      "type": "array",
+      "description": "Inputs `kiln add` accepts. Empty when it takes none.",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "required"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "required": { "type": "boolean" }
+        }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "enum": ["add", "remove"] },
+      "description": "Lifecycle operations kiln can run for it."
+    },
+    "verify": {
+      "type": "array",
+      "description": "Commands that confirm it works after `add`. Empty when there are none.",
+      "items": {
+        "type": "object",
+        "required": ["command", "description"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Capabilities that must be installed first."
+    },
+    "enhances": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "adapters": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "transforms": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "transformDefinitions": { "type": "array", "items": { "type": "object" } },
+    "ownership": {
+      "type": "object",
+      "properties": {
+        "files": { "type": "array", "items": { "type": "string" } },
+        "dependencies": { "type": "array", "items": { "type": "string" } },
+        "scripts": { "type": "array", "items": { "type": "string" } },
+        "envVars": { "type": "array", "items": { "type": "string" } },
+        "metadata": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "files": { "type": "array", "items": { "type": "string" } }
+  }
+}
