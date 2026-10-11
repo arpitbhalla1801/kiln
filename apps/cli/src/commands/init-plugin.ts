@@ -4,6 +4,7 @@ import { validateProjectName } from '../validation/project-name.js';
 import { ensureTargetAvailable } from '../project.js';
 
 const SDK_VERSION_RANGE = '^0.1.0';
+const SCHEMA_PATH = './node_modules/@kiln-cli/capability-sdk/capability.schema.json';
 const DOCS_BASE = 'https://github.com/arpitbhalla1801/kiln/blob/main/docs';
 
 export async function runInitPlugin(
@@ -391,7 +392,7 @@ To upgrade: release a new version, install it in the project, bump the pin. Kiln
   return {
     'package.json': `${JSON.stringify(packageJson, null, 2)}\n`,
     'tsconfig.json': `${JSON.stringify(tsconfig, null, 2)}\n`,
-    'kiln.manifest.json': `${JSON.stringify(manifest, null, 2)}\n`,
+    'kiln.manifest.json': `${JSON.stringify({ $schema: SCHEMA_PATH, ...manifest }, null, 2)}\n`,
     'src/manifest-data.ts': manifestData,
     'src/types.ts': types,
     'src/templates.ts': templates,
