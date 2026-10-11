@@ -224,7 +224,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = parseEnvVariables(argv);
-    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    const providers = parseProviders(argv);
     await journaled(`add ${capabilityId}`, () => runAdd(capabilityId, cliOptions, envVariables, providers));
     return;
   }
@@ -239,7 +239,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = parseEnvVariables(argv);
-    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    const providers = parseProviders(argv);
     await runPlanAdd(capabilityId, cliOptions, envVariables, providers);
     return;
   }
