@@ -34,11 +34,41 @@ export interface OwnershipDeclaration {
   metadata?: string[];
 }
 
+export interface ProviderDeclaration {
+  id: string;
+  description: string;
+}
+
+export interface ConfigOption {
+  name: string;
+  description: string;
+  required: boolean;
+}
+
+export interface VerifyStep {
+  command: string;
+  description: string;
+}
+
+export type CapabilityOperation = 'add' | 'remove';
+
 /** A capability's planning-time declaration, loaded from kiln.manifest.json. */
 export interface CapabilityManifest {
   id: string;
   name?: string;
   version: string;
+  /** One agent-readable line: what adding this capability does for the project. */
+  description: string;
+  /** Frameworks it supports, e.g. `nextjs`. */
+  frameworks: string[];
+  /** Selectable variants; empty when the capability has none. */
+  providers: ProviderDeclaration[];
+  /** Inputs `kiln add` accepts; empty when it takes none. */
+  config: ConfigOption[];
+  /** Lifecycle operations kiln can run for it. */
+  operations: CapabilityOperation[];
+  /** Commands that confirm it works after `add`. */
+  verify: VerifyStep[];
   /** Capabilities that must be installed first ("requires"). */
   dependencies: string[];
   /** Optional partners this capability adapts to when present; never blocks an add. */

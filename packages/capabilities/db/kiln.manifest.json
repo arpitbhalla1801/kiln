@@ -2,6 +2,14 @@
   "id": "db",
   "name": "Database (Prisma)",
   "version": "1.0.0",
+  "description": "Adds Prisma with a client singleton, schema, DATABASE_URL, and db:generate, db:migrate and db:studio scripts.",
+  "frameworks": ["nextjs"],
+  "providers": [],
+  "config": [],
+  "operations": ["add", "remove"],
+  "verify": [
+    { "command": "npx prisma validate", "description": "Validate the Prisma schema." }
+  ],
   "dependencies": ["env"],
   "enhances": ["auth"],
   "adapters": ["node-adapter"],

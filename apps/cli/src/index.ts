@@ -8,6 +8,7 @@ import { runInit, runInitExisting } from './commands/init.js';
 import { runDbMigrate } from './commands/db-migrate.js';
 import { runDoctor } from './commands/doctor.js';
 import { runEnvRemove } from './commands/env-remove.js';
+import { runCapabilitiesList, runCapabilitiesShow } from './commands/capabilities.js';
 import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
 import { runPluginsList, runPluginsVerify } from './commands/plugins.js';
@@ -24,7 +25,7 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'plan' | 'undo';
+type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'capabilities' | 'plan' | 'undo';
 
 const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
@@ -36,6 +37,7 @@ const commands: Record<CommandName, string> = {
   doctor: 'Run environment checks for kiln.',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
+  capabilities: 'List capabilities or show one capability\'s manifest (--json for agents).',
   plan: 'Preview what adding a capability would do, without writing anything.',
   undo: 'Revert the files changed by the last add, remove, or env remove.',
 };
@@ -116,6 +118,14 @@ function printHelp(topic?: string): void {
       console.log(
         'Scaffolds a kiln-capability-<name> package wired against @kiln-cli/capability-sdk.'
       );
+    }
+
+    if (command === 'capabilities') {
+      console.log('Usage: kiln capabilities <list|show> [<id>] [--json]');
+      console.log('  kiln capabilities list       Every capability kiln can add: origin, trust, purpose.');
+      console.log('  kiln capabilities show <id>  Full manifest: providers, config, operations, verify.');
+      console.log('Plugins show as UNVERIFIED unless a kiln maintainer reviewed that exact release.');
+      console.log('  --json      Print machine-readable JSON for scripts and agents');
     }
 
     if (command === 'plugins') {
@@ -281,6 +291,25 @@ async function main(argv: string[]): Promise<void> {
     }
     await runInitPlugin(cliOptions.cwd, secondArg, cliOptions.dryRun);
     return;
+  }
+
+  if (firstArg === 'capabilities') {
+    if (secondArg === 'show') {
+      if (!thirdArg) {
+        throw new Error('Missing capability. Usage: kiln capabilities show <id> [--json]');
+      }
+      await runCapabilitiesShow(thirdArg, cliOptions);
+      return;
+    }
+
+    if (secondArg === 'list' || secondArg === undefined) {
+      await runCapabilitiesList(cliOptions);
+      return;
+    }
+
+    throw new Error(
+      `Unknown 'capabilities' subcommand '${secondArg}'. Usage: kiln capabilities <list|show>`
+    );
   }
 
   if (firstArg === 'plugins') {
