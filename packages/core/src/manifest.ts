@@ -1,10 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import {
+  CAPABILITY_OPERATIONS,
   CapabilityManifest,
+  CapabilityOperation,
+  ConfigOption,
   OwnershipDeclaration,
+  ProviderDeclaration,
   TRANSFORM_TYPES,
   Transform,
   TransformType,
+  VerifyStep,
 } from './models.js';
 
 export class ManifestValidationError extends Error {
@@ -22,6 +27,12 @@ export function validateManifest(manifest: CapabilityManifest): void {
 
   readRequiredString(record, 'id');
   readRequiredString(record, 'version');
+  readRequiredString(record, 'description');
+  readFrameworks(record);
+  readProviders(record);
+  readConfig(record);
+  readOperations(record);
+  readVerify(record);
   readStringArray(record, 'dependencies', true);
   readOptionalStringArray(record, 'enhances');
   readOptionalStringArray(record, 'adapters');
@@ -43,6 +54,12 @@ export function loadManifestFromObject(raw: unknown): CapabilityManifest {
   const manifest: CapabilityManifest = {
     id: readRequiredString(raw, 'id'),
     version: readRequiredString(raw, 'version'),
+    description: readRequiredString(raw, 'description'),
+    frameworks: readFrameworks(raw),
+    providers: readProviders(raw),
+    config: readConfig(raw),
+    operations: readOperations(raw),
+    verify: readVerify(raw),
     dependencies: readStringArray(raw, 'dependencies', true),
     name: readOptionalString(raw, 'name'),
     enhances: readOptionalStringArray(raw, 'enhances'),
@@ -194,6 +211,73 @@ function readOptionalStringArray(
   }
 
   return readStringArray(record, field, false);
+}
+
+function readFrameworks(record: Record<string, unknown>): string[] {
+  const frameworks = readStringArray(record, 'frameworks', true);
+  if (frameworks.length === 0) {
+    throw new ManifestValidationError('frameworks', 'must list at least one framework');
+  }
+  return frameworks;
+}
+
+function readOperations(record: Record<string, unknown>): CapabilityOperation[] {
+  const operations = readStringArray(record, 'operations', true);
+  if (operations.length === 0) {
+    throw new ManifestValidationError('operations', 'must list at least one operation');
+  }
+  for (const operation of operations) {
+    if (!CAPABILITY_OPERATIONS.includes(operation as CapabilityOperation)) {
+      throw new ManifestValidationError(
+        'operations',
+        `must be one of: ${CAPABILITY_OPERATIONS.join(', ')}`
+      );
+    }
+  }
+  return operations as CapabilityOperation[];
+}
+
+function readProviders(record: Record<string, unknown>): ProviderDeclaration[] {
+  return readObjectArray(record, 'providers').map((entry) => ({
+    id: readRequiredString(entry, 'id'),
+    description: readRequiredString(entry, 'description'),
+  }));
+}
+
+function readConfig(record: Record<string, unknown>): ConfigOption[] {
+  return readObjectArray(record, 'config').map((entry) => {
+    if (typeof entry.required !== 'boolean') {
+      throw new ManifestValidationError('config.required', 'must be a boolean');
+    }
+    return {
+      name: readRequiredString(entry, 'name'),
+      description: readRequiredString(entry, 'description'),
+      required: entry.required,
+    };
+  });
+}
+
+function readVerify(record: Record<string, unknown>): VerifyStep[] {
+  return readObjectArray(record, 'verify').map((entry) => ({
+    command: readRequiredString(entry, 'command'),
+    description: readRequiredString(entry, 'description'),
+  }));
+}
+
+function readObjectArray(
+  record: Record<string, unknown>,
+  field: string
+): Record<string, unknown>[] {
+  const value = record[field];
+  if (!Array.isArray(value)) {
+    throw new ManifestValidationError(field, 'must be an array');
+  }
+  return value.map((entry) => {
+    if (!isRecord(entry)) {
+      throw new ManifestValidationError(field, 'each entry must be an object');
+    }
+    return entry;
+  });
 }
 
 function readTransformDefinitions(record: Record<string, unknown>): Transform[] | undefined {
