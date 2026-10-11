@@ -149,7 +149,7 @@ version and manifest. An unreviewed plugin is skipped **before its code is
 imported**. To load it anyway, review its code and pass `--allow-unverified`
 (`kiln add <id> --allow-unverified`). `kiln capabilities show <id>` prints the
 manifest hash and marks unverified plugins. A loaded plugin still runs with
-full project access; isolation is tracked in #238. `kiln plugins verify`
+full project access; isolation is tracked in #238. How a release gets reviewed: [plugin-verification.md](plugin-verification.md). `kiln plugins verify`
 checks the pins without running plugin code.
 
 | Source | In the project |
