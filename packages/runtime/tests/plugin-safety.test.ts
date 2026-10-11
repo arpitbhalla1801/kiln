@@ -68,7 +68,7 @@ describe('plugin safe-failure isolation', () => {
       `
     );
 
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
     const results = await runtime.loadPlugins(root);
 
     expect(results).toHaveLength(1);
@@ -96,7 +96,7 @@ describe('plugin safe-failure isolation', () => {
       `
     );
 
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
     const results = await runtime.loadPlugins(root);
 
     expect(results).toHaveLength(1);
@@ -122,7 +122,7 @@ describe('plugin safe-failure isolation', () => {
       `
     );
 
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
     const results = await runtime.loadPlugins(root);
 
     expect(results).toHaveLength(1);
@@ -171,7 +171,7 @@ describe('plugin safe-failure isolation', () => {
       `
     );
 
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
     const loadResults = await runtime.loadPlugins(root);
     expect(loadResults.every((result) => result.skipped)).toBe(true);
 

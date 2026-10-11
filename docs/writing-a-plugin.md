@@ -144,10 +144,12 @@ kiln loads a plugin only if all of these hold:
 
 A plugin that fails any check is skipped with a message.
 
-A plugin that loads is still **unverified** unless a kiln maintainer reviewed
-that exact package version and manifest. `kiln capabilities show <id>` prints
-the manifest hash and marks unverified plugins. Nothing blocks or isolates an
-unverified plugin yet (tracked in #229). `kiln plugins verify`
+kiln refuses a plugin unless a kiln maintainer reviewed that exact package
+version and manifest. An unreviewed plugin is skipped **before its code is
+imported**. To load it anyway, review its code and pass `--allow-unverified`
+(`kiln add <id> --allow-unverified`). `kiln capabilities show <id>` prints the
+manifest hash and marks unverified plugins. A loaded plugin still runs with
+full project access; isolation is tracked in #238. `kiln plugins verify`
 checks the pins without running plugin code.
 
 | Source | In the project |

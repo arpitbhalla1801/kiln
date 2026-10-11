@@ -6,6 +6,8 @@ export interface CliOptions {
   force?: boolean;
   verbose?: boolean;
   json?: boolean;
+  /** Load third-party plugins no maintainer has reviewed. */
+  allowUnverified?: boolean;
 }
 
 export function formatTransformPlan(plan: TransformPlan, dryRun: boolean): string {

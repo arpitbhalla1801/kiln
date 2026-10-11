@@ -27,7 +27,7 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
   // Ownership-driven, so remove needs no capability instance -- but a
   // third-party capability isn't in SUPPORTED_CAPABILITY_IDS until its
   // kiln.plugins.json entry is loaded and registered.
-  const runtime = createCapabilityRuntime();
+  const runtime = createCapabilityRuntime({ allowUnverified: options.allowUnverified });
   await runtime.loadPlugins(rootPath);
 
   if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {

@@ -10,7 +10,7 @@ const PACKAGE_MANAGER_LABELS: Record<string, string> = { bun: 'Bun', npm: 'npm',
 export async function runInspect(options: CliOptions): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
   // Trusted plugins register their ids here, so one not yet added still shows as ✗.
-  await createCapabilityRuntime().loadPlugins(rootPath);
+  await createCapabilityRuntime({ allowUnverified: options.allowUnverified }).loadPlugins(rootPath);
   const inspection = await new NodeAdapter().inspect(rootPath);
   const ownership = (await OwnershipMetadataStore.exists(rootPath))
     ? await OwnershipMetadataStore.load(rootPath)

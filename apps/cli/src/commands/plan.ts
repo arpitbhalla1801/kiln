@@ -15,7 +15,7 @@ export async function runPlanAdd(
   providers: string[] = []
 ): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
-  const runtime = createCapabilityRuntime();
+  const runtime = createCapabilityRuntime({ allowUnverified: options.allowUnverified });
   await runtime.loadPlugins(rootPath);
   await assertCapabilityPrerequisites(capabilityId, rootPath);
 

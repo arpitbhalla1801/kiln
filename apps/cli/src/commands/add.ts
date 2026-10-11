@@ -39,7 +39,7 @@ export async function runAdd(
   providers: string[] = []
 ): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
-  const runtime = createCapabilityRuntime();
+  const runtime = createCapabilityRuntime({ allowUnverified: options.allowUnverified });
   // A third-party capability isn't in SUPPORTED_CAPABILITY_IDS until its
   // kiln.plugins.json entry is loaded and registered on this runtime.
   await runtime.loadPlugins(rootPath);
