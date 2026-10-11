@@ -1,5 +1,5 @@
 import { detectNextJs } from '@kiln-cli/node-adapter';
-import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
+import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS, type CapabilityRuntime } from '@kiln-cli/runtime';
 import type { EnvVariableMap } from '@kiln-cli/env-capability';
 import { formatCapabilityResult } from '../output.js';
 import type { CliOptions } from '../output.js';
@@ -27,6 +27,35 @@ export async function assertCapabilityPrerequisites(capabilityId: string, rootPa
   }
 }
 
+/**
+ * Shared by `add` and `plan add`: `--provider` values must be ones the
+ * capability's own manifest declares, so docs, agents and validation agree.
+ */
+export async function assertDeclaredProviders(
+  runtime: CapabilityRuntime,
+  capabilityId: string,
+  providers: string[]
+): Promise<void> {
+  if (providers.length === 0) {
+    return;
+  }
+
+  const description = (await runtime.describeCapabilities()).find((entry) => entry.id === capabilityId);
+  const declared = description?.manifest.providers.map((provider) => provider.id) ?? [];
+
+  if (declared.length === 0) {
+    throw new Error(`Capability '${capabilityId}' takes no --provider option.`);
+  }
+
+  for (const provider of providers) {
+    if (!declared.includes(provider)) {
+      throw new Error(
+        `Unknown ${capabilityId} provider '${provider}'. Valid providers: ${declared.join(', ')}`
+      );
+    }
+  }
+}
+
 /** Shared by `add` and `plan add`: fills in default env vars when none were passed for the `env` capability. */
 export function resolveEnvVariables(capabilityId: string, envVariables: EnvVariableMap): EnvVariableMap {
   return capabilityId === 'env' && Object.keys(envVariables).length === 0 ? DEFAULT_ENV_VARS : envVariables;
@@ -44,6 +73,7 @@ export async function runAdd(
   // kiln.plugins.json entry is loaded and registered on this runtime.
   await runtime.loadPlugins(rootPath);
   await assertCapabilityPrerequisites(capabilityId, rootPath);
+  await assertDeclaredProviders(runtime, capabilityId, providers);
 
   const variables = resolveEnvVariables(capabilityId, envVariables);
 

@@ -1,5 +1,7 @@
 export interface AuthProviderDescriptor {
   id: string;
+  /** Shown in the manifest, so `kiln capabilities show auth` and agents describe it. */
+  description: string;
   importName: string;
   importSpecifier: string;
   factoryExpression: string;
@@ -9,6 +11,7 @@ export interface AuthProviderDescriptor {
 export const AUTH_PROVIDERS: Record<string, AuthProviderDescriptor> = {
   github: {
     id: 'github',
+    description: 'GitHub OAuth; needs AUTH_GITHUB_ID and AUTH_GITHUB_SECRET.',
     importName: 'GitHub',
     importSpecifier: 'next-auth/providers/github',
     factoryExpression: 'GitHub',
@@ -16,6 +19,7 @@ export const AUTH_PROVIDERS: Record<string, AuthProviderDescriptor> = {
   },
   google: {
     id: 'google',
+    description: 'Google OAuth; needs AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET.',
     importName: 'Google',
     importSpecifier: 'next-auth/providers/google',
     factoryExpression: 'Google',
@@ -23,6 +27,7 @@ export const AUTH_PROVIDERS: Record<string, AuthProviderDescriptor> = {
   },
   credentials: {
     id: 'credentials',
+    description: 'Demo email/password login; needs no external OAuth app.',
     importName: 'Credentials',
     importSpecifier: 'next-auth/providers/credentials',
     // Demo-only check against env-configured credentials, not a user database --
