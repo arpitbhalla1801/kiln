@@ -1,14 +1,51 @@
+import { LockfileStore, OwnershipMetadataStore } from '@kiln-cli/project-model';
 import { createCapabilityRuntime, type CapabilityDescription } from '@kiln-cli/runtime';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 
-async function describeAll(cwd: string, allowUnverified?: boolean): Promise<CapabilityDescription[]> {
-  // Built-ins are listable anywhere; plugins only load inside a kiln project.
-  const rootPath = await resolveProjectRoot(cwd).catch(() => cwd);
+type CapabilityEntry = CapabilityDescription & {
+  installed: boolean;
+  /** Version recorded in the lockfile when the capability was last added. */
+  installedVersion?: string;
+};
+
+async function describeAll(cwd: string, allowUnverified?: boolean): Promise<CapabilityEntry[]> {
+  // Built-ins are listable anywhere; plugins and installed state need a kiln project.
+  const projectRoot = await resolveProjectRoot(cwd).catch(() => undefined);
+  const rootPath = projectRoot ?? cwd;
   const runtime = createCapabilityRuntime({ allowUnverified });
   await runtime.loadPlugins(rootPath);
   const all = await runtime.describeCapabilities();
-  return all.sort((a, b) => a.id.localeCompare(b.id));
+  const installed = projectRoot ? await readInstalled(projectRoot) : new Map<string, string | undefined>();
+
+  return all
+    .map((entry) => ({
+      ...entry,
+      installed: installed.has(entry.id),
+      installedVersion: installed.get(entry.id),
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Same sources `kiln inspect` uses: the lockfile, plus whoever owns files, dependencies or env vars. */
+async function readInstalled(rootPath: string): Promise<Map<string, string | undefined>> {
+  const installed = new Map<string, string | undefined>();
+
+  const lockCapabilities = (await LockfileStore.load(rootPath))?.snapshot?.capabilities ?? [];
+  for (const entry of lockCapabilities) {
+    installed.set(entry.id, entry.version);
+  }
+
+  if (await OwnershipMetadataStore.exists(rootPath)) {
+    const ownership = await OwnershipMetadataStore.load(rootPath);
+    for (const entry of [...ownership.files, ...ownership.dependencies, ...ownership.envVars]) {
+      if (!installed.has(entry.ownerCapabilityId)) {
+        installed.set(entry.ownerCapabilityId, undefined);
+      }
+    }
+  }
+
+  return installed;
 }
 
 function trustLabel(entry: CapabilityDescription): string {
@@ -18,31 +55,36 @@ function trustLabel(entry: CapabilityDescription): string {
   return entry.verified ? 'plugin, verified' : 'plugin, UNVERIFIED';
 }
 
-/** `kiln capabilities list` -- every capability kiln can add, with origin and trust status. */
+/** `kiln capabilities list` -- every capability kiln can add, with origin, trust and install state. */
 export async function runCapabilitiesList(options: Pick<CliOptions, 'cwd' | 'json' | 'allowUnverified'>): Promise<void> {
   const entries = await describeAll(options.cwd, options.allowUnverified);
 
   if (options.json) {
-    const summaries = entries.map(({ id, source, package: pkg, verified, manifest }) => ({
-      id,
-      name: manifest.name,
-      version: manifest.version,
-      description: manifest.description,
-      frameworks: manifest.frameworks,
-      source,
-      package: pkg,
-      verified,
+    const summaries = entries.map((entry) => ({
+      id: entry.id,
+      name: entry.manifest.name,
+      version: entry.manifest.version,
+      description: entry.manifest.description,
+      frameworks: entry.manifest.frameworks,
+      source: entry.source,
+      package: entry.package,
+      verified: entry.verified,
+      installed: entry.installed,
+      installedVersion: entry.installedVersion,
     }));
     console.log(JSON.stringify(summaries, null, 2));
     return;
   }
 
   for (const entry of entries) {
-    console.log(`${entry.id.padEnd(12)} ${trustLabel(entry).padEnd(20)} ${entry.manifest.description}`);
+    const mark = entry.installed ? '✓' : '✗';
+    console.log(
+      `${mark} ${entry.id.padEnd(12)} ${trustLabel(entry).padEnd(20)} ${entry.manifest.description}`
+    );
   }
 }
 
-/** `kiln capabilities show <id>` -- the full manifest plus trust metadata. */
+/** `kiln capabilities show <id>` -- the full manifest plus trust and install state. */
 export async function runCapabilitiesShow(
   capabilityId: string,
   options: Pick<CliOptions, 'cwd' | 'json' | 'allowUnverified'>
@@ -57,14 +99,23 @@ export async function runCapabilitiesShow(
   }
 
   if (options.json) {
-    const { id, source, package: pkg, verified, manifestSha256, manifest } = entry;
-    console.log(JSON.stringify({ id, source, package: pkg, verified, manifestSha256, manifest }, null, 2));
+    const { id, source, package: pkg, verified, installed, installedVersion, manifestSha256, manifest } = entry;
+    console.log(
+      JSON.stringify(
+        { id, source, package: pkg, verified, installed, installedVersion, manifestSha256, manifest },
+        null,
+        2
+      )
+    );
     return;
   }
 
   const { manifest } = entry;
   console.log(`${entry.id} ${manifest.version} (${trustLabel(entry)})`);
   console.log(manifest.description);
+  console.log(
+    `Installed: ${entry.installed ? `yes${entry.installedVersion ? ` (${entry.installedVersion})` : ''}` : 'no'}`
+  );
   if (entry.package) {
     console.log(`Package: ${entry.package}`);
   }
