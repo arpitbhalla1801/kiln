@@ -1,7 +1,7 @@
 import { createCapabilityRuntime } from '@kiln-cli/runtime';
 import type { CapabilityPlanResult } from '@kiln-cli/runtime';
 import type { EnvVariableMap } from '@kiln-cli/env-capability';
-import { assertCapabilityPrerequisites, resolveEnvVariables } from './add.js';
+import { assertCapabilityPrerequisites, assertDeclaredProviders, resolveEnvVariables } from './add.js';
 import { formatResolvedDependencies, formatTransformPlan } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
@@ -15,9 +15,10 @@ export async function runPlanAdd(
   providers: string[] = []
 ): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
-  const runtime = createCapabilityRuntime();
+  const runtime = createCapabilityRuntime({ allowUnverified: options.allowUnverified });
   await runtime.loadPlugins(rootPath);
   await assertCapabilityPrerequisites(capabilityId, rootPath);
+  await assertDeclaredProviders(runtime, capabilityId, providers);
 
   const variables = resolveEnvVariables(capabilityId, envVariables);
 

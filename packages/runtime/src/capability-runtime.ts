@@ -35,7 +35,7 @@ import { TransformEngine } from '@kiln-cli/transform-engine';
 import { CAPABILITY_REGISTRY, enhancersOf, registerCapability } from './capability-registry.js';
 import { extractInstallDependencies } from './install.js';
 import { loadPlugins as loadPluginModules, type PluginLoadResult } from './plugin-loader.js';
-import { isVerifiedPlugin, manifestSha256 } from './plugin-verification.js';
+import { isVerifiedPlugin, manifestSha256, type VerifiedPlugin } from './plugin-verification.js';
 import pkg from '../package.json' with { type: 'json' };
 import type {
   CapabilityPlanResult,
@@ -65,6 +65,10 @@ export interface CapabilityRuntimeOptions {
   envCapability?: EnvCapability;
   authCapability?: AuthCapability;
   dbCapability?: DbCapability;
+  /** Load third-party plugins no maintainer reviewed. Off by default. */
+  allowUnverified?: boolean;
+  /** Reviewed plugin releases to trust; defaults to the list shipped with kiln. */
+  verifiedPlugins?: VerifiedPlugin[];
   /** Additional capability instances to register alongside the built-ins, keyed by id. */
   capabilities?: Record<string, PluginCapability>;
 }
@@ -77,9 +81,13 @@ export class CapabilityRuntime {
   private readonly capabilities: Map<string, PluginCapability>;
   private readonly pluginProvenance: Map<string, string> = new Map();
   private readonly pluginVerified: Map<string, boolean> = new Map();
+  private readonly allowUnverified: boolean;
+  private readonly verifiedPlugins: VerifiedPlugin[] | undefined;
   private readonly lifecycleHooks: LifecycleHooks<KilnRuntimeContext>;
 
   constructor(options: CapabilityRuntimeOptions = {}) {
+    this.allowUnverified = options.allowUnverified ?? false;
+    this.verifiedPlugins = options.verifiedPlugins;
     this.adapter = options.adapter ?? new NodeAdapter();
     this.envCapability = options.envCapability ?? new EnvCapability();
     this.authCapability = options.authCapability ?? new AuthCapability();
@@ -111,7 +119,10 @@ export class CapabilityRuntime {
       return [];
     }
 
-    const results = await loadPluginModules(rootPath, config.plugins);
+    const results = await loadPluginModules(rootPath, config.plugins, {
+      allowUnverified: this.allowUnverified,
+      verified: this.verifiedPlugins,
+    });
 
     for (const result of results) {
       if (result.capability) {
@@ -121,7 +132,12 @@ export class CapabilityRuntime {
         this.pluginProvenance.set(result.capability.id, result.entry.package);
         this.pluginVerified.set(
           result.capability.id,
-          isVerifiedPlugin(result.entry.package, result.entry.version, manifest)
+          isVerifiedPlugin(
+            result.entry.package,
+            result.entry.version,
+            manifest,
+            this.verifiedPlugins
+          )
         );
       } else {
         console.error(`kiln: skipping plugin '${result.entry.package}': ${result.reason}`);

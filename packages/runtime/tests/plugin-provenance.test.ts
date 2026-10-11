@@ -69,7 +69,7 @@ afterAll(async () => {
 describe('lockfile provenance for plugin-loaded capabilities', () => {
   test('a capability loaded via loadPlugins() records npm:<package>@<version>', async () => {
     const root = await createTempProject();
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
 
     const loadResults = await runtime.loadPlugins(root);
     expect(loadResults[0].skipped).toBe(false);
@@ -84,7 +84,7 @@ describe('lockfile provenance for plugin-loaded capabilities', () => {
 
   test('a built-in capability keeps the synthetic resolved form', async () => {
     const root = await createTempProject();
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
 
     await runtime.addCapability('env', {
       cwd: root,

@@ -4,8 +4,16 @@ import { pathToFileURL } from 'node:url';
 import { validateManifest } from '@kiln-cli/core';
 import { SDK_VERSION, type Capability } from '@kiln-cli/capability-sdk';
 import type { PluginConfigEntry } from '@kiln-cli/project-model';
+import { isVerifiedPlugin, VERIFIED_PLUGINS, type VerifiedPlugin } from './plugin-verification.js';
 
 const KILN_SDK_MAJOR = extractMajorVersion(SDK_VERSION);
+
+export interface PluginLoadOptions {
+  /** Load plugins no maintainer reviewed. Off by default. */
+  allowUnverified?: boolean;
+  /** Reviewed releases to trust; defaults to the list shipped with kiln. */
+  verified?: VerifiedPlugin[];
+}
 
 /** Outcome of attempting to load one plugin entry from kiln.plugins.json. */
 export interface PluginLoadResult {
@@ -26,8 +34,10 @@ export interface PluginLoadResult {
  */
 export async function loadPlugin(
   projectRoot: string,
-  entry: PluginConfigEntry
+  entry: PluginConfigEntry,
+  options: PluginLoadOptions = {}
 ): Promise<PluginLoadResult> {
+  const reviewed = options.verified ?? VERIFIED_PLUGINS;
   const isDirectDependency = await isDirectDependencyOf(projectRoot, entry.package);
   if (!isDirectDependency) {
     return skip(
@@ -75,6 +85,17 @@ export async function loadPlugin(
     );
   }
 
+  // Importing runs the plugin's top-level code, so the gate sits before the import.
+  const isReviewedRelease = reviewed.some(
+    (item) => item.package === entry.package && item.version === entry.version
+  );
+  if (!options.allowUnverified && !isReviewedRelease) {
+    return skip(
+      entry,
+      `'${entry.package}@${entry.version}' is not a maintainer-verified plugin release, so kiln did not load it. Review its code, then pass --allow-unverified to load it anyway.`
+    );
+  }
+
   let capability: Capability | undefined;
   try {
     const moduleUrl = pathToFileURL(entryFile).href;
@@ -104,6 +125,12 @@ export async function loadPlugin(
         `'${entry.package}' returned a malformed manifest from getManifest(): ${(error as Error).message}`
       );
     }
+    if (!options.allowUnverified && !isVerifiedPlugin(entry.package, entry.version, manifest, reviewed)) {
+      return skip(
+        entry,
+        `'${entry.package}@${entry.version}' manifest does not match the maintainer-reviewed release, so kiln did not register it. Pass --allow-unverified to load it anyway.`
+      );
+    }
   } catch (error) {
     return skip(
       entry,
@@ -117,9 +144,10 @@ export async function loadPlugin(
 /** Load every entry in a trust config, skipping (never throwing on) broken ones. */
 export async function loadPlugins(
   projectRoot: string,
-  entries: PluginConfigEntry[]
+  entries: PluginConfigEntry[],
+  options: PluginLoadOptions = {}
 ): Promise<PluginLoadResult[]> {
-  return Promise.all(entries.map((entry) => loadPlugin(projectRoot, entry)));
+  return Promise.all(entries.map((entry) => loadPlugin(projectRoot, entry, options)));
 }
 
 /** Outcome of checking one trust-config entry's version pin, without loading it. */
