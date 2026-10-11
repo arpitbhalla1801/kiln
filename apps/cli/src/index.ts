@@ -151,6 +151,7 @@ function printHelp(topic?: string): void {
   console.log();
   console.log('Global Options:');
   console.log('  --dry-run   Preview operations without touching the filesystem');
+  console.log('  --allow-unverified  Load third-party plugins no kiln maintainer has reviewed');
   console.log('  --help, -h  Show help');
   console.log('  --version, -v Show version');
 }
@@ -174,6 +175,7 @@ async function main(argv: string[]): Promise<void> {
     force: flags.includes('--force'),
     verbose: flags.includes('--verbose'),
     json: flags.includes('--json'),
+    allowUnverified: flags.includes('--allow-unverified'),
     cwd: process.cwd(),
   };
 

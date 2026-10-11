@@ -2,10 +2,10 @@ import { createCapabilityRuntime, type CapabilityDescription } from '@kiln-cli/r
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 
-async function describeAll(cwd: string): Promise<CapabilityDescription[]> {
+async function describeAll(cwd: string, allowUnverified?: boolean): Promise<CapabilityDescription[]> {
   // Built-ins are listable anywhere; plugins only load inside a kiln project.
   const rootPath = await resolveProjectRoot(cwd).catch(() => cwd);
-  const runtime = createCapabilityRuntime();
+  const runtime = createCapabilityRuntime({ allowUnverified });
   await runtime.loadPlugins(rootPath);
   const all = await runtime.describeCapabilities();
   return all.sort((a, b) => a.id.localeCompare(b.id));
@@ -19,8 +19,8 @@ function trustLabel(entry: CapabilityDescription): string {
 }
 
 /** `kiln capabilities list` -- every capability kiln can add, with origin and trust status. */
-export async function runCapabilitiesList(options: Pick<CliOptions, 'cwd' | 'json'>): Promise<void> {
-  const entries = await describeAll(options.cwd);
+export async function runCapabilitiesList(options: Pick<CliOptions, 'cwd' | 'json' | 'allowUnverified'>): Promise<void> {
+  const entries = await describeAll(options.cwd, options.allowUnverified);
 
   if (options.json) {
     const summaries = entries.map(({ id, source, package: pkg, verified, manifest }) => ({
@@ -45,9 +45,9 @@ export async function runCapabilitiesList(options: Pick<CliOptions, 'cwd' | 'jso
 /** `kiln capabilities show <id>` -- the full manifest plus trust metadata. */
 export async function runCapabilitiesShow(
   capabilityId: string,
-  options: Pick<CliOptions, 'cwd' | 'json'>
+  options: Pick<CliOptions, 'cwd' | 'json' | 'allowUnverified'>
 ): Promise<void> {
-  const entries = await describeAll(options.cwd);
+  const entries = await describeAll(options.cwd, options.allowUnverified);
   const entry = entries.find((candidate) => candidate.id === capabilityId);
 
   if (!entry) {

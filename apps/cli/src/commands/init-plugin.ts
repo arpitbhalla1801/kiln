@@ -377,7 +377,7 @@ bun test
 { "plugins": [{ "package": "${packageName}", "version": "0.1.0" }] }
 \`\`\`
 
-3. Run \`kiln plugins verify\`, then \`kiln add ${capabilityId} --var ${apiKeyVar}=...\`
+3. Run \`kiln plugins verify\`, then \`kiln add ${capabilityId} --allow-unverified --var ${apiKeyVar}=...\`. kiln skips plugins no maintainer has reviewed unless you pass \`--allow-unverified\`.
 
 To upgrade: release a new version, install it in the project, bump the pin. Kiln skips a plugin whose installed version doesn't match its pin.
 

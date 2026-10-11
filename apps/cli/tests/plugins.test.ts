@@ -74,7 +74,7 @@ describe('kiln plugins list', () => {
     const { logs, restore } = captureConsoleLog();
 
     try {
-      await runPluginsList({ cwd: root });
+      await runPluginsList({ cwd: root, allowUnverified: true });
     } finally {
       restore();
     }
@@ -88,7 +88,7 @@ describe('kiln plugins list', () => {
 
     const { logs, restore } = captureConsoleLog();
     try {
-      await runPluginsList({ cwd: root });
+      await runPluginsList({ cwd: root, allowUnverified: true });
     } finally {
       restore();
     }
@@ -102,7 +102,7 @@ describe('kiln plugins list', () => {
 
     const { logs, restore } = captureConsoleLog();
     try {
-      await runPluginsList({ cwd: root });
+      await runPluginsList({ cwd: root, allowUnverified: true });
     } finally {
       restore();
     }

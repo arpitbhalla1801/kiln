@@ -21,7 +21,7 @@ async function inspectOutput(root: string, verbose = false): Promise<string> {
     lines.push(args.join(' '));
   });
   try {
-    await runInspect({ cwd: root, dryRun: false, verbose });
+    await runInspect({ cwd: root, dryRun: false, verbose, allowUnverified: true });
   } finally {
     spy.mockRestore();
   }
