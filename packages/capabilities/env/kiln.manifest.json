@@ -9,9 +9,7 @@
     { "name": "--var", "description": "KEY=value written to .env.local; the key is added to .env.example as a placeholder.", "required": false }
   ],
   "operations": ["add", "remove"],
-  "verify": [
-    { "command": "kiln doctor", "description": "Check that env files exist and required variables are set." }
-  ],
+  "verify": [],
   "dependencies": [],
   "adapters": ["node-adapter"],
   "transformDefinitions": [

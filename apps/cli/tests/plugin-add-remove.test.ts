@@ -89,7 +89,7 @@ describe('third-party capability via kiln.plugins.json', () => {
     const spy = console.log;
     console.log = (...args: unknown[]) => lines.push(args.join(' '));
     try {
-      await runPlanAdd(CAPABILITY_ID, { cwd: root, dryRun: false });
+      await runPlanAdd(CAPABILITY_ID, { cwd: root, dryRun: false, allowUnverified: true });
     } finally {
       console.log = spy;
     }
@@ -101,7 +101,7 @@ describe('third-party capability via kiln.plugins.json', () => {
   test('kiln add installs the plugin and kiln remove takes it back out', async () => {
     const root = await createProjectWithPlugin();
 
-    await runAdd(CAPABILITY_ID, { cwd: root, dryRun: false });
+    await runAdd(CAPABILITY_ID, { cwd: root, dryRun: false, allowUnverified: true });
     expect(await readFile(join(root, 'widget.txt'), 'utf8')).toContain(
       'hello from a third-party capability'
     );
@@ -114,7 +114,7 @@ describe('third-party capability via kiln.plugins.json', () => {
       )
     ).toBe(true);
 
-    await runRemove(CAPABILITY_ID, { cwd: root, dryRun: false });
+    await runRemove(CAPABILITY_ID, { cwd: root, dryRun: false, allowUnverified: true });
     expect(await exists(join(root, 'widget.txt'))).toBe(false);
   });
 
@@ -123,7 +123,7 @@ describe('third-party capability via kiln.plugins.json', () => {
     const root = await createProjectWithPlugin();
     const cli = join(import.meta.dir, '../dist/index.js');
 
-    const result = spawnSync('node', [cli, 'plan', 'add', CAPABILITY_ID], { cwd: root, encoding: 'utf8' });
+    const result = spawnSync('node', [cli, 'plan', 'add', CAPABILITY_ID, '--allow-unverified'], { cwd: root, encoding: 'utf8' });
 
     expect(result.stderr).not.toContain('skipping plugin');
     expect(result.stdout).toContain(`Capability: ${CAPABILITY_ID}`);

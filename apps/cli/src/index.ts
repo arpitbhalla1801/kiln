@@ -34,7 +34,7 @@ const commands: Record<CommandName, string> = {
   env: 'Remove individual environment variables (use `kiln add env --var` to set one).',
   db: 'Run database operations with the project env loaded.',
   inspect: 'Inspect the current kiln project.',
-  doctor: 'Run environment checks for kiln.',
+  doctor: 'Run environment checks for kiln (--verify also runs capability verify commands).',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
   capabilities: 'List capabilities or show one capability\'s manifest (--json for agents).',
@@ -151,6 +151,7 @@ function printHelp(topic?: string): void {
   console.log();
   console.log('Global Options:');
   console.log('  --dry-run   Preview operations without touching the filesystem');
+  console.log('  --allow-unverified  Load third-party plugins no kiln maintainer has reviewed');
   console.log('  --help, -h  Show help');
   console.log('  --version, -v Show version');
 }
@@ -174,6 +175,8 @@ async function main(argv: string[]): Promise<void> {
     force: flags.includes('--force'),
     verbose: flags.includes('--verbose'),
     json: flags.includes('--json'),
+    allowUnverified: flags.includes('--allow-unverified'),
+    verify: flags.includes('--verify'),
     cwd: process.cwd(),
   };
 
@@ -222,7 +225,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = parseEnvVariables(argv);
-    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    const providers = parseProviders(argv);
     await journaled(`add ${capabilityId}`, () => runAdd(capabilityId, cliOptions, envVariables, providers));
     return;
   }
@@ -237,7 +240,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = parseEnvVariables(argv);
-    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    const providers = parseProviders(argv);
     await runPlanAdd(capabilityId, cliOptions, envVariables, providers);
     return;
   }

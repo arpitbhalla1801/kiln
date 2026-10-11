@@ -22,9 +22,7 @@ export const ENV_MANIFEST = {
     },
   ],
   operations: ['add', 'remove'],
-  verify: [
-    { command: 'kiln doctor', description: 'Check that env files exist and required variables are set.' },
-  ],
+  verify: [],
   dependencies: [],
   adapters: ['node-adapter'],
   transformDefinitions: [
