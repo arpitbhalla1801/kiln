@@ -288,6 +288,29 @@ export class CapabilityRuntime {
     return new Set(lockfile?.snapshot.capabilities.map((entry) => entry.id) ?? []);
   }
 
+  /**
+   * Call after removing `removedId` from disk: re-plans every installed capability that
+   * `enhances` it, the same way `addCapability` re-plans them after an add, so a removal
+   * leaves cross-capability wiring (e.g. auth's Prisma adapter) consistent with what's
+   * actually still on disk instead of pointing at deleted files.
+   */
+  async reconcileEnhancers(
+    removedId: string,
+    rootPath: string,
+    options: RuntimeOptions & Record<string, unknown> = {}
+  ): Promise<void> {
+    const installed = await this.installedIds(rootPath);
+    for (const enhancerId of enhancersOf(removedId)) {
+      if (this.capabilities.has(enhancerId) && installed.has(enhancerId)) {
+        await this.addCapability(enhancerId, {
+          ...options,
+          cwd: rootPath,
+          skipSiblingRefresh: true,
+        });
+      }
+    }
+  }
+
   /** Installed capabilities that require `id`, i.e. the ones that must be removed before it. */
   async findInstalledDependents(id: string, rootPath: string): Promise<string[]> {
     const installed = await this.installedIds(rootPath);
