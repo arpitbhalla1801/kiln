@@ -1,6 +1,6 @@
 {
   "name": "@kiln-cli/capability-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Public contract for writing third-party kiln capability plugins",
   "license": "MIT",
   "type": "module",
