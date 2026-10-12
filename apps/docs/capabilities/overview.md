@@ -13,3 +13,4 @@ writes, dependencies it installs, and env vars it declares. Built-in capabilitie
 - [Auth](/capabilities/auth)
 - [Env](/capabilities/env)
 - [Plugins](/capabilities/plugins)
+- [Directory](/capabilities/directory)

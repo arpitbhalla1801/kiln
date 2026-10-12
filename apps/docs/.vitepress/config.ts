@@ -92,6 +92,7 @@ export default defineConfig({
             { text: "Auth", link: "/capabilities/auth" },
             { text: "Env", link: "/capabilities/env" },
             { text: "Plugins", link: "/capabilities/plugins" },
+            { text: "Directory", link: "/capabilities/directory" },
           ],
         },
       ],
