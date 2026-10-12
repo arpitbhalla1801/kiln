@@ -2,6 +2,14 @@
   "id": "env",
   "name": "Environment Variables",
   "version": "1.0.0",
+  "description": "Manages .env.local and .env.example: creates them, sets variables, and keeps secrets out of version control.",
+  "frameworks": ["nextjs"],
+  "providers": [],
+  "config": [
+    { "name": "--var", "description": "KEY=value written to .env.local; the key is added to .env.example as a placeholder.", "required": false }
+  ],
+  "operations": ["add", "remove"],
+  "verify": [],
   "dependencies": [],
   "adapters": ["node-adapter"],
   "transformDefinitions": [

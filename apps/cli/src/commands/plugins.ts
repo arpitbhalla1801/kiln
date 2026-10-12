@@ -4,7 +4,7 @@ import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 
 /** `kiln plugins list` -- show every trust-config entry and whether it currently loads. */
-export async function runPluginsList(options: Pick<CliOptions, 'cwd'>): Promise<void> {
+export async function runPluginsList(options: Pick<CliOptions, 'cwd' | 'allowUnverified'>): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
   const config = await PluginConfigStore.load(rootPath);
 
@@ -13,7 +13,7 @@ export async function runPluginsList(options: Pick<CliOptions, 'cwd'>): Promise<
     return;
   }
 
-  const results = await loadPlugins(rootPath, config.plugins);
+  const results = await loadPlugins(rootPath, config.plugins, { allowUnverified: options.allowUnverified });
 
   for (const result of results) {
     const label = `${result.entry.package}@${result.entry.version}`;
@@ -26,7 +26,7 @@ export async function runPluginsList(options: Pick<CliOptions, 'cwd'>): Promise<
 }
 
 /** `kiln plugins verify` -- report version-pin mismatches without loading anything. */
-export async function runPluginsVerify(options: Pick<CliOptions, 'cwd'>): Promise<void> {
+export async function runPluginsVerify(options: Pick<CliOptions, 'cwd' | 'allowUnverified'>): Promise<void> {
   const rootPath = await resolveProjectRoot(options.cwd);
   const config = await PluginConfigStore.load(rootPath);
 

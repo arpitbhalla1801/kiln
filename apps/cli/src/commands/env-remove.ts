@@ -3,7 +3,7 @@ import {
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
 } from '@kiln-cli/project-model';
-import { buildEnvRemovalTransforms } from '@kiln-cli/env-capability';
+import { buildEnvRemovalTransforms, ENV_CAPABILITY_ID } from '@kiln-cli/env-capability';
 import { TransformEngine } from '@kiln-cli/transform-engine';
 import { formatTransformPlan } from '../output.js';
 import type { CliOptions } from '../output.js';
@@ -15,6 +15,17 @@ export async function runEnvRemove(names: string[], options: CliOptions): Promis
   }
 
   const rootPath = await resolveProjectRoot(options.cwd);
+  const tracker = await loadOwnershipTracker(rootPath);
+
+  // Removing a var another capability manages (e.g. db owns DATABASE_URL) silently breaks that
+  // capability on its next run, so warn before doing it rather than failing after the fact.
+  for (const name of names) {
+    const owner = tracker.getOwner('envVar', name);
+    if (owner !== undefined && owner !== ENV_CAPABILITY_ID) {
+      console.warn(`Warning: '${name}' is managed by the '${owner}' capability. Removing it may break that capability.`);
+    }
+  }
+
   const transforms = buildEnvRemovalTransforms(names);
 
   const engine = new TransformEngine();
@@ -27,7 +38,6 @@ export async function runEnvRemove(names: string[], options: CliOptions): Promis
   console.log(formatTransformPlan(preview, options.dryRun));
 
   if (!options.dryRun) {
-    const tracker = await loadOwnershipTracker(rootPath);
     const snapshot = tracker.toSnapshot();
     const removed = new Set(names);
 

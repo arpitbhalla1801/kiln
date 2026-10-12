@@ -1,10 +1,18 @@
 export const name = '@kiln-cli/runtime';
 
 export {
+  capabilityLinks,
   CapabilityRuntime,
   createCapabilityRuntime,
+  type CapabilityDescription,
   type CapabilityRuntimeOptions,
 } from './capability-runtime.js';
+export {
+  isVerifiedPlugin,
+  manifestSha256,
+  VERIFIED_PLUGINS,
+  type VerifiedPlugin,
+} from './plugin-verification.js';
 export { extractInstallDependencies, type InstallDependencies } from './install.js';
 export {
   checkPluginPin,

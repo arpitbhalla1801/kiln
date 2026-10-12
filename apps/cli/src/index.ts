@@ -8,6 +8,7 @@ import { runInit, runInitExisting } from './commands/init.js';
 import { runDbMigrate } from './commands/db-migrate.js';
 import { runDoctor } from './commands/doctor.js';
 import { runEnvRemove } from './commands/env-remove.js';
+import { runCapabilitiesList, runCapabilitiesShow } from './commands/capabilities.js';
 import { runInitPlugin } from './commands/init-plugin.js';
 import { runInspect } from './commands/inspect.js';
 import { runPluginsList, runPluginsVerify } from './commands/plugins.js';
@@ -24,18 +25,19 @@ declare const process: {
 export const name = pkg.name;
 export const version = pkg.version;
 
-type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'plan' | 'undo';
+type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'doctor' | 'init-plugin' | 'plugins' | 'capabilities' | 'plan' | 'undo';
 
 const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
   add: 'Add a capability to a kiln project (env, auth, db).',
   remove: 'Remove a capability from a kiln project (env, auth, db).',
-  env: 'Manage individual environment variables.',
+  env: 'Remove individual environment variables (use `kiln add env --var` to set one).',
   db: 'Run database operations with the project env loaded.',
   inspect: 'Inspect the current kiln project.',
-  doctor: 'Run environment checks for kiln.',
+  doctor: 'Run environment checks for kiln (--verify also runs capability verify commands).',
   'init-plugin': 'Scaffold a new third-party capability plugin package.',
   plugins: 'List or verify third-party plugins from kiln.plugins.json.',
+  capabilities: 'List capabilities or show one capability\'s manifest (--json for agents).',
   plan: 'Preview what adding a capability would do, without writing anything.',
   undo: 'Revert the files changed by the last add, remove, or env remove.',
 };
@@ -118,6 +120,14 @@ function printHelp(topic?: string): void {
       );
     }
 
+    if (command === 'capabilities') {
+      console.log('Usage: kiln capabilities <list|show> [<id>] [--json]');
+      console.log('  kiln capabilities list       Every capability kiln can add: origin, trust, purpose.');
+      console.log('  kiln capabilities show <id>  Full manifest: providers, config, operations, verify.');
+      console.log('Plugins show as UNVERIFIED unless a kiln maintainer reviewed that exact release.');
+      console.log('  --json      Print machine-readable JSON for scripts and agents');
+    }
+
     if (command === 'plugins') {
       console.log('Usage: kiln plugins <list|verify>');
       console.log('  kiln plugins list    Show each kiln.plugins.json entry and whether it loads.');
@@ -141,6 +151,7 @@ function printHelp(topic?: string): void {
   console.log();
   console.log('Global Options:');
   console.log('  --dry-run   Preview operations without touching the filesystem');
+  console.log('  --allow-unverified  Load third-party plugins no kiln maintainer has reviewed');
   console.log('  --help, -h  Show help');
   console.log('  --version, -v Show version');
 }
@@ -164,6 +175,8 @@ async function main(argv: string[]): Promise<void> {
     force: flags.includes('--force'),
     verbose: flags.includes('--verbose'),
     json: flags.includes('--json'),
+    allowUnverified: flags.includes('--allow-unverified'),
+    verify: flags.includes('--verify'),
     cwd: process.cwd(),
   };
 
@@ -212,7 +225,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = parseEnvVariables(argv);
-    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    const providers = parseProviders(argv);
     await journaled(`add ${capabilityId}`, () => runAdd(capabilityId, cliOptions, envVariables, providers));
     return;
   }
@@ -227,7 +240,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     const envVariables = parseEnvVariables(argv);
-    const providers = capabilityId === 'auth' ? parseProviders(argv) : [];
+    const providers = parseProviders(argv);
     await runPlanAdd(capabilityId, cliOptions, envVariables, providers);
     return;
   }
@@ -281,6 +294,25 @@ async function main(argv: string[]): Promise<void> {
     }
     await runInitPlugin(cliOptions.cwd, secondArg, cliOptions.dryRun);
     return;
+  }
+
+  if (firstArg === 'capabilities') {
+    if (secondArg === 'show') {
+      if (!thirdArg) {
+        throw new Error('Missing capability. Usage: kiln capabilities show <id> [--json]');
+      }
+      await runCapabilitiesShow(thirdArg, cliOptions);
+      return;
+    }
+
+    if (secondArg === 'list' || secondArg === undefined) {
+      await runCapabilitiesList(cliOptions);
+      return;
+    }
+
+    throw new Error(
+      `Unknown 'capabilities' subcommand '${secondArg}'. Usage: kiln capabilities <list|show>`
+    );
   }
 
   if (firstArg === 'plugins') {

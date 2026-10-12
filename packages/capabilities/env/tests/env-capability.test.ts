@@ -115,19 +115,35 @@ describe('EnvCapability', () => {
     expect(vfs.read('.env.local')).toContain('DATABASE_URL=postgres://localhost:5432/app');
   });
 
-  test('registers ownership and rejects conflicts', async () => {
+  test('rejects conflicts when a specific capability claims an already-owned var', async () => {
     const tracker = new OwnershipTracker();
     tracker.registerEnvVar('DATABASE_URL', 'auth');
 
     const env = new EnvCapability();
     const root = await createTempProject();
 
-    expect(() =>
+    await expect(
       env.planAdd(root, {
         variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
         tracker,
+        ownerCapabilityId: 'db',
       })
-    ).toThrow(/Ownership conflict detected/);
+    ).rejects.toThrow(/Ownership conflict detected/);
+  });
+
+  test('the generic env baseline claim never conflicts on an envVar, just skips claiming it', async () => {
+    const tracker = new OwnershipTracker();
+    tracker.registerEnvVar('DATABASE_URL', 'db');
+
+    const env = new EnvCapability();
+    const root = await createTempProject();
+
+    const plan = await env.planAdd(root, {
+      variables: { DATABASE_URL: 'postgres://localhost:5432/app' },
+      tracker,
+    });
+
+    expect(plan.ownershipRegistrations.some((r) => r.resourceKey === 'DATABASE_URL')).toBe(false);
   });
 
   test('rejects a db add whose env var is already owned by auth, and names both owners', async () => {

@@ -60,6 +60,24 @@ what is already there.
 
 Full types: `node_modules/@kiln-cli/capability-sdk/dist/index.d.ts`.
 
+## The manifest
+
+`getManifest()` must return these fields. A plugin missing any of them is
+skipped with the field name in the message.
+
+| Field | Meaning |
+|---|---|
+| `description` | One line saying what adding the capability does |
+| `frameworks` | Supported frameworks, at least one, e.g. `["nextjs"]` |
+| `providers` | `[{ id, description }]` selectable variants; `[]` if none |
+| `config` | `[{ name, description, required }]` inputs `kiln add` accepts; `[]` if none |
+| `operations` | `"add"` and/or `"remove"`, at least one |
+| `verify` | `[{ command, description }]` commands that confirm it works; `[]` if none |
+
+`kiln capabilities list --json` and `kiln capabilities show <id> --json` expose
+these so scripts and AI agents can discover capabilities before running
+`kiln add`. `verify` is declared, not run by kiln yet.
+
 ## Transforms
 
 A plugin composes these six kinds. It can't register new kinds.
@@ -122,8 +140,16 @@ kiln loads a plugin only if all of these hold:
 1. it is a **direct** dependency in the project's own `package.json`
 2. `kiln.plugins.json` pins its **exact** installed version: `{ "plugins": [{ "package": "kiln-capability-chat", "version": "0.1.0" }] }`
 3. its `package.json` depends on `@kiln-cli/capability-sdk` with the same major version as kiln's
+4. its `getManifest()` result passes manifest validation (see [The manifest](#the-manifest))
 
-A plugin that fails any check is skipped with a message. `kiln plugins verify`
+A plugin that fails any check is skipped with a message.
+
+kiln refuses a plugin unless a kiln maintainer reviewed that exact package
+version and manifest. An unreviewed plugin is skipped **before its code is
+imported**. To load it anyway, review its code and pass `--allow-unverified`
+(`kiln add <id> --allow-unverified`). `kiln capabilities show <id>` prints the
+manifest hash and marks unverified plugins. A loaded plugin still runs with
+full project access; isolation is tracked in #238. How a release gets reviewed: [plugin-verification.md](plugin-verification.md). `kiln plugins verify`
 checks the pins without running plugin code.
 
 | Source | In the project |

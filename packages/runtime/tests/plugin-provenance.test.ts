@@ -41,7 +41,7 @@ async function createTempProject(): Promise<string> {
     export default {
       id: 'fake-plugin',
       async getManifest() {
-        return { id: 'fake-plugin', version: '1.4.2', dependencies: [] };
+        return { id: 'fake-plugin', version: '1.4.2', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] };
       },
       async getCapability() {
         return { id: 'fake-plugin', version: '1.4.2', dependencies: [] };
@@ -69,7 +69,7 @@ afterAll(async () => {
 describe('lockfile provenance for plugin-loaded capabilities', () => {
   test('a capability loaded via loadPlugins() records npm:<package>@<version>', async () => {
     const root = await createTempProject();
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
 
     const loadResults = await runtime.loadPlugins(root);
     expect(loadResults[0].skipped).toBe(false);
@@ -84,7 +84,7 @@ describe('lockfile provenance for plugin-loaded capabilities', () => {
 
   test('a built-in capability keeps the synthetic resolved form', async () => {
     const root = await createTempProject();
-    const runtime = new CapabilityRuntime();
+    const runtime = new CapabilityRuntime({ allowUnverified: true });
 
     await runtime.addCapability('env', {
       cwd: root,
