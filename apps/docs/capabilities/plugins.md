@@ -29,3 +29,5 @@ kiln plugins verify    # verify installed plugin version pins
 
 [docs/writing-a-plugin.md](https://github.com/arpitbhalla1801/kiln/blob/main/docs/writing-a-plugin.md)
 covers transforms, ownership and remove, options, testing, distribution and trust.
+
+See the [capability directory](/capabilities/directory) for available capabilities.
