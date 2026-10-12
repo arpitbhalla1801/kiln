@@ -21,7 +21,7 @@ async function inspectOutput(root: string, verbose = false): Promise<string> {
     lines.push(args.join(' '));
   });
   try {
-    await runInspect({ cwd: root, dryRun: false, verbose });
+    await runInspect({ cwd: root, dryRun: false, verbose, allowUnverified: true });
   } finally {
     spy.mockRestore();
   }
@@ -92,7 +92,7 @@ describe('kiln inspect', () => {
       join(packageDir, 'index.mjs'),
       `export default {
         id: 'gizmo',
-        async getManifest() { return { id: 'gizmo', version: '1.0.0', dependencies: [] }; },
+        async getManifest() { return { id: 'gizmo', version: '1.0.0', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] }; },
         async getCapability() { return { id: 'gizmo', version: '1.0.0', dependencies: [] }; },
         async planAdd() { return { transforms: [], capability: { id: 'gizmo', version: '1.0.0', dependencies: [] }, ownershipRegistrations: [] }; },
       };`

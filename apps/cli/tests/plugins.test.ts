@@ -62,7 +62,7 @@ afterAll(async () => {
 const VALID_CAPABILITY_MODULE = `
 export default {
   id: 'fake-plugin',
-  async getManifest() { return { id: 'fake-plugin', version: '1.4.2', dependencies: [] }; },
+  async getManifest() { return { id: 'fake-plugin', version: '1.4.2', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] }; },
   async getCapability() { return { id: 'fake-plugin', version: '1.4.2', dependencies: [] }; },
   async planAdd() { return { transforms: [], capability: { id: 'fake-plugin', version: '1.4.2', dependencies: [] }, ownershipRegistrations: [] }; },
 };
@@ -74,7 +74,7 @@ describe('kiln plugins list', () => {
     const { logs, restore } = captureConsoleLog();
 
     try {
-      await runPluginsList({ cwd: root });
+      await runPluginsList({ cwd: root, allowUnverified: true });
     } finally {
       restore();
     }
@@ -88,7 +88,7 @@ describe('kiln plugins list', () => {
 
     const { logs, restore } = captureConsoleLog();
     try {
-      await runPluginsList({ cwd: root });
+      await runPluginsList({ cwd: root, allowUnverified: true });
     } finally {
       restore();
     }
@@ -102,7 +102,7 @@ describe('kiln plugins list', () => {
 
     const { logs, restore } = captureConsoleLog();
     try {
-      await runPluginsList({ cwd: root });
+      await runPluginsList({ cwd: root, allowUnverified: true });
     } finally {
       restore();
     }

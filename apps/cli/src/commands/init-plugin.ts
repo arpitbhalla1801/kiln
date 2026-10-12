@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { validateProjectName } from '../validation/project-name.js';
 import { ensureTargetAvailable } from '../project.js';
 
-const SDK_VERSION_RANGE = '^0.1.0';
+const SDK_VERSION_RANGE = '^0.2.0';
+const SCHEMA_PATH = './node_modules/@kiln-cli/capability-sdk/capability.schema.json';
 const DOCS_BASE = 'https://github.com/arpitbhalla1801/kiln/blob/main/docs';
 
 export async function runInitPlugin(
@@ -103,6 +104,18 @@ function buildPluginFiles(parts: PluginNameParts): Record<string, string> {
     id: capabilityId,
     name: pascalName,
     version: '0.1.0',
+    description: `Adds ${capabilityId} to a Next.js project. Replace with what your capability does.`,
+    frameworks: ['nextjs'],
+    providers: [],
+    config: [
+      {
+        name: '--var',
+        description: `${apiKeyVar}=value written to .env.local.`,
+        required: false,
+      },
+    ],
+    operations: ['add', 'remove'],
+    verify: [{ command: 'npx tsc --noEmit', description: 'Type-check the generated module.' }],
     dependencies: [],
     ownership: {
       files: [modulePath],
@@ -365,7 +378,7 @@ bun test
 { "plugins": [{ "package": "${packageName}", "version": "0.1.0" }] }
 \`\`\`
 
-3. Run \`kiln plugins verify\`, then \`kiln add ${capabilityId} --var ${apiKeyVar}=...\`
+3. Run \`kiln plugins verify\`, then \`kiln add ${capabilityId} --allow-unverified --var ${apiKeyVar}=...\`. kiln skips plugins no maintainer has reviewed unless you pass \`--allow-unverified\`.
 
 To upgrade: release a new version, install it in the project, bump the pin. Kiln skips a plugin whose installed version doesn't match its pin.
 
@@ -379,7 +392,7 @@ To upgrade: release a new version, install it in the project, bump the pin. Kiln
   return {
     'package.json': `${JSON.stringify(packageJson, null, 2)}\n`,
     'tsconfig.json': `${JSON.stringify(tsconfig, null, 2)}\n`,
-    'kiln.manifest.json': `${JSON.stringify(manifest, null, 2)}\n`,
+    'kiln.manifest.json': `${JSON.stringify({ $schema: SCHEMA_PATH, ...manifest }, null, 2)}\n`,
     'src/manifest-data.ts': manifestData,
     'src/types.ts': types,
     'src/templates.ts': templates,

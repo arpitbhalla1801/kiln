@@ -25,6 +25,11 @@ kiln plugins list      # list installed plugin capabilities
 kiln plugins verify    # verify installed plugin version pins
 ```
 
+kiln skips a plugin, without importing its code, unless a kiln maintainer
+reviewed that exact release. Review the plugin, then pass `--allow-unverified`
+to `add`, `remove`, `plan`, `inspect`, `plugins list` or `capabilities` to load
+it. `kiln capabilities list` shows each plugin's trust status.
+
 ## Writing a plugin
 
 [docs/writing-a-plugin.md](https://github.com/arpitbhalla1801/kiln/blob/main/docs/writing-a-plugin.md)

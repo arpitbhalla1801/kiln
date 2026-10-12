@@ -50,20 +50,20 @@ describe('business journey plugin journey', () => {
     expect(verify.output).toContain('(ok)');
 
     // PD-28 plan add previews the plugin and writes nothing
-    const plan = runKiln(['plan', 'add', 'hello'], appDir);
+    const plan = runKiln(['plan', 'add', 'hello', '--allow-unverified'], appDir);
     expect(plan.exitCode).toBe(0);
     expect(plan.stdout).toContain('src/lib/hello.ts');
     expect(await exists(join(appDir, 'src/lib/hello.ts'))).toBe(false);
-    expect(runKiln(['inspect'], appDir).stdout).toContain('✗ hello');
+    expect(runKiln(['inspect', '--allow-unverified'], appDir).stdout).toContain('✗ hello');
 
     // PD-29 add writes the plugin's files and inspect shows it installed
-    expect(runKiln(['add', 'hello'], appDir).exitCode).toBe(0);
+    expect(runKiln(['add', 'hello', '--allow-unverified'], appDir).exitCode).toBe(0);
     expect(await exists(join(appDir, 'src/lib/hello.ts'))).toBe(true);
-    expect(runKiln(['inspect'], appDir).stdout).toContain('✓ hello');
+    expect(runKiln(['inspect', '--allow-unverified'], appDir).stdout).toContain('✓ hello');
 
     // PD-30 remove takes the plugin's files back out
-    expect(runKiln(['remove', 'hello'], appDir).exitCode).toBe(0);
+    expect(runKiln(['remove', 'hello', '--allow-unverified'], appDir).exitCode).toBe(0);
     expect(await exists(join(appDir, 'src/lib/hello.ts'))).toBe(false);
-    expect(runKiln(['inspect'], appDir).stdout).toContain('✗ hello');
+    expect(runKiln(['inspect', '--allow-unverified'], appDir).stdout).toContain('✗ hello');
   }, 300000);
 });

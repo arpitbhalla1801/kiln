@@ -7,7 +7,13 @@ import {
   ownershipMetadataFromSnapshot,
   OwnershipMetadataStore,
 } from '@kiln-cli/project-model';
-import { buildEnvRemovalTransforms, GITIGNORE_ENV_LOCAL_KEY } from '@kiln-cli/env-capability';
+import {
+  buildEnvRemovalTransforms,
+  DEFAULT_ENV_EXAMPLE_PATH,
+  DEFAULT_ENV_LOCAL_PATH,
+  ENV_CAPABILITY_ID,
+  GITIGNORE_ENV_LOCAL_KEY,
+} from '@kiln-cli/env-capability';
 import { createCapabilityRuntime, SUPPORTED_CAPABILITY_IDS } from '@kiln-cli/runtime';
 import { createTransformPipeline, TransformEngine } from '@kiln-cli/transform-engine';
 import type { OwnershipSnapshot } from '@kiln-cli/core';
@@ -21,12 +27,28 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
   // Ownership-driven, so remove needs no capability instance -- but a
   // third-party capability isn't in SUPPORTED_CAPABILITY_IDS until its
   // kiln.plugins.json entry is loaded and registered.
-  await createCapabilityRuntime().loadPlugins(rootPath);
+  const runtime = createCapabilityRuntime({ allowUnverified: options.allowUnverified });
+  await runtime.loadPlugins(rootPath);
 
   if (!SUPPORTED_CAPABILITY_IDS.includes(capabilityId)) {
     throw new Error(
       `Unsupported capability '${capabilityId}'. Supported capabilities: ${SUPPORTED_CAPABILITY_IDS.join(', ')}`
     );
+  }
+
+  // An installed capability that requires this one would be left broken; same --force escape as the import check below.
+  const dependents = await runtime.findInstalledDependents(capabilityId, rootPath);
+  if (dependents.length > 0) {
+    const reasons = dependents.map(
+      (dependent) => `${dependent} requires ${capabilityId}. Remove ${dependent} first.`
+    );
+    console.log(reasons.join('\n'));
+
+    if (!options.dryRun && !options.force) {
+      throw new Error(
+        `Refusing to remove '${capabilityId}': ${reasons.join(' ')} Re-run with --force to remove anyway.`
+      );
+    }
   }
   const tracker = await loadOwnershipTracker(rootPath);
   const snapshot = tracker.toSnapshot();
@@ -54,10 +76,22 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
     return;
   }
 
-  const { deletable, edited } = await partitionEditedFiles(
+  const { deletable: deletableCandidates, edited } = await partitionEditedFiles(
     rootPath,
     ownedFiles.map((entry) => entry.filePath)
   );
+
+  // .env.example/.env.local are shared across capabilities but always file-owned by 'env'
+  // (see env-capability's buildOwnershipRegistrations). Deleting them while another
+  // capability still owns env vars inside them would wipe that capability's values too.
+  const sharedEnvFiles = new Set([DEFAULT_ENV_EXAMPLE_PATH, DEFAULT_ENV_LOCAL_PATH]);
+  const otherCapabilityOwnsEnvVars = snapshot.envVars.some(
+    (entry) => entry.ownerCapabilityId !== capabilityId
+  );
+  const deletable =
+    capabilityId === ENV_CAPABILITY_ID && otherCapabilityOwnsEnvVars
+      ? deletableCandidates.filter((filePath) => !sharedEnvFiles.has(filePath))
+      : deletableCandidates;
 
   const ownedScriptNames = new Set(ownedScripts.map((entry) => entry.name));
   const keptScripts = Object.fromEntries(
@@ -185,6 +219,11 @@ export async function runRemove(capabilityId: string, options: CliOptions): Prom
       );
       await LockfileStore.save(lockfile, rootPath);
     }
+
+    // Mirror addCapability's sibling-refresh: a capability that enhanced the one just
+    // removed (e.g. auth wiring a Prisma adapter when db was present) needs to re-plan
+    // now that it's gone, or it's left importing a file that no longer exists.
+    await runtime.reconcileEnhancers(capabilityId, rootPath);
   }
 }
 

@@ -20,9 +20,14 @@ export async function resolveProjectRoot(cwd: string): Promise<string> {
   );
 }
 
+// Entries a freshly `git clone`d empty repo already has that never conflict with kiln's
+// own scaffold files, so a target directory containing only these still counts as available.
+const INNOCUOUS_ENTRIES = new Set(['.git', '.gitignore', '.github', 'README.md', 'LICENSE', 'LICENSE.md']);
+
 /**
  * Ensures a target directory is available for scaffolding a new project or plugin:
- * either it doesn't exist yet, or it exists and is empty. Throws otherwise.
+ * either it doesn't exist yet, or it exists and contains nothing but innocuous entries
+ * (see INNOCUOUS_ENTRIES). Throws otherwise.
  *
  * @param targetDir the directory being scaffolded into
  * @param thing a noun describing what's being created, used in error messages (e.g. "project", "plugin")
@@ -43,7 +48,9 @@ export async function ensureTargetAvailable(targetDir: string, thing: string): P
     );
   }
 
-  if (entries.length > 0) {
+  const conflicting = entries.filter((entry) => !INNOCUOUS_ENTRIES.has(entry));
+
+  if (conflicting.length > 0) {
     throw new Error(
       `Target directory '${targetDir}' already exists and is not empty. Choose a new name or remove the directory.`
     );

@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { loadPlugin } from '../src/plugin-loader.js';
+import { manifestSha256 } from '../src/plugin-verification.js';
 
 const tempRoots: string[] = [];
 
@@ -42,7 +43,7 @@ const VALID_CAPABILITY_MODULE = `
 export default {
   id: 'fake-plugin',
   async getManifest() {
-    return { id: 'fake-plugin', version: '1.0.0', dependencies: [] };
+    return { id: 'fake-plugin', version: '1.0.0', description: 'test plugin', frameworks: ['nextjs'], providers: [], config: [], operations: ['add', 'remove'], verify: [], dependencies: [] };
   },
   async getCapability() {
     return { id: 'fake-plugin', version: '1.0.0', dependencies: [] };
@@ -64,7 +65,7 @@ describe('loadPlugin', () => {
     const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
     await installFakePackage(root, 'kiln-capability-fake', '1.0.0', VALID_CAPABILITY_MODULE);
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(false);
     expect(result.capability?.id).toBe('fake-plugin');
@@ -74,7 +75,7 @@ describe('loadPlugin', () => {
     const root = await createTempProject();
     await installFakePackage(root, 'kiln-capability-fake', '1.0.0', VALID_CAPABILITY_MODULE);
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('must be a direct dependency');
@@ -84,7 +85,7 @@ describe('loadPlugin', () => {
     const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
     await installFakePackage(root, 'kiln-capability-fake', '2.0.0', VALID_CAPABILITY_MODULE);
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('does not match the version');
@@ -93,7 +94,7 @@ describe('loadPlugin', () => {
   test('skips a plugin that is not installed at all', async () => {
     const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('not installed');
@@ -108,7 +109,7 @@ describe('loadPlugin', () => {
       'export default { hello: "world" };'
     );
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('does not export a usable Capability');
@@ -123,7 +124,7 @@ describe('loadPlugin', () => {
       'throw new Error("boom during module load");'
     );
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('threw while loading');
@@ -139,7 +140,7 @@ describe('loadPlugin', () => {
       null
     );
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain("does not declare a '@kiln-cli/capability-sdk' dependency");
@@ -149,9 +150,60 @@ describe('loadPlugin', () => {
     const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
     await installFakePackage(root, 'kiln-capability-fake', '1.0.0', VALID_CAPABILITY_MODULE, '^99.0.0');
 
-    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' });
+    const result = await loadPlugin(root, { package: 'kiln-capability-fake', version: '1.0.0' }, { allowUnverified: true });
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toContain('targets @kiln-cli/capability-sdk v99');
+  });
+});
+
+describe('unverified plugin gate', () => {
+  const entry = { package: 'kiln-capability-fake', version: '1.0.0' };
+  const MARKER = '__kilnGateTestImported';
+
+  // Top-level code runs on import, so the marker proves whether kiln imported the module.
+  const MARKED_MODULE = `globalThis.${MARKER} = true;\n${VALID_CAPABILITY_MODULE}`;
+
+  async function projectWithPlugin(): Promise<string> {
+    const root = await createTempProject({ 'kiln-capability-fake': '1.0.0' });
+    await installFakePackage(root, 'kiln-capability-fake', '1.0.0', MARKED_MODULE);
+    delete (globalThis as Record<string, unknown>)[MARKER];
+    return root;
+  }
+
+  test('refuses an unreviewed release by default, without importing its code', async () => {
+    const root = await projectWithPlugin();
+
+    const result = await loadPlugin(root, entry, { verified: [] });
+
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toContain('--allow-unverified');
+    expect((globalThis as Record<string, unknown>)[MARKER]).toBeUndefined();
+  });
+
+  test('--allow-unverified loads it', async () => {
+    const root = await projectWithPlugin();
+
+    const result = await loadPlugin(root, entry, { verified: [], allowUnverified: true });
+
+    expect(result.skipped).toBe(false);
+  });
+
+  test('a reviewed release loads only while its manifest hash matches', async () => {
+    const root = await projectWithPlugin();
+    const loaded = await loadPlugin(root, entry, { allowUnverified: true });
+    const manifest = await loaded.capability!.getManifest();
+    const reviewed = {
+      package: entry.package,
+      version: entry.version,
+      manifestSha256: manifestSha256(manifest),
+    };
+
+    expect((await loadPlugin(root, entry, { verified: [reviewed] })).skipped).toBe(false);
+
+    const tampered = { ...reviewed, manifestSha256: 'f'.repeat(64) };
+    const result = await loadPlugin(root, entry, { verified: [tampered] });
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toContain('does not match the maintainer-reviewed release');
   });
 });
