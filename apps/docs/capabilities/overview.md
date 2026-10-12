@@ -19,3 +19,4 @@ for the specifics.
 - [Env](/capabilities/env)
 - [Db](/capabilities/db)
 - [Plugins](/capabilities/plugins)
+- [Directory](/capabilities/directory)
