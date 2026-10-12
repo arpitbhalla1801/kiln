@@ -91,6 +91,7 @@ export default defineConfig({
             { text: "Overview", link: "/capabilities/overview" },
             { text: "Auth", link: "/capabilities/auth" },
             { text: "Env", link: "/capabilities/env" },
+            { text: "Db", link: "/capabilities/db" },
             { text: "Plugins", link: "/capabilities/plugins" },
             { text: "Directory", link: "/capabilities/directory" },
           ],

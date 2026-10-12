@@ -13,7 +13,7 @@ Capabilities you can add with `kiln add <id>`.
 | --- | --- | --- |
 | [Env](/capabilities/env) | `env` | Manages `.env.example` and env vars. |
 | [Auth](/capabilities/auth) | `auth` | Scaffolds next-auth with provider config. |
-| Database | `db` | Scaffolds Prisma with schema, client and scripts. Needs `env`. |
+| [Db](/capabilities/db) | `db` | Scaffolds Prisma with schema, client and scripts. Needs `env`. |
 
 ## Community plugins
 
