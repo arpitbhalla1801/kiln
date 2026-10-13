@@ -2,6 +2,8 @@
 
 **Create your app once. Compose capabilities over time.**
 
+[Docs](https://arpitbhalla1801.github.io/kiln/) | [npm](https://www.npmjs.com/package/@kiln-cli/kiln) | kiln CLI for Next.js
+
 [![npm](https://img.shields.io/npm/v/@kiln-cli/kiln?color=cb3837)](https://www.npmjs.com/package/@kiln-cli/kiln)
 [![downloads](https://img.shields.io/npm/dm/@kiln-cli/kiln)](https://www.npmjs.com/package/@kiln-cli/kiln)
 [![CI](https://github.com/arpitbhalla1801/kiln/actions/workflows/business-journeys.yml/badge.svg)](https://github.com/arpitbhalla1801/kiln/actions/workflows/business-journeys.yml)
