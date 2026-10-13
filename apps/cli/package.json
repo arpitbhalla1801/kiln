@@ -1,9 +1,11 @@
 {
   "name": "@kiln-cli/kiln",
   "version": "2.2.0",
-  "description": "Capability-based scaffolding CLI for Node/Next.js projects",
+  "description": "kiln: capability-based CLI that adds auth, db and env to Next.js apps",
   "license": "MIT",
   "keywords": [
+    "kiln",
+    "kiln-cli",
     "cli",
     "nextjs",
     "scaffold",
@@ -21,7 +23,7 @@
     "url": "git+https://github.com/arpitbhalla1801/kiln.git",
     "directory": "apps/cli"
   },
-  "homepage": "https://github.com/arpitbhalla1801/kiln#readme",
+  "homepage": "https://arpitbhalla1801.github.io/kiln/",
   "bugs": {
     "url": "https://github.com/arpitbhalla1801/kiln/issues"
   },
