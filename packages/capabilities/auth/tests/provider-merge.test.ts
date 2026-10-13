@@ -166,3 +166,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     expect(result).toContain('custom comment a human added');
   });
 });
+
+describe('session typing', () => {
+  test('adapter output augments Session with a required user.id', () => {
+    const content = createAuthConfigContent(['github'], { dbClientImportPath: './lib/db' });
+    expect(content).toContain('declare module "next-auth"');
+    expect(content).toContain('user: { id: string } & DefaultSession["user"]');
+  });
+
+  test('no-adapter output is unchanged', () => {
+    expect(createAuthConfigContent(['github'])).not.toContain('declare module');
+  });
+});

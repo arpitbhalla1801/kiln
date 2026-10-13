@@ -27,6 +27,17 @@ export function createAuthConfigContent(
     ? `import NextAuth from "next-auth";\n${providerImports}${adapterImportLines}`
     : `import NextAuth from "next-auth";${adapterImportLines}`;
 
+  // With an adapter, sessions are database-backed so session.user.id is always set; the
+  // stock Session type leaves it optional, which breaks `where: { userId: session.user.id }`.
+  const sessionTypes = adapter
+    ? 'import type { DefaultSession } from "next-auth";\n\n' +
+      'declare module "next-auth" {\n' +
+      '  interface Session {\n' +
+      '    user: { id: string } & DefaultSession["user"];\n' +
+      '  }\n' +
+      '}\n\n'
+    : '';
+
   const providersList = providers.map((provider) => `    ${provider.factoryExpression},`).join('\n');
   const providersArray = providersList ? `[\n${providersList}\n  ]` : '[]';
 
@@ -40,7 +51,7 @@ export function createAuthConfigContent(
 
   return `${importBlock}
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+${sessionTypes}export const { handlers, auth, signIn, signOut } = NextAuth({
 ${adapterField}  providers: ${providersArray},
 });
 `;

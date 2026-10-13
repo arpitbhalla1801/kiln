@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { connect } from 'node:net';
 import { join } from 'node:path';
 import { NodeAdapter, spawnSafely } from '@kiln-cli/node-adapter';
@@ -57,6 +57,10 @@ export async function collectChecks(options: CliOptions): Promise<DoctorCheck[]>
 
     checks.push(await checkRequiredEnvVars(rootPath));
     checks.push(await checkDatabaseConnectivity(rootPath));
+    const clientDrift = await checkPrismaClientDrift(rootPath);
+    if (clientDrift) {
+      checks.push(clientDrift);
+    }
 
     if (await OwnershipMetadataStore.exists(rootPath)) {
       checks.push({
@@ -175,6 +179,32 @@ async function checkDatabaseConnectivity(rootPath: string): Promise<DoctorCheck>
         status: 'warn',
         detail: `cannot reach database at ${url.hostname}:${port}`,
       };
+}
+
+// ponytail: mtime comparison against the default client output only. pnpm's virtual store and
+// a custom generator `output` are skipped rather than guessed at; hash the schema if mtime misleads.
+async function checkPrismaClientDrift(rootPath: string): Promise<DoctorCheck | undefined> {
+  const name = 'prisma-client';
+  const schemaStat = await stat(join(rootPath, 'prisma', 'schema.prisma')).catch(() => undefined);
+  if (!schemaStat || !(await stat(join(rootPath, 'node_modules')).catch(() => undefined))) {
+    return undefined;
+  }
+
+  const schema = await readFile(join(rootPath, 'prisma', 'schema.prisma'), 'utf8');
+  if (/^\s*output\s*=/m.test(schema) || (await stat(join(rootPath, 'node_modules', '.pnpm')).catch(() => undefined))) {
+    return undefined;
+  }
+
+  const clientStat = await stat(join(rootPath, 'node_modules', '.prisma', 'client', 'index.d.ts')).catch(
+    () => undefined
+  );
+  if (!clientStat) {
+    return { name, status: 'warn', detail: 'client not generated; run `bun run db:generate`' };
+  }
+
+  return clientStat.mtimeMs < schemaStat.mtimeMs
+    ? { name, status: 'warn', detail: 'prisma/schema.prisma is newer than the generated client; run `bun run db:generate`' }
+    : { name, status: 'pass', detail: 'generated client is up to date' };
 }
 
 function defaultDbPort(protocol: string): number {
