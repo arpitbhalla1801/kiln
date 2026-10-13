@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import './helpers/no-install.js';
+import { createCapabilityRuntime } from '@kiln-cli/runtime';
 import { runAdd } from '../src/commands/add.js';
 import { runInit } from '../src/commands/init.js';
 
@@ -62,6 +63,15 @@ describe('auth + db integration', () => {
     expect(schema).toContain('model Account');
     expect(schema).toContain('model Session');
     expect(schema).toContain('model VerificationToken');
+  }, 60000);
+
+  test('add db summary lists the auth.ts rewrite it triggers', async () => {
+    const root = await projectWith('auth');
+    const result = await createCapabilityRuntime().addCapability('db', { cwd: root, dryRun: false });
+
+    const paths = result.preview.operations.map((operation) => operation.filePath);
+    expect(paths).toContain('src/auth.ts');
+    expect(result.preview.summary.total).toBe(result.preview.operations.length);
   }, 60000);
 
   test('auth alone: no adapter wiring', async () => {
