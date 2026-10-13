@@ -211,7 +211,8 @@ export class CapabilityRuntime {
       const installed = await this.installedIds(rootPath);
       for (const enhancerId of enhancersOf(id)) {
         if (this.capabilities.has(enhancerId) && installed.has(enhancerId)) {
-          await this.addCapability(enhancerId, { ...options, skipSiblingRefresh: true });
+          const refreshed = await this.addCapability(enhancerId, { ...options, skipSiblingRefresh: true });
+          mergeRefresh(result, refreshed);
         }
       }
     }
@@ -687,6 +688,26 @@ async function findSkippedEditedFiles(
   }
 
   return warnings;
+}
+
+/** Folds a sibling refresh into the primary result so the printed summary lists every file the add touched. */
+function mergeRefresh(result: RuntimeExecutionResult, refreshed: RuntimeExecutionResult): void {
+  const byPath = new Map(result.preview.operations.map((operation) => [operation.filePath, operation]));
+  for (const operation of refreshed.preview.operations) {
+    byPath.set(operation.filePath, operation);
+  }
+
+  const operations = [...byPath.values()];
+  result.preview = {
+    operations,
+    summary: {
+      created: operations.filter((operation) => operation.type === 'create').length,
+      modified: operations.filter((operation) => operation.type === 'modify').length,
+      deleted: operations.filter((operation) => operation.type === 'delete').length,
+      total: operations.length,
+    },
+  };
+  result.warnings.push(...refreshed.warnings);
 }
 
 export function createCapabilityRuntime(options?: CapabilityRuntimeOptions): CapabilityRuntime {
