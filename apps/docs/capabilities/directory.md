@@ -14,6 +14,7 @@ Capabilities you can add with `kiln add <id>`.
 | [Env](/capabilities/env) | `env` | Manages `.env.example` and env vars. |
 | [Auth](/capabilities/auth) | `auth` | Scaffolds next-auth with provider config. |
 | [Db](/capabilities/db) | `db` | Scaffolds Prisma with schema, client and scripts. Needs `env`. |
+| [Logging](/capabilities/logging) | `logging` | Captures client and server errors with Sentry. Needs `env`. |
 
 ## Community plugins
 

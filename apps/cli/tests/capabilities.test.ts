@@ -40,7 +40,7 @@ describe('kiln capabilities', () => {
     const output = await capture(() => runCapabilitiesList({ cwd, json: true }));
     const entries = JSON.parse(output) as Array<Record<string, unknown>>;
 
-    expect(entries.map((entry) => entry.id)).toEqual(['auth', 'db', 'env']);
+    expect(entries.map((entry) => entry.id)).toEqual(['auth', 'db', 'env', 'logging']);
     for (const entry of entries) {
       expect(entry.source).toBe('builtin');
       expect(entry.verified).toBe(true);

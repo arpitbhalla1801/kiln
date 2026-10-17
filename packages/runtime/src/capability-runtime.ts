@@ -17,6 +17,7 @@ import {
   withActiveAdapters,
 } from '@kiln-cli/core';
 import { DbCapability } from '@kiln-cli/db-capability';
+import { LoggingCapability } from '@kiln-cli/logging-capability';
 import { EnvCapability, type EnvVariableMap } from '@kiln-cli/env-capability';
 import { NodeAdapter } from '@kiln-cli/node-adapter';
 import { createPlanExecutor, type CapabilityExecutionPlan } from '@kiln-cli/planner';
@@ -65,6 +66,7 @@ export interface CapabilityRuntimeOptions {
   envCapability?: EnvCapability;
   authCapability?: AuthCapability;
   dbCapability?: DbCapability;
+  loggingCapability?: LoggingCapability;
   /** Load third-party plugins no maintainer reviewed. Off by default. */
   allowUnverified?: boolean;
   /** Reviewed plugin releases to trust; defaults to the list shipped with kiln. */
@@ -78,6 +80,7 @@ export class CapabilityRuntime {
   private readonly envCapability: EnvCapability;
   private readonly authCapability: AuthCapability;
   private readonly dbCapability: DbCapability;
+  private readonly loggingCapability: LoggingCapability;
   private readonly capabilities: Map<string, PluginCapability>;
   private readonly pluginProvenance: Map<string, string> = new Map();
   private readonly pluginVerified: Map<string, boolean> = new Map();
@@ -92,10 +95,12 @@ export class CapabilityRuntime {
     this.envCapability = options.envCapability ?? new EnvCapability();
     this.authCapability = options.authCapability ?? new AuthCapability();
     this.dbCapability = options.dbCapability ?? new DbCapability();
+    this.loggingCapability = options.loggingCapability ?? new LoggingCapability();
     this.capabilities = new Map<string, PluginCapability>([
       ['env', this.envCapability],
       ['auth', this.authCapability],
       ['db', this.dbCapability],
+      ['logging', this.loggingCapability],
       ...Object.entries(options.capabilities ?? {}),
     ]);
     this.lifecycleHooks = new LifecycleHooks<KilnRuntimeContext>();
