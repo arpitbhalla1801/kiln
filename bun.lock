@@ -108,6 +108,16 @@
         "@types/node": "^25.9.1",
       },
     },
+    "packages/capabilities/logging": {
+      "name": "@kiln-cli/logging-capability",
+      "version": "2.2.1",
+      "dependencies": {
+        "@kiln-cli/capability-sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^25.9.1",
+      },
+    },
     "packages/core": {
       "name": "@kiln-cli/core",
       "version": "2.2.1",
@@ -146,6 +156,7 @@
         "@kiln-cli/core": "workspace:*",
         "@kiln-cli/db-capability": "workspace:*",
         "@kiln-cli/env-capability": "workspace:*",
+        "@kiln-cli/logging-capability": "workspace:*",
         "@kiln-cli/node-adapter": "workspace:*",
         "@kiln-cli/planner": "workspace:*",
         "@kiln-cli/project-model": "workspace:*",
@@ -384,6 +395,8 @@
     "@kiln-cli/env-capability": ["@kiln-cli/env-capability@workspace:packages/capabilities/env"],
 
     "@kiln-cli/kiln": ["@kiln-cli/kiln@workspace:apps/cli"],
+
+    "@kiln-cli/logging-capability": ["@kiln-cli/logging-capability@workspace:packages/capabilities/logging"],
 
     "@kiln-cli/node-adapter": ["@kiln-cli/node-adapter@workspace:packages/adapters/node"],
 

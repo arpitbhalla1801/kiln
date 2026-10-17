@@ -5,7 +5,7 @@ import { formatCapabilityResult } from '../output.js';
 import type { CliOptions } from '../output.js';
 import { resolveProjectRoot } from '../project.js';
 
-const TYPESCRIPT_CAPABILITIES = ['auth', 'db'];
+const TYPESCRIPT_CAPABILITIES = ['auth', 'db', 'logging'];
 
 const DEFAULT_ENV_VARS: EnvVariableMap = {
   DATABASE_URL: { example: 'postgres://localhost:5432/app', required: true },

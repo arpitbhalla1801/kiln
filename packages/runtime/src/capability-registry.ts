@@ -27,6 +27,7 @@ export function isSupportedCapabilityId(id: string): boolean {
 registerCapability('env');
 registerCapability('auth', ['env'], ['db']);
 registerCapability('db', ['env'], ['auth']);
+registerCapability('logging', ['env']);
 
 /** Ids of registered capabilities that enhance `id`, i.e. the ones to re-plan when `id` is added. */
 export function enhancersOf(id: string): string[] {
