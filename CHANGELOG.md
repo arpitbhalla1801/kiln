@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.2.1
+
+### Features
+
+- `kiln doctor` flags a stale Prisma client after `schema.prisma` changes
+- With `auth` and `db` installed, `session.user.id` is typed
+
+### Fixes
+
+- The `kiln add` summary counts files rewritten by sibling refresh
+
+### Docs
+
+- Capability directory and `db` capability pages
+
 ## 2.2.0
 
 ### Features

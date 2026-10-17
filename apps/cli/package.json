@@ -1,6 +1,6 @@
 {
   "name": "@kiln-cli/kiln",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "kiln: capability-based CLI that adds auth, db and env to Next.js apps",
   "license": "MIT",
   "keywords": [
