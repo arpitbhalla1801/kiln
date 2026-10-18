@@ -29,8 +29,8 @@ type CommandName = 'init' | 'add' | 'remove' | 'env' | 'db' | 'inspect' | 'docto
 
 const commands: Record<CommandName, string> = {
   init: 'Scaffold a new kiln project, or adopt an existing one with --existing.',
-  add: 'Add a capability to a kiln project (env, auth, db).',
-  remove: 'Remove a capability from a kiln project (env, auth, db).',
+  add: 'Add a capability to a kiln project (env, auth, db, logging).',
+  remove: 'Remove a capability from a kiln project (env, auth, db, logging).',
   env: 'Remove individual environment variables (use `kiln add env --var` to set one).',
   db: 'Run database operations with the project env loaded.',
   inspect: 'Inspect the current kiln project.',
@@ -66,7 +66,7 @@ function printHelp(topic?: string): void {
 
     if (command === 'add') {
       console.log('Usage: kiln add <capability>');
-      console.log('Capabilities: env, auth, db');
+      console.log('Capabilities: env, auth, db, logging');
       console.log('  kiln add env [--var KEY=value]');
       console.log('  kiln add auth [--provider github|google|credentials] [--var KEY=value]');
       console.log('  kiln add db');
@@ -82,7 +82,7 @@ function printHelp(topic?: string): void {
 
     if (command === 'remove') {
       console.log('Usage: kiln remove <capability>');
-      console.log('Capabilities: env, auth, db');
+      console.log('Capabilities: env, auth, db, logging');
       console.log('Deletes the files, dependencies, scripts, and env vars that capability owns.');
       console.log('Files you edited after kiln wrote them are kept. Refuses if code still imports');
       console.log('what would be removed; --force removes anyway. `remove db` never touches');
@@ -236,7 +236,7 @@ async function main(argv: string[]): Promise<void> {
     }
     const capabilityId = thirdArg;
     if (!capabilityId) {
-      throw new Error('Missing capability. Usage: kiln plan add <env|auth|db>');
+      throw new Error('Missing capability. Usage: kiln plan add <env|auth|db|logging>');
     }
 
     const envVariables = parseEnvVariables(argv);

@@ -1,0 +1,36 @@
+import type { CapabilityManifest } from '@kiln-cli/capability-sdk';
+
+export const LOGGING_MANIFEST: CapabilityManifest = {
+  id: 'logging',
+  name: 'Logging',
+  version: '2.2.1',
+  description:
+    'Adds error capture to a Next.js project: a logger wrapper, a global error boundary, and server and client Sentry instrumentation.',
+  frameworks: ['nextjs'],
+  providers: [{ id: 'sentry', description: 'Capture client and server errors with @sentry/nextjs.' }],
+  config: [
+    {
+      name: '--provider',
+      description: 'Logging provider. Only sentry exists today and it is the default.',
+      required: false,
+    },
+    {
+      name: '--var',
+      description: 'SENTRY_DSN=value and NEXT_PUBLIC_SENTRY_DSN=value written to .env.local.',
+      required: false,
+    },
+  ],
+  operations: ['add', 'remove'],
+  verify: [{ command: 'npx tsc --noEmit', description: 'Type-check the generated files.' }],
+  dependencies: ['env'],
+  ownership: {
+    files: [
+      'src/lib/logger.ts',
+      'src/app/global-error.tsx',
+      'src/instrumentation.ts',
+      'src/instrumentation-client.ts',
+    ],
+    dependencies: ['@sentry/nextjs'],
+    envVars: ['SENTRY_DSN', 'NEXT_PUBLIC_SENTRY_DSN'],
+  },
+};

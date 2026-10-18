@@ -1,0 +1,20 @@
+{
+  "name": "@kiln-cli/logging-capability",
+  "version": "2.2.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@kiln-cli/capability-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  },
+  "scripts": {
+    "build": "tsc -b --force",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "bun test tests"
+  }
+}

@@ -9,6 +9,7 @@
     "@kiln-cli/capability-sdk": "workspace:*",
     "@kiln-cli/core": "workspace:*",
     "@kiln-cli/db-capability": "workspace:*",
+    "@kiln-cli/logging-capability": "workspace:*",
     "@kiln-cli/env-capability": "workspace:*",
     "@kiln-cli/node-adapter": "workspace:*",
     "@kiln-cli/planner": "workspace:*",

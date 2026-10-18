@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { AuthCapability } from '@kiln-cli/auth-capability';
 import { DbCapability } from '@kiln-cli/db-capability';
+import { LoggingCapability } from '@kiln-cli/logging-capability';
 import { EnvCapability } from '@kiln-cli/env-capability';
 
 const capabilitiesDir = join(import.meta.dirname, '../../capabilities');
@@ -14,6 +15,7 @@ describe('built-in manifest mirrors', () => {
     ['env', new EnvCapability()],
     ['auth', new AuthCapability()],
     ['db', new DbCapability()],
+    ['logging', new LoggingCapability()],
   ] as const;
 
   for (const [id, capability] of builtins) {
